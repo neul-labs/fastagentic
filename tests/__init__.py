@@ -1,0 +1,1 @@
+"""FastAgentic tests."""

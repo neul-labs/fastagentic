@@ -96,7 +96,7 @@ async def summarize(text: str) -> str:
     ...
 
 
-@resource(name="run-status", uri="/runs/{run_id}", cache_ttl=60)
+@resource(name="run-status", uri="runs/{run_id}", cache_ttl=60)
 async def fetch_run(run_id: str) -> dict:
     ...
 
@@ -137,7 +137,27 @@ The command launches:
 - MCP stdio transport: tool, prompt, and resource discovery
 - Background runners for durable workflows
 
-Browse `http://localhost:8000/docs` for the OpenAPI explorer, `http://localhost:8000/mcp/schema` for MCP metadata, and `fastagentic tail` for live events.
+Browse `http://localhost:8000/docs` for the OpenAPI explorer, `http://localhost:8000/mcp/schema` for MCP metadata.
+
+## Test Your Agent
+
+Use the interactive Agent CLI to test your agent:
+
+```bash
+# Start interactive chat
+fastagentic agent chat --endpoint /triage
+
+# Or send a single query
+fastagentic agent query "Classify this ticket: User cannot login"
+```
+
+The Agent CLI provides:
+- Streaming responses with real-time display
+- Tool call visualization
+- Conversation history
+- Multiple output formats (markdown, plain, JSON)
+
+See the [Agent CLI Guide](cli-agent.md) for full documentation.
 
 ## Validate Schema Parity
 

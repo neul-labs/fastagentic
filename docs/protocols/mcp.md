@@ -1,6 +1,6 @@
 # MCP Implementation
 
-FastAgentic implements the Model Context Protocol (MCP) specification [2025-11-25](https://modelcontextprotocol.io/specification/2025-03-26), providing tool, resource, and prompt exposure to LLM hosts like Claude Desktop, IDE extensions, and custom applications.
+FastAgentic implements the Model Context Protocol (MCP) specification [2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25), providing tool, resource, and prompt exposure to LLM hosts like Claude Desktop, IDE extensions, and custom applications.
 
 ## What MCP Provides
 

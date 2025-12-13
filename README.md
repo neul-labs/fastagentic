@@ -2,6 +2,10 @@
 
 > **Build agents with anything. Ship them with FastAgentic.**
 
+[![Tests](https://img.shields.io/badge/tests-608%20passed-brightgreen)]()
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
+[![License](https://img.shields.io/badge/license-MIT-green)]()
+
 FastAgentic is the **deployment layer** for agentic applications. It transforms agents built with PydanticAI, LangChain, LangGraph, or CrewAI into production-ready services with REST, MCP, and streaming interfaces—plus authentication, policy, observability, and durability baked in.
 
 **FastAgentic is not an agent framework. It deploys them.**
@@ -52,6 +56,29 @@ FastAgentic is the **deployment layer** for agentic applications. It transforms 
 - Are experimenting with agent logic locally
 - Have a single internal consumer with no governance needs
 - Need an agent framework first (use PydanticAI, LangChain, etc.)
+
+## Installation
+
+```bash
+# Core installation
+pip install fastagentic
+
+# Or with uv (recommended)
+uv add fastagentic
+
+# With specific adapter support
+uv add "fastagentic[pydanticai]"
+uv add "fastagentic[langgraph]"
+uv add "fastagentic[crewai]"
+
+# With integrations
+uv add "fastagentic[langfuse]"    # Observability
+uv add "fastagentic[portkey]"    # AI Gateway
+uv add "fastagentic[lakera]"     # Security guardrails
+
+# Everything
+uv add "fastagentic[all]"
+```
 
 ## Quick Start
 
@@ -108,10 +135,75 @@ async def triage(ticket: TicketIn) -> TicketOut:
 Run the framework with both ASGI and MCP entry points:
 
 ```bash
+# Start the HTTP server
 fastagentic run
+
+# Or run as MCP server (for Claude Desktop, etc.)
+fastagentic mcp serve app:app
 ```
 
 The command boots the FastAPI application, registers MCP discovery metadata, and exposes streaming endpoints for agent workflows.
+
+## First-Class Integrations
+
+FastAgentic integrates with best-of-breed tools for specialized concerns:
+
+```python
+from fastagentic import App
+from fastagentic.integrations import (
+    LangfuseIntegration,    # Observability & tracing
+    PortkeyIntegration,     # AI Gateway (200+ LLMs)
+    LakeraIntegration,      # Security guardrails
+    Mem0Integration,        # Intelligent memory
+)
+
+app = App(
+    title="My Agent",
+    integrations=[
+        LangfuseIntegration(
+            public_key="pk-...",
+            secret_key="sk-...",
+        ),
+        LakeraIntegration(
+            api_key="lak-...",
+            block_on_detect=True,  # Block prompt injection
+        ),
+        Mem0Integration(
+            api_key="m0-...",
+            auto_search=True,      # Auto-inject relevant memories
+        ),
+    ]
+)
+```
+
+| Integration | Purpose | Features |
+|-------------|---------|----------|
+| **Langfuse** | Observability | Tracing, analytics, prompt management |
+| **Portkey** | AI Gateway | 200+ LLMs, fallbacks, caching |
+| **Lakera** | Security | Prompt injection, PII detection |
+| **Mem0** | Memory | Semantic memory, auto-extraction |
+
+## Reliability Patterns
+
+Built-in patterns for production resilience:
+
+```python
+from fastagentic import App, RetryPolicy, CircuitBreaker, RateLimit
+
+app = App(
+    title="Resilient Agent",
+    retry_policy=RetryPolicy(
+        max_attempts=3,
+        backoff="exponential",
+        retry_on=["rate_limit", "timeout"],
+    ),
+    rate_limit=RateLimit(
+        rpm=60,
+        tpm=100000,
+        by="user",
+    ),
+)
+```
 
 ## How It Fits Together
 
@@ -146,20 +238,43 @@ The command boots the FastAPI application, registers MCP discovery metadata, and
 
 | Command                     | Description                                     |
 | --------------------------- | ----------------------------------------------- |
+| `fastagentic run`           | Start the ASGI server                          |
 | `fastagentic new`           | Scaffold a new application with sample modules  |
-| `fastagentic add endpoint`  | Generate a tool or agent endpoint stub          |
-| `fastagentic run`           | Start the ASGI server and MCP stdio transport   |
-| `fastagentic tail`          | Stream live traces, events, and cost telemetry  |
+| `fastagentic info`          | Show information about the current app          |
+| `fastagentic agent chat`    | Interactive CLI for agent testing               |
+| `fastagentic agent query`   | Send single queries (scriptable)                |
+| `fastagentic mcp serve`     | Run as MCP stdio server (for Claude Desktop)    |
+| `fastagentic mcp schema`    | Print MCP schema (tools, resources, prompts)    |
+| `fastagentic a2a card`      | Print A2A Agent Card                           |
 | `fastagentic test contract` | Verify OpenAPI and MCP schema parity            |
 
 ## Roadmap Highlights
 
-- **v0.1:** Core decorators, MCP schema fusion, LangChain adapter, SSE streaming
-- **v0.2:** LangGraph & CrewAI adapters, resilient run storage
+- **v0.1:** Core decorators, MCP schema fusion, adapters, SSE streaming
+- **v0.2:** Reliability patterns, MCP stdio, first-class integrations (Langfuse, Portkey, Lakera, Mem0)
 - **v0.3:** Policy engine, cost tracking, audit logging
 - **v0.4:** Advanced prompt management, human-in-the-loop actions
 - **v0.5:** Cluster orchestration, distributed checkpointing
-- **v1.0:** Full MCP compliance, SDK, and operational dashboard
+- **v1.0:** Python SDK, PII detection, dashboard & metrics, production readiness checker
+- **v1.1:** New adapters (Semantic Kernel, AutoGen, LlamaIndex, DSPy), template ecosystem
+- **v1.2:** Interactive Agent CLI for testing and development
+
+## Contributing
+
+```bash
+# Clone the repository
+git clone https://github.com/fastagentic/fastagentic.git
+cd fastagentic
+
+# Install dependencies with uv
+uv sync --extra dev
+
+# Run tests
+uv run pytest tests/ -v
+
+# Run linting
+uv run ruff check src/
+```
 
 ## Learn More
 
@@ -194,6 +309,9 @@ The command boots the FastAPI application, registers MCP discovery metadata, and
 - [Configuration Reference](docs/operations/configuration/)
 - [Observability](docs/operations/observability/)
 - [Security & Compliance](docs/operations/security/)
+
+**Developer Tools**
+- [Agent CLI](docs/cli-agent.md) - Interactive testing and development
 
 **Reference**
 - [Runtime Architecture](docs/architecture.md)

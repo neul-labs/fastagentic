@@ -123,7 +123,7 @@ FastAgentic implements two complementary interoperability protocols:
 FastAgentic generates compatible schemas for all protocols from a single definition:
 
 - **OpenAPI 3.1**: Every decorator contributes operations, security definitions, and examples to the REST API schema.
-- **MCP 2025-11**: Tools, resources, and prompts exposed under `/mcp/schema` and stdio transport. Supports Tasks for long-running operations and Extensions for custom capabilities.
+- **MCP 2025-11-25**: Tools, resources, and prompts exposed under `/mcp/schema` and stdio transport. Supports Tasks for long-running operations and Extensions for custom capabilities.
 - **A2A v0.3**: Agent Cards auto-generated with skills, security schemes, and protocol interfaces. Available at `/.well-known/agent.json`.
 - **Prompt Catalog**: Prompt decorators generate entries for both MCP prompts and A2A skill descriptions.
 
