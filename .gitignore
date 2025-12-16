@@ -25,3 +25,5 @@ logs
 
 *.pyc
 *.pyo
+
+.hypothesis
