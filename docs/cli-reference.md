@@ -54,22 +54,64 @@ The generator creates files under `endpoints/` or `prompts/` with Pydantic model
 
 ## `fastagentic run`
 
-Launches the ASGI application and MCP stdio server.
+Launches the ASGI application server. Supports both development (Uvicorn) and production (Gunicorn) modes.
 
 ```bash
-fastagentic run --port 8080 --stdio
+# Development with auto-reload
+fastagentic run --reload
+
+# Production with Gunicorn
+fastagentic run --server gunicorn --workers 4
+
+# Production with concurrency limits
+fastagentic run --server gunicorn --workers 4 --max-concurrent 100
 ```
 
-| Option        | Description                                                |
-| ------------- | ---------------------------------------------------------- |
-| `--reload`    | Enable auto-reload on code changes                         |
-| `--host`      | Bind address for the ASGI server                           |
-| `--port`      | Port for HTTP traffic                                      |
-| `--no-stdio`  | Disable MCP stdio transport                                |
-| `--stdio`     | Force stdio mode without HTTP                              |
-| `--workers`   | Number of worker processes                                 |
+### Server Options
 
-The command loads configuration, performs schema fusion, registers MCP metadata, and starts background workers for durable run processing.
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--server, -s` | uvicorn | Server type: `uvicorn` or `gunicorn` |
+| `--host` | 127.0.0.1 | Bind address for the server |
+| `--port` | 8000 | Port for HTTP traffic |
+| `--workers` | 1 | Number of worker processes |
+| `--reload` | false | Enable auto-reload (dev only, forces 1 worker) |
+
+### Scalability Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--max-concurrent` | unlimited | Maximum concurrent requests per worker |
+| `--instance-id` | auto | Instance ID for cluster metrics |
+| `--timeout-graceful` | 30 | Graceful shutdown timeout (seconds) |
+
+### Connection Pool Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--redis-pool-size` | 10 | Redis connection pool size per worker |
+| `--db-pool-size` | 5 | Database connection pool size per worker |
+| `--db-max-overflow` | 10 | Database pool overflow connections |
+
+### Examples
+
+```bash
+# Development
+fastagentic run --reload
+
+# Staging
+fastagentic run --server gunicorn --workers 2 --max-concurrent 50
+
+# Production
+fastagentic run \
+  --server gunicorn \
+  --workers 4 \
+  --max-concurrent 100 \
+  --redis-pool-size 20 \
+  --instance-id worker-1
+```
+
+See the [Scaling Guide](scaling.md) for detailed production deployment documentation.
 
 ## `fastagentic tail`
 
@@ -391,12 +433,38 @@ This hierarchy keeps local development flexible while preserving predictable dep
 
 ## Environment Variables
 
+### General
+
 | Variable | Description |
 |----------|-------------|
 | `FASTAGENTIC_ENV` | Environment (dev, staging, prod) |
 | `FASTAGENTIC_CONFIG` | Config file path |
 | `FASTAGENTIC_LOG_LEVEL` | Log level (DEBUG, INFO, WARN, ERROR) |
 | `FASTAGENTIC_LOG_FORMAT` | Log format (text, json) |
+
+### Server Configuration
+
+| Variable | Description |
+|----------|-------------|
+| `FASTAGENTIC_SERVER` | Server type: `uvicorn` or `gunicorn` |
+| `FASTAGENTIC_HOST` | Bind address |
+| `FASTAGENTIC_PORT` | Port number |
+| `FASTAGENTIC_WORKERS` | Number of worker processes |
+| `FASTAGENTIC_MAX_CONCURRENT` | Max concurrent requests per worker |
+| `FASTAGENTIC_INSTANCE_ID` | Instance identifier for metrics |
+| `FASTAGENTIC_TIMEOUT_KEEP_ALIVE` | Keep-alive timeout (seconds) |
+| `FASTAGENTIC_TIMEOUT_GRACEFUL_SHUTDOWN` | Graceful shutdown timeout (seconds) |
+
+### Connection Pools
+
+| Variable | Description |
+|----------|-------------|
+| `FASTAGENTIC_REDIS_POOL_SIZE` | Redis pool size per worker |
+| `FASTAGENTIC_REDIS_POOL_TIMEOUT` | Redis pool timeout (seconds) |
+| `FASTAGENTIC_REDIS_SOCKET_TIMEOUT` | Redis socket timeout (seconds) |
+| `FASTAGENTIC_DB_POOL_SIZE` | Database pool size per worker |
+| `FASTAGENTIC_DB_MAX_OVERFLOW` | Database pool max overflow |
+| `FASTAGENTIC_DB_POOL_TIMEOUT` | Database pool timeout (seconds) |
 
 ## Exit Codes
 

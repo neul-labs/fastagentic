@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import uuid
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Sequence
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
     from fastagentic.adapters.base import BaseAdapter
     from fastagentic.hooks.base import Hook
     from fastagentic.memory import MemoryProvider
+    from fastagentic.server.config import PoolConfig
 
 logger = structlog.get_logger()
 
@@ -47,6 +49,18 @@ class AppConfig(BaseModel):
 
     # A2A
     a2a_enabled: bool = True
+
+    # Concurrency
+    max_concurrent: int | None = None
+
+    # Cluster identification
+    instance_id: str | None = None
+
+    # Connection pools
+    redis_pool_size: int = 10
+    redis_pool_timeout: float = 5.0
+    db_pool_size: int = 5
+    db_max_overflow: int = 10
 
 
 class App:
@@ -86,7 +100,20 @@ class App:
         hooks: Sequence[Hook] | None = None,
         memory: MemoryProvider | None = None,
         session_memory: MemoryProvider | None = None,
+        max_concurrent: int | None = None,
+        instance_id: str | None = None,
+        redis_pool_size: int | None = None,
+        db_pool_size: int | None = None,
     ) -> None:
+        # Get pool config from environment if not specified
+        _redis_pool = redis_pool_size or int(os.environ.get("FASTAGENTIC_REDIS_POOL_SIZE", "10"))
+        _db_pool = db_pool_size or int(os.environ.get("FASTAGENTIC_DB_POOL_SIZE", "5"))
+        _db_overflow = int(os.environ.get("FASTAGENTIC_DB_MAX_OVERFLOW", "10"))
+        _max_concurrent = max_concurrent or (
+            int(mc) if (mc := os.environ.get("FASTAGENTIC_MAX_CONCURRENT")) else None
+        )
+        _instance_id = instance_id or os.environ.get("FASTAGENTIC_INSTANCE_ID")
+
         self.config = AppConfig(
             title=title,
             version=version,
@@ -98,12 +125,18 @@ class App:
             mcp_enabled=mcp_enabled,
             mcp_path_prefix=mcp_path_prefix,
             a2a_enabled=a2a_enabled,
+            max_concurrent=_max_concurrent,
+            instance_id=_instance_id,
+            redis_pool_size=_redis_pool,
+            db_pool_size=_db_pool,
+            db_max_overflow=_db_overflow,
         )
 
         self._hooks: list[Hook] = list(hooks) if hooks else []
         self._memory = memory
         self._session_memory = session_memory
         self._durable_store: Any = None  # Will be initialized on startup
+        self._instance_id = _instance_id or self._generate_instance_id()
 
         # Create the FastAPI app with lifespan
         self._fastapi = FastAPI(
@@ -113,10 +146,46 @@ class App:
             lifespan=self._lifespan,
         )
 
+        # Add middleware
+        self._configure_middleware()
+
         # Register built-in routes
         self._register_health_routes()
         self._register_mcp_routes()
         self._register_a2a_routes()
+
+    def _generate_instance_id(self) -> str:
+        """Generate a unique instance ID."""
+        import socket
+        hostname = socket.gethostname()
+        pid = os.getpid()
+        return f"{hostname}-{pid}"
+
+    def _configure_middleware(self) -> None:
+        """Configure production middleware."""
+        # Add concurrency limit middleware if configured
+        if self.config.max_concurrent:
+            from fastagentic.server.middleware import ConcurrencyLimitMiddleware
+            self._fastapi.add_middleware(
+                ConcurrencyLimitMiddleware,
+                max_concurrent=self.config.max_concurrent,
+            )
+            logger.info(
+                "Concurrency limit enabled",
+                max_concurrent=self.config.max_concurrent,
+            )
+
+        # Add instance metrics middleware
+        from fastagentic.server.middleware import InstanceMetricsMiddleware
+        self._fastapi.add_middleware(
+            InstanceMetricsMiddleware,
+            instance_id=self._instance_id,
+        )
+
+    @property
+    def instance_id(self) -> str:
+        """Get the instance ID for this app instance."""
+        return self._instance_id
 
     @property
     def fastapi(self) -> FastAPI:
@@ -162,7 +231,7 @@ class App:
             await self._close_durable_store()
 
     async def _init_durable_store(self) -> None:
-        """Initialize the durable store connection."""
+        """Initialize the durable store connection with pooling."""
         store_url = self.config.durable_store
         if not store_url:
             return
@@ -170,18 +239,53 @@ class App:
         if store_url.startswith("redis://"):
             try:
                 import redis.asyncio as redis
+                from redis.asyncio.connection import ConnectionPool
 
-                self._durable_store = redis.from_url(store_url)
-                logger.info("Connected to Redis durable store")
+                # Create connection pool with configured settings
+                pool = ConnectionPool.from_url(
+                    store_url,
+                    max_connections=self.config.redis_pool_size,
+                    socket_timeout=self.config.redis_pool_timeout,
+                    socket_connect_timeout=self.config.redis_pool_timeout,
+                    retry_on_timeout=True,
+                )
+                self._durable_store = redis.Redis(connection_pool=pool)
+                logger.info(
+                    "Connected to Redis durable store",
+                    pool_size=self.config.redis_pool_size,
+                    instance_id=self._instance_id,
+                )
             except ImportError:
                 logger.warning("Redis not installed, durable runs disabled")
-        elif store_url.startswith("postgres://"):
-            logger.warning("PostgreSQL durable store not yet implemented")
+        elif store_url.startswith("postgres://") or store_url.startswith("postgresql://"):
+            try:
+                from sqlalchemy.ext.asyncio import create_async_engine
+
+                # Create async engine with pool configuration
+                self._db_engine = create_async_engine(
+                    store_url.replace("postgres://", "postgresql+asyncpg://")
+                    .replace("postgresql://", "postgresql+asyncpg://"),
+                    pool_size=self.config.db_pool_size,
+                    max_overflow=self.config.db_max_overflow,
+                    pool_timeout=30.0,
+                    pool_recycle=1800,
+                    pool_pre_ping=True,
+                )
+                logger.info(
+                    "Connected to PostgreSQL durable store",
+                    pool_size=self.config.db_pool_size,
+                    max_overflow=self.config.db_max_overflow,
+                    instance_id=self._instance_id,
+                )
+            except ImportError:
+                logger.warning("SQLAlchemy/asyncpg not installed, PostgreSQL disabled")
 
     async def _close_durable_store(self) -> None:
         """Close the durable store connection."""
         if self._durable_store:
             await self._durable_store.close()
+        if hasattr(self, "_db_engine") and self._db_engine:
+            await self._db_engine.dispose()
 
     def _register_health_routes(self) -> None:
         """Register health check endpoints."""
@@ -192,6 +296,7 @@ class App:
                 "status": "healthy",
                 "version": self.config.version,
                 "title": self.config.title,
+                "instance_id": self._instance_id,
             }
 
         @self._fastapi.get("/ready")
@@ -200,7 +305,31 @@ class App:
             checks = {"app": True}
             if self.config.durable_store:
                 checks["durable_store"] = self._durable_store is not None
-            return {"ready": all(checks.values()), "checks": checks}
+            return {
+                "ready": all(checks.values()),
+                "checks": checks,
+                "instance_id": self._instance_id,
+            }
+
+        @self._fastapi.get("/metrics")
+        async def metrics() -> dict[str, Any]:
+            """Return instance metrics for monitoring."""
+            metrics_data = {
+                "instance_id": self._instance_id,
+                "version": self.config.version,
+                "config": {
+                    "max_concurrent": self.config.max_concurrent,
+                    "redis_pool_size": self.config.redis_pool_size,
+                    "db_pool_size": self.config.db_pool_size,
+                },
+            }
+
+            # Include middleware metrics if available
+            for middleware in self._fastapi.middleware_stack.app.__dict__.get("_middleware", []):
+                if hasattr(middleware, "get_metrics"):
+                    metrics_data["middleware"] = middleware.get_metrics()
+
+            return metrics_data
 
     def _register_mcp_routes(self) -> None:
         """Register MCP protocol routes."""
