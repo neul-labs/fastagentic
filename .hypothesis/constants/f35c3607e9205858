@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/audit/hooks.py
+# hypothesis_version: 6.148.7
+
+[1000, 'Unknown error', 'duration_ms', 'error', 'error_type', 'input', 'input_tokens', 'ip_address', 'latency_ms', 'message_count', 'model', 'output', 'output_tokens', 'request', 'started', 'success', 'tenant_id', 'tokens', 'tool_duration_ms', 'tool_error', 'tool_input', 'tool_output', 'total', 'total_tokens', 'unknown', 'user_email', 'user_roles']

@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/templates/base.py
+# hypothesis_version: 6.148.7
+
+[0.0, '*', '.', 'MIT', 'agent', 'author', 'automation', 'boolean', 'category', 'changelog', 'chatbot', 'choice', 'choices', 'composable', 'content', 'created_at', 'default', 'dependencies', 'deprecated', 'deprecation_message', 'description', 'documentation', 'downloads', 'encoding', 'enterprise', 'executable', 'files', 'framework', 'frameworks', 'homepage', 'integration', 'is_template', 'license', 'max_length', 'metadata', 'min_length', 'name', 'number', 'path', 'pattern', 'rag', 'rating', 'rating_count', 'release_date', 'repository', 'required', 'string', 'tags', 'template.json', 'type', 'updated_at', 'utf-8', 'utility', 'variables', 'version', 'versions', 'workflow']

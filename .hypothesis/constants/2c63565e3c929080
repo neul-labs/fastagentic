@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/dashboard/stats.py
+# hypothesis_version: 6.148.7
+
+[0.0, 0.001, 0.5, 0.95, 0.99, 60.0, -1000, 100, 1000, 3600, 'active_requests', 'avg_duration_ms', 'avg_response_time_ms', 'completed', 'completed_at', 'cost', 'cost_per_hour', 'duration', 'duration_ms', 'endpoint', 'endpoints', 'error', 'error_rate', 'errors', 'failed', 'failed_requests', 'input_tokens', 'labels', 'metadata', 'output_tokens', 'p50_duration_ms', 'p95_duration_ms', 'p99_duration_ms', 'pending', 'recent_errors', 'requests', 'requests_per_second', 'run_id', 'started_at', 'status', 'successful_requests', 'system', 'timestamp', 'tokens', 'tokens_per_minute', 'tool_calls', 'total_cost', 'total_errors', 'total_requests', 'total_tokens', 'uptime_seconds', 'value']

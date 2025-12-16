@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/adapters/sdk.py
+# hypothesis_version: 6.148.7
+
+['1.0.0', 'MIT', 'T', 'adapter', 'author', 'capabilities', 'content', 'custom', 'description', 'error', 'framework', 'framework_version', 'healthy', 'homepage', 'input', 'license', 'message', 'metadata', 'model_dump', 'name', 'prompt', 'query', 'repository', 'result', 'simple-adapter', 'status', 'tags', 'text', 'unknown', 'version']

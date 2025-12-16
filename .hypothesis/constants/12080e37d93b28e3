@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/protocols/a2a.py
+# hypothesis_version: 6.148.7
+
+[404, 500, '/', '/a2a/agents', '/a2a/ping', '/a2a/tasks', '/a2a/tasks/{task_id}', '0.3', 'agent', 'agents', 'available_skills', 'cancelled', 'error', 'input', 'message', 'name', 'ok', 'pending', 'skill', 'status', 'task_id', 'unknown', 'url', 'version']

@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/hitl/confirmation.py
+# hypothesis_version: 6.148.7
+
+['/', '1', '> ', 'Are you sure?', 'No', 'P', 'T', 'Yes', 'destructive', 'multi_step', 'simple', 'timeout', 'true', 'y', 'yes']

@@ -71,6 +71,16 @@ dev = [
     "httpx>=0.28.0",
 ]
 
+# Fuzzy and mutation testing
+testing = [
+    "hypothesis>=6.100.0",
+    "hypothesis-jsonschema>=0.23.0",
+    "mutmut>=2.4.0",
+    "pytest-benchmark>=4.0.0",
+    "faker>=24.0.0",
+    "pytest-timeout>=2.3.0",
+]
+
 # All adapters
 adapters = [
     "fastagentic[pydanticai]",
@@ -175,3 +185,14 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "if __name__ == .__main__.:",
 ]
+
+[tool.mutmut]
+paths_to_mutate = "src/fastagentic/"
+tests_dir = "tests/"
+runner = "python -m pytest -x --tb=no -q"
+dict_synonyms = "Struct, NamedStruct"
+
+[tool.hypothesis]
+deadline = 1000
+max_examples = 100
+suppress_health_check = ["too_slow"]

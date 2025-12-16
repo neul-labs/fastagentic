@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/adapters/llamaindex.py
+# hypothesis_version: 6.148.7
+
+[500, 'achat', 'aquery', 'assistant', 'astream_chat', 'chat_history', 'content', 'error', 'input', 'message', 'metadata', 'model_dump', 'node', 'prompt', 'query', 'question', 'response', 'response_gen', 'result', 'role', 'score', 'source_nodes', 'sources', 'text', 'user']

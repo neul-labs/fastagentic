@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/server/config.py
+# hypothesis_version: 6.148.7
+
+[5.0, 30.0, 1800, 8000, '1', '10', '127.0.0.1', '30', '30.0', '5', '5.0', '8000', 'FASTAGENTIC_HOST', 'FASTAGENTIC_PORT', 'FASTAGENTIC_RELOAD', 'FASTAGENTIC_SERVER', 'FASTAGENTIC_WORKERS', 'gunicorn', 'true', 'uvicorn']

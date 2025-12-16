@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/protocols/__init__.py
+# hypothesis_version: 6.148.7
+
+['MCPStdioTransport', 'configure_a2a', 'configure_mcp', 'serve_stdio']

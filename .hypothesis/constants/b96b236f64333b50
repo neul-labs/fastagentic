@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/templates/registry.py
+# hypothesis_version: 6.148.7
+
+[30.0, 100, 3600, ',', '/audit', '/templates', '/templates/search', '?', 'Authorization', 'Content-Type', 'GET', 'POST', 'application/json', 'category', 'error', 'framework', 'limit', 'message', 'organization', 'pending', 'private', 'published', 'q', 'status', 'tags', 'template']

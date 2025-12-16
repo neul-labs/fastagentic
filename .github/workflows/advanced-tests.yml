@@ -1,0 +1,110 @@
+name: Advanced Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Run weekly on Sundays at midnight
+    - cron: '0 0 * * 0'
+
+jobs:
+  fuzzing:
+    name: Fuzzy Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --extra testing
+
+      - name: Run fuzzy tests
+        env:
+          HYPOTHESIS_PROFILE: ci
+        run: uv run pytest tests/fuzzing/ -v --tb=short
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fuzzy-test-results
+          path: .hypothesis/
+
+  mutation:
+    name: Mutation Testing
+    runs-on: ubuntu-latest
+    # Only run on main branch or scheduled runs (mutation testing is slow)
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --extra testing
+
+      - name: Run mutation tests (policy engine)
+        run: |
+          uv run mutmut run \
+            --paths-to-mutate=src/fastagentic/policy/engine.py \
+            --runner="python -m pytest tests/mutation/test_policy_mutations.py -x --tb=no -q" \
+            --no-progress \
+            || true
+          uv run mutmut results
+
+      - name: Run mutation tests (RBAC)
+        run: |
+          uv run mutmut run \
+            --paths-to-mutate=src/fastagentic/policy/rbac.py \
+            --runner="python -m pytest tests/mutation/test_rbac_mutations.py -x --tb=no -q" \
+            --no-progress \
+            || true
+          uv run mutmut results
+
+      - name: Run mutation tests (budget)
+        run: |
+          uv run mutmut run \
+            --paths-to-mutate=src/fastagentic/policy/budget.py \
+            --runner="python -m pytest tests/mutation/test_budget_mutations.py -x --tb=no -q" \
+            --no-progress \
+            || true
+          uv run mutmut results
+
+      - name: Generate mutation report
+        run: |
+          uv run mutmut html || true
+
+      - name: Upload mutation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-report
+          path: html/
+
+  reliability-tests:
+    name: Reliability & Concurrency Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync --extra testing
+
+      - name: Run reliability tests
+        run: uv run pytest tests/fuzzing/test_reliability_fuzzing.py -v --tb=short

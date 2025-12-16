@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/types.py
+# hypothesis_version: 6.148.7
+
+['1.0.0', 'T', 'a2a/v0.3', 'application/json', 'cancelled', 'checkpoint', 'completed', 'done', 'error', 'failed', 'node_end', 'node_start', 'paused', 'pending', 'running', 'token', 'tool_call', 'tool_result']

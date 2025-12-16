@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/protocols/mcp_stdio.py
+# hypothesis_version: 6.148.7
+
+[-32700, -32603, -32602, -32601, '2.0', '2025-11-25', 'Missing params', 'arguments', 'capabilities', 'code', 'content', 'contents', 'data', 'description', 'error', 'id', 'initialize', 'initialized', 'inputSchema', 'isError', 'jsonrpc', 'listChanged', 'message', 'messages', 'method', 'mimeType', 'name', 'params', 'ping', 'prompts', 'prompts/get', 'prompts/list', 'protocolVersion', 'resources', 'resources/list', 'resources/read', 'result', 'role', 'serverInfo', 'subscribe', 'text', 'tools', 'tools/call', 'tools/list', 'type', 'uri', 'user', 'version']

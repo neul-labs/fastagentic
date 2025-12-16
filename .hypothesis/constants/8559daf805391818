@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/templates/marketplace.py
+# hypothesis_version: 6.148.7
+
+[30.0, 3600, '/categories', '/frameworks', '/tags', '/templates', 'Failed to publish', 'Failed to update', 'GET', 'POST', 'PUT', 'content', 'created_at', 'error', 'helpful', 'helpful_count', 'limit', 'message', 'metadata', 'page', 'per_page', 'popular', 'rating', 'recent', 'replacement', 'score', 'sort', 'status', 'template', 'template_name', 'title', 'updated_at', 'user_id', 'verified_user']

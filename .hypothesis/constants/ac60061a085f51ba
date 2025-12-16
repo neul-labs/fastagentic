@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/policy/budget.py
+# hypothesis_version: 6.148.7
+
+[0.0, 100, 3600, 86400, 604800, 2592000, '; ', 'budget', 'day', 'global', 'hour', 'minute', 'month', 'week']

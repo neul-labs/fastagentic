@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/templates/composer.py
+# hypothesis_version: 6.148.7
+
+['.json', '.py', '.toml', '.yaml', '.yml', '1.0.0', 'Composed template', 'base', 'base_template', 'base_wins', 'composition.json', 'composition_config', 'conflicts', 'include', 'include_template', 'include_templates', 'include_wins', 'merge', 'merge_dependencies', 'merge_variables', 'override_strategy', 'path', 'potential_conflicts', 'prompt', 'replace', 'resolution', 'resolve_conflicts', 'skip', 'source_templates', 'template', 'templates', 'total_files', 'variables', 'warnings']

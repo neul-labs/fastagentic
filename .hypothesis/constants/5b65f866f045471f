@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/hitl/approval.py
+# hypothesis_version: 6.148.7
+
+[3600, '*', 'approved', 'cancelled', 'expired', 'pending', 'rejected', 'system:auto-approve']
