@@ -1,0 +1,18 @@
+[project]
+name = "langgraph-workflow"
+version = "1.0.0"
+description = "A stateful research workflow using LangGraph and FastAgentic"
+requires-python = ">=3.10"
+dependencies = [
+    "fastagentic[langgraph]",
+    "langchain-openai>=0.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
