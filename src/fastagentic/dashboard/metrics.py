@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Protocol
 
 
 @dataclass
@@ -173,7 +171,7 @@ class Histogram(Metric):
 
         # Initialize if needed
         if key not in self._bucket_counts:
-            self._bucket_counts[key] = {b: 0 for b in self.buckets}
+            self._bucket_counts[key] = dict.fromkeys(self.buckets, 0)
             self._sums[key] = 0
             self._counts[key] = 0
 

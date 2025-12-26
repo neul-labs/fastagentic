@@ -6,9 +6,9 @@ seamlessly with FastAgentic's deployment features.
 
 from __future__ import annotations
 
-from abc import abstractmethod
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Callable, TypeVar
+from typing import Any, TypeVar
 
 from fastagentic.adapters.base import AdapterContext, BaseAdapter
 from fastagentic.types import StreamEvent, StreamEventType

@@ -37,13 +37,44 @@ async def get_current_time() -> str:
     description="Perform basic arithmetic calculations",
 )
 async def calculate(expression: str) -> str:
-    """Safely evaluate a math expression."""
-    # Simple safe eval for basic math
-    allowed = set("0123456789+-*/.(). ")
-    if not all(c in allowed for c in expression):
-        return "Error: Invalid expression"
+    """Safely evaluate a math expression using ast."""
+    import ast
+    import operator
+
+    # Define allowed operators
+    operators = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.Pow: operator.pow,
+        ast.USub: operator.neg,
+        ast.UAdd: operator.pos,
+    }
+
+    def safe_eval(node: ast.AST) -> float:
+        if isinstance(node, ast.Constant):
+            if isinstance(node.value, (int, float)):
+                return float(node.value)
+            raise ValueError("Only numeric constants allowed")
+        elif isinstance(node, ast.BinOp):
+            op = operators.get(type(node.op))
+            if op is None:
+                raise ValueError(f"Unsupported operator: {type(node.op).__name__}")
+            return op(safe_eval(node.left), safe_eval(node.right))
+        elif isinstance(node, ast.UnaryOp):
+            op = operators.get(type(node.op))
+            if op is None:
+                raise ValueError(f"Unsupported operator: {type(node.op).__name__}")
+            return op(safe_eval(node.operand))
+        elif isinstance(node, ast.Expression):
+            return safe_eval(node.body)
+        else:
+            raise ValueError(f"Unsupported expression type: {type(node).__name__}")
+
     try:
-        result = eval(expression)  # Safe due to character filtering
+        tree = ast.parse(expression, mode='eval')
+        result = safe_eval(tree)
         return str(result)
     except Exception as e:
         return f"Error: {e}"

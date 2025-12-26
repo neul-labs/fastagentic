@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> type:
     """Lazy-load optional integrations."""
     if name == "LangfuseIntegration":
         from fastagentic.integrations.langfuse import LangfuseIntegration

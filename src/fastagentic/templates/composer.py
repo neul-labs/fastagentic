@@ -10,14 +10,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-
 from fastagentic.templates.base import (
     Template,
-    TemplateMetadata,
     TemplateFile,
+    TemplateMetadata,
     TemplateVariable,
     TemplateVersion,
-    TemplateCategory,
 )
 from fastagentic.templates.registry import TemplateRegistry
 

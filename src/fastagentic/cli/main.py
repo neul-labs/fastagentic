@@ -6,7 +6,7 @@ import importlib.util
 import os
 import sys
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -32,7 +32,7 @@ def version_callback(value: bool) -> None:
 @app.callback()
 def main(
     version: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--version",
             "-v",
@@ -67,14 +67,14 @@ def run(
         ),
     ] = "uvicorn",
     max_concurrent: Annotated[
-        Optional[int],
+        int | None,
         typer.Option(
             "--max-concurrent",
             help="Maximum concurrent requests (enables backpressure)",
         ),
     ] = None,
     instance_id: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--instance-id",
             help="Instance ID for cluster-aware metrics",
@@ -126,7 +126,7 @@ def run(
         # Cluster deployment with instance ID
         fastagentic run --server gunicorn --instance-id worker-1
     """
-    from fastagentic.server.config import ServerConfig, PoolConfig
+    from fastagentic.server.config import PoolConfig, ServerConfig
 
     # Parse module:attribute format
     if ":" in app_path:
@@ -159,7 +159,7 @@ def run(
     )
 
     # Display startup info
-    console.print(f"[bold green]Starting FastAgentic server...[/bold green]")
+    console.print("[bold green]Starting FastAgentic server...[/bold green]")
     console.print(f"  App: {module_path}:{attr_name}")
     console.print(f"  Server: {server}")
     console.print(f"  URL: http://{host}:{port}")
@@ -170,7 +170,6 @@ def run(
         console.print(f"  Instance ID: {instance_id}")
 
     # Set environment variables for the app to pick up
-    import os
     os.environ["FASTAGENTIC_INSTANCE_ID"] = config.get_instance_id()
     os.environ["FASTAGENTIC_REDIS_POOL_SIZE"] = str(redis_pool_size)
     os.environ["FASTAGENTIC_DB_POOL_SIZE"] = str(db_pool_size)
@@ -201,7 +200,7 @@ def new(
         ),
     ] = "pydanticai",
     directory: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--directory", "-d", help="Directory to create project in"),
     ] = None,
 ) -> None:
@@ -212,7 +211,7 @@ def new(
         console.print(f"[red]Error: Directory '{project_dir}' already exists[/red]")
         raise typer.Exit(1)
 
-    console.print(f"[bold green]Creating new FastAgentic project...[/bold green]")
+    console.print("[bold green]Creating new FastAgentic project...[/bold green]")
     console.print(f"  Name: {name}")
     console.print(f"  Template: {template}")
     console.print(f"  Directory: {project_dir}")
@@ -227,11 +226,11 @@ def new(
     # Create basic files
     _create_project_files(project_dir, name, template)
 
-    console.print(f"\n[bold green]Project created successfully![/bold green]")
-    console.print(f"\nNext steps:")
+    console.print("\n[bold green]Project created successfully![/bold green]")
+    console.print("\nNext steps:")
     console.print(f"  cd {project_dir}")
-    console.print(f"  uv sync")
-    console.print(f"  fastagentic run")
+    console.print("  uv sync")
+    console.print("  fastagentic run")
 
 
 def _create_project_files(project_dir: Path, name: str, template: str) -> None:
@@ -904,20 +903,20 @@ def test_contract(
 
             all_passed = True
 
-            for name, (defn, _) in tools.items():
-                status = "[green]PASS[/green]" if defn.name else "[red]FAIL[/red]"
+            for name, (tool_defn, _) in tools.items():
+                status = "[green]PASS[/green]" if tool_defn.name else "[red]FAIL[/red]"
                 table.add_row("Tool", name, status)
 
-            for name, (defn, _) in resources.items():
-                status = "[green]PASS[/green]" if defn.name else "[red]FAIL[/red]"
+            for name, (resource_defn, _) in resources.items():
+                status = "[green]PASS[/green]" if resource_defn.name else "[red]FAIL[/red]"
                 table.add_row("Resource", name, status)
 
-            for name, (defn, _) in prompts.items():
-                status = "[green]PASS[/green]" if defn.name else "[red]FAIL[/red]"
+            for name, (prompt_defn, _) in prompts.items():
+                status = "[green]PASS[/green]" if prompt_defn.name else "[red]FAIL[/red]"
                 table.add_row("Prompt", name, status)
 
-            for path, (defn, _) in endpoints.items():
-                status = "[green]PASS[/green]" if defn.path else "[red]FAIL[/red]"
+            for path, (endpoint_defn, _) in endpoints.items():
+                status = "[green]PASS[/green]" if endpoint_defn.path else "[red]FAIL[/red]"
                 table.add_row("Endpoint", path, status)
 
             console.print(table)
@@ -1031,16 +1030,16 @@ def mcp_schema(
 
     console.print("[bold]MCP Schema[/bold]")
     console.print(f"\nTools: {len(tools)}")
-    for name, (defn, _) in tools.items():
-        console.print(f"  - {name}: {defn.description[:50]}...")
+    for name, (tool_defn, _) in tools.items():
+        console.print(f"  - {name}: {tool_defn.description[:50]}...")
 
     console.print(f"\nResources: {len(resources)}")
-    for name, (defn, _) in resources.items():
-        console.print(f"  - {name}: {defn.uri}")
+    for name, (resource_defn, _) in resources.items():
+        console.print(f"  - {name}: {resource_defn.uri}")
 
     console.print(f"\nPrompts: {len(prompts)}")
-    for name, (defn, _) in prompts.items():
-        console.print(f"  - {name}: {defn.description[:50] if defn.description else 'No description'}...")
+    for name, (prompt_defn, _) in prompts.items():
+        console.print(f"  - {name}: {prompt_defn.description[:50] if prompt_defn.description else 'No description'}...")
 
 
 # Agent CLI commands
@@ -1059,7 +1058,7 @@ def agent_chat(
         typer.Option("--endpoint", "-e", help="Agent endpoint path"),
     ] = "/chat",
     api_key: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--api-key", "-k", help="API key for authentication"),
     ] = None,
     stream: Annotated[
@@ -1120,7 +1119,7 @@ def agent_query(
         typer.Option("--endpoint", "-e", help="Agent endpoint path"),
     ] = "/chat",
     api_key: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--api-key", "-k", help="API key for authentication"),
     ] = None,
     stream: Annotated[
@@ -1128,7 +1127,7 @@ def agent_query(
         typer.Option("--stream/--no-stream", help="Enable streaming responses"),
     ] = True,
     output: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--output", "-o", help="Output file path"),
     ] = None,
     format: Annotated[
@@ -1174,15 +1173,15 @@ def agent_config(
         typer.Option("--show", "-s", help="Show current configuration"),
     ] = True,
     set_url: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--url", "-u", help="Set default server URL"),
     ] = None,
     set_endpoint: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--endpoint", "-e", help="Set default endpoint"),
     ] = None,
     set_api_key: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--api-key", "-k", help="Set API key"),
     ] = None,
 ) -> None:
@@ -1237,11 +1236,11 @@ def agent_history(
         typer.Option("--list", "-l", help="List saved conversations"),
     ] = False,
     load: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--load", help="Load and display a conversation"),
     ] = None,
     delete: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--delete", "-d", help="Delete a conversation"),
     ] = None,
     clear_all: Annotated[

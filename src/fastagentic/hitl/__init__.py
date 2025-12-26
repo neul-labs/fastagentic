@@ -5,11 +5,11 @@ escalation handling, and human review for sensitive actions.
 """
 
 from fastagentic.hitl.approval import (
+    ApprovalManager,
+    ApprovalPolicy,
     ApprovalRequest,
     ApprovalResponse,
     ApprovalStatus,
-    ApprovalPolicy,
-    ApprovalManager,
 )
 from fastagentic.hitl.confirmation import (
     ConfirmationRequest,
@@ -18,10 +18,10 @@ from fastagentic.hitl.confirmation import (
     require_confirmation,
 )
 from fastagentic.hitl.escalation import (
-    EscalationTrigger,
-    EscalationLevel,
     EscalationHandler,
+    EscalationLevel,
     EscalationManager,
+    EscalationTrigger,
 )
 
 __all__ = [

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 
@@ -150,7 +151,7 @@ class CircuitBreaker:
 
             return result
 
-        except Exception as e:
+        except Exception:
             # Failure - record and possibly open circuit
             async with self._lock:
                 self._failures.append(time.time())

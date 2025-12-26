@@ -3,16 +3,16 @@
 Provides PII detection, data masking, and compliance helpers.
 """
 
-from fastagentic.compliance.pii import (
-    PIIDetector,
-    PIIType,
-    PIIMatch,
-    PIIMasker,
-    PIIConfig,
-)
 from fastagentic.compliance.hooks import (
     PIIDetectionHook,
     PIIMaskingHook,
+)
+from fastagentic.compliance.pii import (
+    PIIConfig,
+    PIIDetector,
+    PIIMasker,
+    PIIMatch,
+    PIIType,
 )
 
 __all__ = [

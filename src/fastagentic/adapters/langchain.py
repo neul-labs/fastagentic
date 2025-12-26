@@ -6,7 +6,8 @@ to expose them via FastAgentic endpoints.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from fastagentic.adapters.base import AdapterContext, BaseAdapter
 from fastagentic.types import StreamEvent, StreamEventType
@@ -199,6 +200,7 @@ class LangChainAdapter(BaseAdapter):
             return str(chunk.content)
 
         if isinstance(chunk, dict):
-            return chunk.get("content", str(chunk))
+            content = chunk.get("content")
+            return str(content) if content is not None else str(chunk)
 
         return str(chunk)

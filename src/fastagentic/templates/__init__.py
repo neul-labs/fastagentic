@@ -6,16 +6,15 @@ and template composition features.
 
 from fastagentic.templates.base import (
     Template,
-    TemplateMetadata,
     TemplateFile,
+    TemplateMetadata,
     TemplateVariable,
     TemplateVersion,
 )
-from fastagentic.templates.registry import (
-    TemplateRegistry,
-    LocalRegistry,
-    RemoteRegistry,
-    EnterpriseRegistry,
+from fastagentic.templates.composer import (
+    ComposedTemplate,
+    CompositionConfig,
+    TemplateComposer,
 )
 from fastagentic.templates.marketplace import (
     Marketplace,
@@ -23,10 +22,11 @@ from fastagentic.templates.marketplace import (
     TemplateRating,
     TemplateReview,
 )
-from fastagentic.templates.composer import (
-    TemplateComposer,
-    CompositionConfig,
-    ComposedTemplate,
+from fastagentic.templates.registry import (
+    EnterpriseRegistry,
+    LocalRegistry,
+    RemoteRegistry,
+    TemplateRegistry,
 )
 
 __all__ = [

@@ -4,24 +4,22 @@ from __future__ import annotations
 
 import os
 import uuid
+from collections.abc import AsyncIterator, Callable, Sequence
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Sequence
+from typing import TYPE_CHECKING, Any
 
+import structlog
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
-import structlog
 
-from fastagentic.context import AgentContext, RunContext, UserInfo
+from fastagentic.context import AgentContext, RunContext
 from fastagentic.decorators import get_endpoints, get_prompts, get_resources, get_tools
-from fastagentic.types import RunStatus, StreamEvent, StreamEventType
 
 if TYPE_CHECKING:
-    from fastagentic.adapters.base import BaseAdapter
     from fastagentic.hooks.base import Hook
     from fastagentic.memory import MemoryProvider
-    from fastagentic.server.config import PoolConfig
 
 logger = structlog.get_logger()
 

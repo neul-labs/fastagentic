@@ -5,7 +5,7 @@ Implements the A2A v0.3 specification for agent interoperability.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from fastapi import Request
 from fastapi.responses import JSONResponse

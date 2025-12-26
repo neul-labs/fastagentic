@@ -4,14 +4,14 @@ Provides automatic cost logging, aggregation, and reporting
 for LLM usage across your agentic applications.
 """
 
-from fastagentic.cost.tracker import (
-    CostTracker,
-    CostRecord,
-    CostAggregation,
-    ModelPricing,
-    DEFAULT_PRICING,
-)
 from fastagentic.cost.hooks import CostTrackingHook
+from fastagentic.cost.tracker import (
+    DEFAULT_PRICING,
+    CostAggregation,
+    CostRecord,
+    CostTracker,
+    ModelPricing,
+)
 
 __all__ = [
     "CostTracker",

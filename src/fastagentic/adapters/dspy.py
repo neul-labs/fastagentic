@@ -6,7 +6,8 @@ via FastAgentic endpoints with streaming support.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from fastagentic.adapters.base import AdapterContext, BaseAdapter
 from fastagentic.types import StreamEvent, StreamEventType
@@ -93,7 +94,7 @@ class DSPyAdapter(BaseAdapter):
         # Run in executor to avoid blocking
         loop = asyncio.get_event_loop()
 
-        def run_sync():
+        def run_sync() -> Any:
             return self.module(**kwargs)
 
         result = await loop.run_in_executor(None, run_sync)
@@ -178,7 +179,8 @@ class DSPyAdapter(BaseAdapter):
             return input
 
         if hasattr(input, "model_dump"):
-            return input.model_dump()
+            result: dict[str, Any] = input.model_dump()
+            return result
 
         if isinstance(input, str):
             # Try to infer the input field name from the signature
@@ -361,7 +363,7 @@ class DSPyProgramAdapter(DSPyAdapter):
 
         loop = asyncio.get_event_loop()
 
-        def run_sync():
+        def run_sync() -> Any:
             # Use forward() for Module subclasses
             if hasattr(self.module, "forward"):
                 return self.module.forward(**kwargs)

@@ -5,9 +5,10 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Awaitable, Protocol
+from typing import Any, Protocol
 
 
 class WorkerStatus(str, Enum):

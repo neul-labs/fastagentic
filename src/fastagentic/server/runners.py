@@ -19,6 +19,11 @@ def run_uvicorn(app_path: str, config: ServerConfig) -> None:
     """
     import uvicorn
 
+    # Ensure current directory is in Python path for module imports
+    cwd = os.getcwd()
+    if cwd not in sys.path:
+        sys.path.insert(0, cwd)
+
     uvicorn.run(
         app_path,
         host=config.host,

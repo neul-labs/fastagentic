@@ -4,13 +4,13 @@ Provides structured audit trails for compliance, security,
 and operational monitoring of agentic applications.
 """
 
+from fastagentic.audit.hooks import AuditHook
 from fastagentic.audit.logger import (
-    AuditLogger,
     AuditEvent,
     AuditEventType,
+    AuditLogger,
     AuditSeverity,
 )
-from fastagentic.audit.hooks import AuditHook
 
 __all__ = [
     "AuditLogger",

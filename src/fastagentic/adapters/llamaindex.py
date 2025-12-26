@@ -6,7 +6,8 @@ to expose them via FastAgentic endpoints with streaming support.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from fastagentic.adapters.base import AdapterContext, BaseAdapter
 from fastagentic.types import StreamEvent, StreamEventType
@@ -97,6 +98,7 @@ class LlamaIndexAdapter(BaseAdapter):
 
     async def _invoke_agent(self, query: str, ctx: AdapterContext) -> Any:
         """Invoke LlamaIndex agent."""
+        assert self.agent is not None
         # Get chat history from context
         chat_history = ctx.state.get("chat_history", [])
 
@@ -116,6 +118,7 @@ class LlamaIndexAdapter(BaseAdapter):
 
     async def _invoke_chat_engine(self, query: str, ctx: AdapterContext) -> Any:
         """Invoke LlamaIndex chat engine."""
+        assert self.chat_engine is not None
         chat_history = ctx.state.get("chat_history", [])
 
         if hasattr(self.chat_engine, "achat"):
@@ -132,6 +135,7 @@ class LlamaIndexAdapter(BaseAdapter):
 
     async def _invoke_query_engine(self, query: str, ctx: AdapterContext) -> Any:
         """Invoke LlamaIndex query engine."""
+        assert self.query_engine is not None
         if hasattr(self.query_engine, "aquery"):
             response = await self.query_engine.aquery(query)
         else:
@@ -176,6 +180,7 @@ class LlamaIndexAdapter(BaseAdapter):
         self, query: str, ctx: AdapterContext
     ) -> AsyncIterator[StreamEvent]:
         """Stream from LlamaIndex agent."""
+        assert self.agent is not None
         chat_history = ctx.state.get("chat_history", [])
         full_response = ""
 
@@ -231,6 +236,7 @@ class LlamaIndexAdapter(BaseAdapter):
         self, query: str, ctx: AdapterContext
     ) -> AsyncIterator[StreamEvent]:
         """Stream from LlamaIndex chat engine."""
+        assert self.chat_engine is not None
         chat_history = ctx.state.get("chat_history", [])
         full_response = ""
 
@@ -283,6 +289,7 @@ class LlamaIndexAdapter(BaseAdapter):
         self, query: str, ctx: AdapterContext
     ) -> AsyncIterator[StreamEvent]:
         """Stream from LlamaIndex query engine."""
+        assert self.query_engine is not None
         full_response = ""
 
         if hasattr(self.query_engine, "aquery") and self.streaming:

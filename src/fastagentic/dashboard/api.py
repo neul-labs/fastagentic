@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Awaitable
+from typing import Any
 
-from fastagentic.dashboard.stats import StatsCollector, SystemStats
 from fastagentic.dashboard.metrics import (
     MetricsRegistry,
     PrometheusExporter,
     default_registry,
 )
+from fastagentic.dashboard.stats import StatsCollector
 
 
 @dataclass
@@ -121,11 +121,11 @@ class DashboardAPI:
         # Update metrics
         from fastagentic.dashboard.metrics import (
             active_requests,
-            requests_total,
-            request_duration,
-            tokens_total,
             cost_total,
             errors_total,
+            request_duration,
+            requests_total,
+            tokens_total,
         )
 
         active_requests.dec()

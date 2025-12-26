@@ -7,6 +7,9 @@ dependencies = [
     "fastagentic[pydanticai]",
 ]
 
+[tool.uv.sources]
+fastagentic = { path = "../..", editable = true }
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",

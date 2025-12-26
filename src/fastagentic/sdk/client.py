@@ -5,32 +5,26 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Iterator
-from contextlib import asynccontextmanager, contextmanager
+from typing import Any
 
 try:
     import httpx
 except ImportError:
     httpx = None  # type: ignore
 
+from fastagentic.sdk.exceptions import (
+    ConnectionError,
+    FastAgenticError,
+    StreamError,
+    raise_for_status,
+)
 from fastagentic.sdk.models import (
     RunRequest,
     RunResponse,
-    RunStatus,
     StreamEvent,
-    StreamEventType,
-    ToolCall,
     ToolResult,
-    UsageStats,
-    Message,
-)
-from fastagentic.sdk.exceptions import (
-    FastAgenticError,
-    AuthenticationError,
-    ConnectionError,
-    StreamError,
-    raise_for_status,
 )
 
 

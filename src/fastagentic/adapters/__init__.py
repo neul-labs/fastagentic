@@ -7,7 +7,8 @@ for FastAgentic's deployment features.
 Optional imports are lazy-loaded to avoid requiring all dependencies.
 """
 
-from fastagentic.adapters.base import AdapterContext, BaseAdapter, StreamEvent
+from fastagentic.adapters.base import AdapterContext, BaseAdapter
+from fastagentic.types import StreamEvent
 
 __all__ = [
     "BaseAdapter",
@@ -27,7 +28,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> type:
     """Lazy-load optional adapters."""
     if name == "PydanticAIAdapter":
         from fastagentic.adapters.pydanticai import PydanticAIAdapter

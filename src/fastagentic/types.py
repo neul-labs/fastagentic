@@ -1,7 +1,8 @@
 """Core type definitions for FastAgentic."""
 
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -31,6 +32,10 @@ class StreamEventType(str, Enum):
     CHECKPOINT = "checkpoint"
     ERROR = "error"
     DONE = "done"
+    # Additional types for adapter compatibility
+    MESSAGE = "message"
+    SOURCE = "source"
+    TRACE = "trace"
 
 
 class StreamEvent(BaseModel):

@@ -3,24 +3,24 @@
 Provides operational visibility, metrics, and run introspection.
 """
 
-from fastagentic.dashboard.stats import (
-    StatsCollector,
-    RunStats,
-    EndpointStats,
-    SystemStats,
-    TimeSeriesPoint,
+from fastagentic.dashboard.api import (
+    DashboardAPI,
+    DashboardConfig,
 )
 from fastagentic.dashboard.metrics import (
-    MetricsRegistry,
     Counter,
     Gauge,
     Histogram,
     MetricExporter,
+    MetricsRegistry,
     PrometheusExporter,
 )
-from fastagentic.dashboard.api import (
-    DashboardAPI,
-    DashboardConfig,
+from fastagentic.dashboard.stats import (
+    EndpointStats,
+    RunStats,
+    StatsCollector,
+    SystemStats,
+    TimeSeriesPoint,
 )
 
 __all__ = [
