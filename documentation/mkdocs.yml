@@ -1,0 +1,222 @@
+site_name: FastAgentic
+site_description: The deployment layer for agentic applications. Build agents with anything. Ship them with FastAgentic.
+site_url: https://fastagentic.dev
+repo_url: https://github.com/fastagentic/fastagentic
+repo_name: fastagentic/fastagentic
+edit_uri: edit/main/documentation/docs/
+
+theme:
+  name: material
+  custom_dir: overrides
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  logo: assets/logo.svg
+  favicon: assets/favicon.png
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.action.edit
+    - content.action.view
+    - toc.follow
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: fastagentic
+      repo: fastagentic
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      auto_append:
+        - includes/abbreviations.md
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/fastagentic/fastagentic
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/fastagentic/
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/fastagentic
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
+  consent:
+    title: Cookie consent
+    description: >-
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/extra.js
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started.md
+    - Quickstart: quickstart.md
+    - Why FastAgentic?: why-fastagentic.md
+    - Comparison: comparison.md
+  - Core Concepts:
+    - Architecture: architecture.md
+    - Decorators: decorators.md
+    - Platform Services: platform-services.md
+  - Adapters:
+    - adapters/index.md
+    - PydanticAI: adapters/pydanticai.md
+    - LangGraph: adapters/langgraph.md
+    - CrewAI: adapters/crewai.md
+    - LangChain: adapters/langchain.md
+    - Custom Adapters: adapters/custom.md
+    - Comparison: adapters/comparison.md
+    - New Adapters (v1.1): adapters-new.md
+  - Protocols:
+    - protocols/index.md
+    - MCP: protocols/mcp.md
+    - A2A: protocols/a2a.md
+  - Features:
+    - Reliability: reliability.md
+    - Checkpointing: checkpoint.md
+    - Policy Engine: policy.md
+    - Compliance & PII: compliance.md
+    - Dashboard: dashboard.md
+    - Hooks: hooks.md
+    - Memory: memory.md
+    - Prompts: prompts-management.md
+    - Human-in-the-Loop: hitl.md
+    - Cluster: cluster.md
+  - CLI & SDK:
+    - CLI Reference: cli-reference.md
+    - Agent CLI: cli-agent.md
+    - Python SDK: sdk.md
+  - Templates:
+    - templates/index.md
+    - Template Ecosystem: templates-ecosystem.md
+    - PydanticAI: templates/pydanticai.md
+    - LangGraph: templates/langgraph.md
+    - CrewAI: templates/crewai.md
+    - LangChain: templates/langchain.md
+    - Contributing: templates/contributing.md
+  - Integrations:
+    - integrations/index.md
+    - Langfuse: integrations/langfuse.md
+    - Portkey: integrations/portkey.md
+    - Lakera: integrations/lakera.md
+    - Mem0: integrations/mem0.md
+    - Braintrust: integrations/braintrust.md
+  - Operations:
+    - operations/index.md
+    - Deployment:
+      - Docker: operations/deployment/docker.md
+      - Kubernetes: operations/deployment/kubernetes.md
+      - Serverless: operations/deployment/serverless.md
+    - Configuration:
+      - Environment Variables: operations/configuration/environment-vars.md
+      - Secrets Management: operations/configuration/secrets-management.md
+    - Observability:
+      - Metrics: operations/observability/metrics.md
+      - Tracing: operations/observability/tracing.md
+      - Alerting: operations/observability/alerting.md
+    - Security:
+      - Hardening: operations/security/hardening.md
+      - Compliance: operations/security/compliance.md
+    - Runbook:
+      - Troubleshooting: operations/runbook/troubleshooting.md
+  - Guides:
+    - guides/index.md
+    - Choosing an Adapter: guides/choosing-an-adapter.md
+    - Choosing Integrations: guides/choosing-integrations.md
+    - Production Checklist: guides/production-checklist.md
+    - Testing: testing.md
+    - Advanced Testing: testing-advanced.md
+    - Scaling: scaling.md
+    - Security: security.md
+  - Reference:
+    - MCP Authorization: reference/mcp-authorization.md
+    - A2A Specification: reference/a2a-specification.md
+    - Ops: ops.md
+    - Roadmap: roadmap.md
+
+copyright: Copyright &copy; 2024-2025 FastAgentic Team
