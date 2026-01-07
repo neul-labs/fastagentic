@@ -117,6 +117,6 @@ app = App(
 
 ## Learn More
 
-- [FastAgentic Documentation](https://fastagentic.dev)
+- [FastAgentic Documentation](https://github.com/neul-labs/fastagentic)
 - [PydanticAI Documentation](https://ai.pydantic.dev)
 - [Adapters Guide](../../docs/adapters/pydanticai.md)

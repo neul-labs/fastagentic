@@ -151,7 +151,7 @@ registry.remove_template("old-template")
 from fastagentic.templates import RemoteRegistry, RemoteRegistryConfig
 
 config = RemoteRegistryConfig(
-    url="https://templates.fastagentic.dev",
+    url="https://github.com/neul-labs/fastagentic/tree/main/templates",
     api_key="your-key",
     cache_ttl=3600,
 )

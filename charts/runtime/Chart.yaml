@@ -1,0 +1,16 @@
+apiVersion: v2
+name: runtime
+description: FastAgentic runtime chart for deploying agentic applications
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - fastagentic
+  - agentic
+  - deployment
+home: https://github.com/neul-labs/fastagentic
+sources:
+  - https://github.com/neul-labs/fastagentic
+maintainers:
+  - name: FastAgentic Team
+    url: https://github.com/neul-labs/fastagentic

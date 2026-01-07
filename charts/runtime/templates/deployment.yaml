@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "runtime.fullname" . }}
+  labels:
+    {{- include "runtime.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "runtime.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "runtime.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "runtime.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            - name: FASTAGENTIC_HOST
+              value: "0.0.0.0"
+            - name: FASTAGENTIC_PORT
+              value: "8000"
+            {{- if .Values.auth.oidcIssuer }}
+            - name: FASTAGENTIC_OIDC_ISSUER
+              value: {{ .Values.auth.oidcIssuer | quote }}
+            {{- end }}
+            {{- if .Values.auth.oidcAudience }}
+            - name: FASTAGENTIC_OIDC_AUDIENCE
+              value: {{ .Values.auth.oidcAudience | quote }}
+            {{- end }}
+            {{- if .Values.durability.connectionString }}
+            - name: FASTAGENTIC_DURABLE_STORE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.durability.existingSecret | default (include "runtime.fullname" .) }}
+                  key: database-url
+            {{- end }}
+            {{- if .Values.telemetry.exporterEndpoint }}
+            - name: FASTAGENTIC_OTEL_ENDPOINT
+              value: {{ .Values.telemetry.exporterEndpoint | quote }}
+            {{- end }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

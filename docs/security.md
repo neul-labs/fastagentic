@@ -318,7 +318,7 @@ fastagentic run --ssl-keyfile key.pem --ssl-certfile cert.pem
 If you discover a security vulnerability:
 
 1. **Do not** open a public issue
-2. Email security@fastagentic.dev
+2. Email security@neul-labs.com
 3. Include detailed reproduction steps
 4. Allow time for a fix before disclosure
 

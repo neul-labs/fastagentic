@@ -1,0 +1,142 @@
+# Default values for runtime
+# This is a YAML-formatted file.
+
+replicaCount: 3
+
+image:
+  repository: fastagentic/runtime
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # allowPrivilegeEscalation: false
+  # readOnlyRootFilesystem: true
+  # capabilities:
+  #   drop:
+  #     - ALL
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    # nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    # nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+  hosts:
+    - host: agent.company.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  # - secretName: agent-tls
+  #   hosts:
+  #     - agent.company.com
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # requests:
+  #   cpu: 500m
+  #   memory: 512Mi
+  # limits:
+  #   cpu: 2000m
+  #   memory: 2Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilization: 70
+  targetMemoryUtilization: 80
+  # behavior: {}
+
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health/ready
+    port: 8000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+startupProbe:
+  httpGet:
+    path: /health/startup
+    port: 8000
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 5
+  failureThreshold: 30
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Durability
+durability:
+  backend: postgres
+  connectionString: ""
+  existingSecret: ""
+
+# Telemetry
+telemetry:
+  enabled: true
+  serviceName: ""
+  exporterEndpoint: ""
+
+# Authentication
+auth:
+  oidcIssuer: ""
+  oidcAudience: ""
+  existingSecret: ""
+
+# Environment variables
+env: []
+  # - name: FASTAGENTIC_LOG_FORMAT
+  #   value: json
+
+affinity: {}
+  # podAntiAffinity:
+  #   preferredDuringSchedulingIgnoredDuringExecution:
+  #     - weight: 100
+  #       podAffinityTerm:
+  #         labelSelector:
+  #           matchLabels:
+  #             app.kubernetes.io/name: my-agent
+  #         topologyKey: kubernetes.io/hostname
+
+nodeSelector: {}
+
+tolerations: []
+
+topologySpreadConstraints: []

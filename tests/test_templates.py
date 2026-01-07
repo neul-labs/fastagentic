@@ -464,7 +464,9 @@ class TestMarketplace:
     def test_create_marketplace(self):
         """Test creating a marketplace."""
         marketplace = Marketplace()
-        assert marketplace.config.url == "https://templates.fastagentic.dev"
+        assert (
+            marketplace.config.url == "https://github.com/neul-labs/fastagentic/tree/main/templates"
+        )
 
     def test_custom_config(self):
         """Test marketplace with custom config."""

@@ -206,7 +206,7 @@ class RemoteRegistry(TemplateRegistry):
 
     Example:
         registry = RemoteRegistry(
-            RemoteRegistryConfig(url="https://templates.fastagentic.dev")
+            RemoteRegistryConfig(url="https://github.com/neul-labs/fastagentic/tree/main/templates")
         )
         templates = registry.list_templates()
     """

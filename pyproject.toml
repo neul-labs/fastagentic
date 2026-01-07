@@ -120,7 +120,7 @@ fastagentic = "fastagentic.cli:app"
 
 [project.urls]
 Homepage = "https://github.com/fastagentic/fastagentic"
-Documentation = "https://fastagentic.dev"
+Documentation = "https://github.com/neul-labs/fastagentic"
 Repository = "https://github.com/fastagentic/fastagentic"
 
 [build-system]
