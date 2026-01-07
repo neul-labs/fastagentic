@@ -1,6 +1,6 @@
 [project]
 name = "fastagentic"
-version = "1.0.1"
+version = "1.0.2"
 description = "The deployment layer for agentic applications. Build agents with anything. Ship them with FastAgentic."
 readme = "README.md"
 license = { text = "MIT" }
