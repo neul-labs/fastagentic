@@ -365,7 +365,8 @@ class ApprovalManager:
             try:
                 await callback(request)
             except Exception:
-                pass  # Don't fail on callback errors
+                # Don't fail on callback errors
+                pass
 
         return request
 

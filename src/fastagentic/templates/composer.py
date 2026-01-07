@@ -281,7 +281,7 @@ class TemplateComposer:
         self,
         conflict: FileConflict,
         config: CompositionConfig,
-        variables: dict[str, Any],
+        _variables: dict[str, Any],
     ) -> str:
         """Resolve a file conflict.
 
@@ -302,7 +302,7 @@ class TemplateComposer:
         else:
             return "skip"
 
-    def _can_merge_files(self, file1: TemplateFile, file2: TemplateFile) -> bool:
+    def _can_merge_files(self, file1: TemplateFile, _file2: TemplateFile) -> bool:
         """Check if two files can be merged.
 
         Files can be merged if they're both Python files or both config files.
@@ -395,7 +395,7 @@ class TemplateComposer:
             merged = self._deep_merge(base_data, include_data)
 
             return yaml.dump(merged, default_flow_style=False)
-        except Exception:
+        except (yaml.YAMLError, TypeError):
             return base
 
     def _deep_merge(self, base: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:

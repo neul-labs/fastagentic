@@ -396,9 +396,8 @@ class EnterpriseRegistry(TemplateRegistry):
     ) -> list[TemplateMetadata]:
         """List available templates."""
         # Check category restrictions
-        if self.config.allowed_categories:
-            if category and category not in self.config.allowed_categories:
-                return []
+        if self.config.allowed_categories and category and category not in self.config.allowed_categories:
+            return []
 
         templates = self._remote.list_templates(
             category=category,
@@ -419,9 +418,8 @@ class EnterpriseRegistry(TemplateRegistry):
         template = self._remote.get_template(name, version)
 
         # Check category restrictions
-        if template and self.config.allowed_categories:
-            if template.metadata.category not in self.config.allowed_categories:
-                return None
+        if template and self.config.allowed_categories and template.metadata.category not in self.config.allowed_categories:
+            return None
 
         return template
 

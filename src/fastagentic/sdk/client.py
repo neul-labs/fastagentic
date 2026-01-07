@@ -161,7 +161,7 @@ class AsyncFastAgenticClient:
                 if response.status_code >= 400:
                     try:
                         data = response.json()
-                    except Exception:
+                    except (ValueError, httpx.DecodingError):
                         data = {"error": response.text}
                     raise_for_status(response.status_code, data)
 
@@ -260,7 +260,7 @@ class AsyncFastAgenticClient:
                     content = await response.aread()
                     try:
                         data = json.loads(content)
-                    except Exception:
+                    except json.JSONDecodeError:
                         data = {"error": content.decode()}
                     raise_for_status(response.status_code, data)
 
@@ -321,7 +321,11 @@ class AsyncFastAgenticClient:
         Returns:
             RunResponse when complete
         """
+        import random
+
         deadline = time.time() + timeout if timeout else None
+        current_interval = poll_interval
+        attempt = 0
 
         while True:
             response = await self.get_run(run_id)
@@ -331,7 +335,12 @@ class AsyncFastAgenticClient:
             if deadline and time.time() > deadline:
                 raise FastAgenticError(f"Timeout waiting for run {run_id}")
 
-            await asyncio.sleep(poll_interval)
+            # Exponential backoff with jitter
+            await asyncio.sleep(current_interval)
+            attempt += 1
+            # Add jitter (±25%) and cap at 10 seconds
+            jitter = current_interval * 0.25 * random.uniform(-1, 1)
+            current_interval = min(current_interval * 1.5 + jitter, 10.0)
 
     async def list_tools(self) -> list[dict[str, Any]]:
         """List available tools.
@@ -479,7 +488,7 @@ class FastAgenticClient:
                 if response.status_code >= 400:
                     try:
                         data = response.json()
-                    except Exception:
+                    except (ValueError, httpx.DecodingError):
                         data = {"error": response.text}
                     raise_for_status(response.status_code, data)
 
@@ -578,7 +587,7 @@ class FastAgenticClient:
                     content = response.read()
                     try:
                         data = json.loads(content)
-                    except Exception:
+                    except json.JSONDecodeError:
                         data = {"error": content.decode()}
                     raise_for_status(response.status_code, data)
 
@@ -616,7 +625,11 @@ class FastAgenticClient:
         poll_interval: float = 1.0,
     ) -> RunResponse:
         """Wait for a run to complete."""
+        import random
+
         deadline = time.time() + timeout if timeout else None
+        current_interval = poll_interval
+        attempt = 0
 
         while True:
             response = self.get_run(run_id)
@@ -626,7 +639,12 @@ class FastAgenticClient:
             if deadline and time.time() > deadline:
                 raise FastAgenticError(f"Timeout waiting for run {run_id}")
 
-            time.sleep(poll_interval)
+            # Exponential backoff with jitter
+            time.sleep(current_interval)
+            attempt += 1
+            # Add jitter (±25%) and cap at 10 seconds
+            jitter = current_interval * 0.25 * random.uniform(-1, 1)
+            current_interval = min(current_interval * 1.5 + jitter, 10.0)
 
     def list_tools(self) -> list[dict[str, Any]]:
         """List available tools."""

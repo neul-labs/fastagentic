@@ -203,11 +203,10 @@ def require_confirmation(
                 raise ConfirmationCancelledError(f"Action cancelled: {msg}")
 
             # For DESTRUCTIVE, verify the confirmation text
-            if confirmation_type == ConfirmationType.DESTRUCTIVE:
-                if response.response != confirmation_text:
-                    raise ConfirmationCancelledError(
-                        f"Invalid confirmation text. Expected '{confirmation_text}'"
-                    )
+            if confirmation_type == ConfirmationType.DESTRUCTIVE and response.response != confirmation_text:
+                raise ConfirmationCancelledError(
+                    f"Invalid confirmation text. Expected '{confirmation_text}'"
+                )
 
             return await func(*args, **kwargs)
 

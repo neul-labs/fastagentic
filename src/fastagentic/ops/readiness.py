@@ -574,7 +574,7 @@ class ReadinessChecker:
             recommendation="Enable telemetry for production monitoring",
         )
 
-    def _check_health_endpoint(self, config: dict[str, Any]) -> CheckResult:
+    def _check_health_endpoint(self, _config: dict[str, Any]) -> CheckResult:
         """Check if health endpoint is available."""
         # Health endpoint is always available in FastAgentic
         return CheckResult(
@@ -693,13 +693,13 @@ class ReadinessChecker:
             recommendation="Set ENVIRONMENT to 'production' for production deployments",
         )
 
-    def _check_dependencies(self, config: dict[str, Any]) -> CheckResult:
+    def _check_dependencies(self, _config: dict[str, Any]) -> CheckResult:
         """Check that dependencies are available."""
         missing = []
 
         # Check optional dependencies
         try:
-            import httpx
+            import httpx  # noqa: F401
         except ImportError:
             missing.append("httpx (for SDK client)")
 

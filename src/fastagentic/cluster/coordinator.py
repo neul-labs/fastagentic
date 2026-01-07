@@ -199,7 +199,7 @@ class Coordinator:
         task_type: str,
         data: dict[str, Any],
         *,
-        priority: TaskPriority = TaskPriority.NORMAL,
+        _priority: TaskPriority = TaskPriority.NORMAL,
         timeout: float = 300.0,
     ) -> Any:
         """Submit a task and wait for result.

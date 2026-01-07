@@ -326,7 +326,7 @@ class LangfuseIntegration(Integration):
             self._hook = LangfuseHook(self._client, self._config)
         return [self._hook]
 
-    def setup(self, app: App) -> None:
+    def setup(self, _app: App) -> None:
         """Initialize the Langfuse client."""
         if not self.is_available():
             return

@@ -88,7 +88,7 @@ class TemplateVariable:
             if not isinstance(value, (int, float)):
                 errors.append(f"{self.name} must be a number")
 
-        elif self.type == "boolean":
+        elif self.type == "boolean":  # noqa: SIM102
             if not isinstance(value, bool):
                 errors.append(f"{self.name} must be a boolean")
 

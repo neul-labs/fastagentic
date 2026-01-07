@@ -237,10 +237,9 @@ class ABTest:
         Returns:
             Selected variant
         """
-        if not self.is_active:
+        if not self.is_active and self._winner and self._winner in self.variants:
             # Return winner if test is complete
-            if self._winner and self._winner in self.variants:
-                return self.variants[self._winner]
+            return self.variants[self._winner]
 
         variant_list = list(self.variants.values())
 

@@ -172,7 +172,7 @@ class SessionMemory(ABC):
         """
         ...
 
-    async def summarize(self, session_id: str) -> str:
+    async def summarize(self, _session_id: str) -> str:
         """Get a summary of the conversation.
 
         Default implementation returns empty string.

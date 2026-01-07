@@ -22,6 +22,16 @@ _hook_registry: dict[str, list[Callable[..., Any]]] = {}
 T = TypeVar("T")
 
 
+def reset_hooks() -> None:
+    """Reset the hook registry.
+
+    This is primarily useful for testing to ensure a clean state
+    between test cases.
+    """
+    global _hook_registry
+    _hook_registry = {}
+
+
 class HookResultAction(str, Enum):
     """Action to take after a hook executes."""
 
@@ -135,7 +145,7 @@ class Hook(ABC):
 
     Example:
         class MyHook(Hook):
-            async def on_request(self, ctx: HookContext) -> HookResult:
+            async def on_request(self, _ctx: HookContext) -> HookResult:
                 # Log the request
                 print(f"Request to {ctx.endpoint}")
                 return HookResult.proceed()
@@ -156,65 +166,65 @@ class Hook(ABC):
         pass
 
     # Request hooks
-    async def on_request(self, ctx: HookContext) -> HookResult:
+    async def on_request(self, _ctx: HookContext) -> HookResult:
         """Called at the start of a request."""
         return HookResult.proceed()
 
-    async def on_response(self, ctx: HookContext) -> HookResult:
+    async def on_response(self, _ctx: HookContext) -> HookResult:
         """Called before sending a response."""
         return HookResult.proceed()
 
     # LLM hooks
-    async def on_llm_start(self, ctx: HookContext) -> HookResult:
+    async def on_llm_start(self, _ctx: HookContext) -> HookResult:
         """Called before an LLM call."""
         return HookResult.proceed()
 
-    async def on_llm_end(self, ctx: HookContext) -> HookResult:
+    async def on_llm_end(self, _ctx: HookContext) -> HookResult:
         """Called after an LLM call."""
         return HookResult.proceed()
 
     # Tool hooks
-    async def on_tool_call(self, ctx: HookContext) -> HookResult:
+    async def on_tool_call(self, _ctx: HookContext) -> HookResult:
         """Called before a tool is invoked."""
         return HookResult.proceed()
 
-    async def on_tool_result(self, ctx: HookContext) -> HookResult:
+    async def on_tool_result(self, _ctx: HookContext) -> HookResult:
         """Called after a tool returns."""
         return HookResult.proceed()
 
     # Node hooks (LangGraph)
-    async def on_node_enter(self, ctx: HookContext) -> HookResult:
+    async def on_node_enter(self, _ctx: HookContext) -> HookResult:
         """Called when entering a graph node."""
         return HookResult.proceed()
 
-    async def on_node_exit(self, ctx: HookContext) -> HookResult:
+    async def on_node_exit(self, _ctx: HookContext) -> HookResult:
         """Called when exiting a graph node."""
         return HookResult.proceed()
 
     # Durability hooks
-    async def on_checkpoint(self, ctx: HookContext) -> HookResult:
+    async def on_checkpoint(self, _ctx: HookContext) -> HookResult:
         """Called when a checkpoint is created."""
         return HookResult.proceed()
 
-    async def on_resume(self, ctx: HookContext) -> HookResult:
+    async def on_resume(self, _ctx: HookContext) -> HookResult:
         """Called when resuming from a checkpoint."""
         return HookResult.proceed()
 
     # Error hooks
-    async def on_error(self, ctx: HookContext) -> HookResult:
+    async def on_error(self, _ctx: HookContext) -> HookResult:
         """Called when an error occurs."""
         return HookResult.proceed()
 
-    async def on_retry(self, ctx: HookContext) -> HookResult:
+    async def on_retry(self, _ctx: HookContext) -> HookResult:
         """Called before a retry attempt."""
         return HookResult.proceed()
 
     # Memory hooks
-    async def on_memory_add(self, ctx: HookContext) -> HookResult:
+    async def on_memory_add(self, _ctx: HookContext) -> HookResult:
         """Called before adding to memory."""
         return HookResult.proceed()
 
-    async def on_memory_search(self, ctx: HookContext) -> HookResult:
+    async def on_memory_search(self, _ctx: HookContext) -> HookResult:
         """Called after memory search."""
         return HookResult.proceed()
 

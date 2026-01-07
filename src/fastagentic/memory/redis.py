@@ -87,7 +87,7 @@ class RedisProvider(MemoryProvider):
     async def search(
         self,
         user_id: str,
-        query: str,
+        _query: str,
         limit: int = 10,
         filters: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:

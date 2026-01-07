@@ -85,7 +85,7 @@ class DSPyAdapter(BaseAdapter):
             raise RuntimeError(f"DSPy invocation failed: {e}") from e
 
     async def _run_module(
-        self, kwargs: dict[str, Any], ctx: AdapterContext
+        self, kwargs: dict[str, Any], _ctx: AdapterContext
     ) -> Any:
         """Run the DSPy module."""
         import asyncio
@@ -227,7 +227,7 @@ class DSPyAdapter(BaseAdapter):
         return str(result)
 
     def _format_result(
-        self, result: Any, ctx: AdapterContext
+        self, result: Any, _ctx: AdapterContext
     ) -> dict[str, Any]:
         """Format DSPy result."""
         output: dict[str, Any] = {}

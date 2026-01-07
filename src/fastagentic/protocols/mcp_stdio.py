@@ -141,7 +141,7 @@ class MCPStdioTransport:
     async def _handle_initialize(
         self,
         id: int | str | None,
-        params: dict[str, Any] | None,
+        _params: dict[str, Any] | None,
     ) -> None:
         """Handle initialize request."""
         result = {

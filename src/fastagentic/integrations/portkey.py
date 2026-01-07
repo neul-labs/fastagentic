@@ -194,7 +194,7 @@ class PortkeyIntegration(Integration):
             self._hook = PortkeyHook(self._config)
         return [self._hook]
 
-    def setup(self, app: App) -> None:
+    def setup(self, _app: App) -> None:
         """Initialize the Portkey client."""
         if not self.is_available():
             return

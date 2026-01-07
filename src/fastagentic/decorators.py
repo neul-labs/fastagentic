@@ -46,6 +46,20 @@ def get_endpoints() -> dict[str, tuple[EndpointDefinition, Callable[..., Any]]]:
     return _endpoints.copy()
 
 
+def reset_registries() -> None:
+    """Reset all decorator registries.
+
+    This is primarily useful for testing to ensure a clean state
+    between test cases. In production, decorators are typically
+    used once at module load time.
+    """
+    global _tools, _resources, _prompts, _endpoints
+    _tools = {}
+    _resources = {}
+    _prompts = {}
+    _endpoints = {}
+
+
 def _extract_parameters_from_signature(func: Callable[..., Any]) -> dict[str, Any]:
     """Extract JSON Schema parameters from function signature."""
     sig = inspect.signature(func)

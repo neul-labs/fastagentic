@@ -66,7 +66,7 @@ class CrewAIAdapter(BaseAdapter):
         Returns:
             The crew's output
         """
-        adapter_ctx = self._ensure_adapter_context(ctx)
+        adapter_ctx = self._ensure_adapter_context(ctx)  # noqa: F841
 
         # Convert Pydantic models to dict
         if hasattr(input, "model_dump"):
@@ -115,7 +115,6 @@ class CrewAIAdapter(BaseAdapter):
 
             # CrewAI doesn't have native async streaming, so we track progress
             # by monitoring task callbacks
-            current_agent: str | None = None
             current_task: int = 0
 
             # Set up task callback to capture progress
@@ -226,9 +225,6 @@ class CrewAIAdapter(BaseAdapter):
         self.crew.verbose = True
 
         try:
-            # Use a queue to capture verbose output
-            output_queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
-
             async def capture_output() -> Any:
                 loop = asyncio.get_event_loop()
                 return await loop.run_in_executor(

@@ -95,7 +95,7 @@ class AutoGenAdapter(BaseAdapter):
             raise RuntimeError(f"AutoGen invocation failed: {e}") from e
 
     async def _invoke_two_agent(
-        self, message: str, ctx: AdapterContext
+        self, message: str, _ctx: AdapterContext
     ) -> dict[str, Any]:
         """Invoke two-agent conversation."""
         # Register message callback
@@ -114,7 +114,7 @@ class AutoGenAdapter(BaseAdapter):
         return self._extract_chat_result(chat_result)
 
     async def _invoke_group_chat(
-        self, message: str, ctx: AdapterContext
+        self, message: str, _ctx: AdapterContext
     ) -> dict[str, Any]:
         """Invoke group chat conversation."""
         from autogen import GroupChatManager
@@ -273,7 +273,7 @@ class AutoGenAdapter(BaseAdapter):
             sender: Any,
             message: str | dict[str, Any],
             recipient: Any,
-            silent: bool,
+            _silent: bool,
         ) -> None:
             self._message_buffer.append(
                 {
@@ -288,11 +288,11 @@ class AutoGenAdapter(BaseAdapter):
         if hasattr(self.initiator, "register_reply"):
             self.initiator.register_reply(
                 [type(self.recipient)],
-                lambda *args, **kwargs: (False, None),
+                lambda *_args, **_kwargs: (False, None),
                 position=0,
             )
 
-    def _register_streaming_callback(self, ctx: AdapterContext) -> None:
+    def _register_streaming_callback(self, _ctx: AdapterContext) -> None:
         """Register streaming callback."""
         self._register_message_callback()
 
