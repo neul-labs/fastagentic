@@ -8,7 +8,7 @@ FastAgentic integrates with best-of-breed tools for observability, guardrails, m
 
 We build hooks. You choose the tools.
 
-## Integration Categories
+## Current Integrations
 
 ### Observability
 
@@ -16,10 +16,8 @@ Track LLM calls, token usage, costs, and trace agent execution.
 
 | Integration | What It Does | Status |
 |-------------|--------------|--------|
-| **[Langfuse](langfuse.md)** | LLM tracing, prompt analytics, cost tracking | v0.3 |
-| **[Logfire](logfire.md)** | PydanticAI native observability, structured logging | v0.3 |
-| **[Datadog](datadog.md)** | APM integration, dashboards, alerting | v0.3 |
-| OTEL (built-in) | OpenTelemetry span export | v0.1 |
+| **[Langfuse](langfuse.md)** | LLM tracing, prompt analytics, cost tracking | ✅ Stable |
+| OTEL (built-in) | OpenTelemetry span export | ✅ Stable |
 
 ### Guardrails & Security
 
@@ -27,9 +25,7 @@ Protect against prompt injection, validate outputs, enforce content policies.
 
 | Integration | What It Does | Status |
 |-------------|--------------|--------|
-| **[Lakera](lakera.md)** | Prompt injection detection, content moderation | v0.3 |
-| **[Guardrails AI](guardrails-ai.md)** | Output validation with RAIL specs | v0.3 |
-| **[NeMo Guardrails](nemo.md)** | Conversational guardrails, topic control | v0.3 |
+| **[Lakera](lakera.md)** | Prompt injection detection, content moderation | ✅ Stable |
 
 ### Memory
 
@@ -37,9 +33,7 @@ Persistent user memory, session context, and conversation history.
 
 | Integration | What It Does | Status |
 |-------------|--------------|--------|
-| **[Mem0](mem0.md)** | Persistent user memory across sessions | v0.3 |
-| **[Zep](zep.md)** | Session memory with auto-summarization | v0.3 |
-| Redis (built-in) | Simple key-value memory | v0.2 |
+| **[Mem0](mem0.md)** | Persistent user memory across sessions | ✅ Stable |
 
 ### LLM Gateway
 
@@ -47,9 +41,7 @@ Rate limiting, fallbacks, caching, and multi-provider routing.
 
 | Integration | What It Does | Status |
 |-------------|--------------|--------|
-| **[Portkey](portkey.md)** | Gateway with fallbacks, caching, load balancing | v0.3 |
-| **[LiteLLM](litellm.md)** | Multi-provider routing, unified API | v0.3 |
-| Simple limiter (built-in) | Basic RPM/TPM rate limiting | v0.3 |
+| **[Portkey](portkey.md)** | Gateway with fallbacks, caching, load balancing | ✅ Stable |
 
 ### Evaluation
 
@@ -57,28 +49,28 @@ Score agent outputs, track experiments, measure quality.
 
 | Integration | What It Does | Status |
 |-------------|--------------|--------|
-| **[Braintrust](braintrust.md)** | Experiment tracking, scoring, datasets | v0.4 |
-| **[LangSmith](langsmith.md)** | Trace-based evaluation, feedback | v0.4 |
-| **[Maxim](maxim.md)** | Production eval pipelines | v0.4 |
+| **[Braintrust](braintrust.md)** | Experiment tracking, scoring, datasets | ✅ Stable |
 
-### Human-in-the-Loop
+---
 
-Approval workflows, human escalation, interactive sessions.
+## Future Integrations (Roadmap)
 
-| Integration | What It Does | Status |
-|-------------|--------------|--------|
-| **[HumanLayer](humanlayer.md)** | Multi-channel approval (Slack, Email) | v0.4 |
-| Webhooks (built-in) | Custom approval endpoints | v0.4 |
+The following integrations are planned for future releases:
 
-### Prompt Management
+| Integration | Category | Description |
+|-------------|----------|-------------|
+| Logfire | Observability | PydanticAI native observability, structured logging |
+| Datadog | Observability | APM integration, dashboards, alerting |
+| Guardrails AI | Guardrails | Output validation with RAIL specs |
+| NeMo Guardrails | Guardrails | Conversational guardrails, topic control |
+| Zep | Memory | Session memory with auto-summarization |
+| LiteLLM | Gateway | Multi-provider routing, unified API |
+| LangSmith | Evaluation | Trace-based evaluation, feedback |
+| HumanLayer | HITL | Multi-channel approval (Slack, Email) |
+| PromptLayer | Prompt Mgmt | Versioning, A/B testing, analytics |
+| Agenta | Prompt Mgmt | Prompt + eval workflow |
 
-Version control, A/B testing, and prompt deployment.
-
-| Integration | What It Does | Status |
-|-------------|--------------|--------|
-| **[PromptLayer](promptlayer.md)** | Versioning, A/B testing, analytics | v0.4 |
-| **[Latitude](latitude.md)** | Prompt CMS, publishing workflow | v0.4 |
-| **[Agenta](agenta.md)** | Prompt + eval workflow | v0.4 |
+Contributions are welcome! See [Building Custom Integrations](#building-custom-integrations) to get started.
 
 ---
 
@@ -304,13 +296,8 @@ myintegration = "fastagentic_myintegration:MyHook"
 | Integration | on_request | on_llm_* | on_tool_* | on_response | on_error | Memory |
 |-------------|:----------:|:--------:|:---------:|:-----------:|:--------:|:------:|
 | Langfuse | | ✓ | ✓ | | ✓ | |
-| Logfire | ✓ | ✓ | ✓ | ✓ | ✓ | |
-| Datadog | ✓ | ✓ | ✓ | ✓ | ✓ | |
 | Lakera | | ✓ | | | | |
-| Guardrails AI | | | | ✓ | | |
-| NeMo | | ✓ | | ✓ | | |
 | Mem0 | | | | | | ✓ |
-| Zep | | | | | | ✓ |
 | Portkey | | ✓ | | | | |
 | Braintrust | | | | ✓ | | |
 

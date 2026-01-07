@@ -1,56 +1,34 @@
 # CLI Reference
 
-The FastAgentic CLI streamlines project scaffolding, local development, introspection, and contract testing. This reference documents each command and its key options.
+The FastAgentic CLI streamlines project scaffolding, local development, and testing. This reference documents each command and its key options.
 
 ## Global Options
 
-| Option          | Description                              |
-| --------------- | ---------------------------------------- |
-| `--config PATH` | Use an alternate configuration file      |
-| `--env NAME`    | Load environment-specific settings       |
-| `--quiet`       | Reduce logging verbosity                 |
-| `--json`        | Emit machine-readable output when available |
+| Option | Description |
+| ------ | ----------- |
+| `--version, -v` | Show version and exit |
+| `--help` | Show help message |
 
 ## `fastagentic new`
 
-Scaffold a new application.
+Scaffold a new application from a template.
 
 ```bash
-fastagentic new my-service --adapter langgraph --auth oidc
+fastagentic new my-service --template pydanticai
 ```
 
-| Option             | Description                                              |
-| ------------------ | -------------------------------------------------------- |
-| `--adapter`        | Preconfigure sample workflow (`langchain`, `langgraph`, `crewai`) |
-| `--auth`           | Include auth boilerplate (`oidc`, `none`)                |
-| `--telemetry`      | Enable telemetry configuration (`otel`, `none`)          |
-| `--force`          | Overwrite existing directory                             |
+| Option | Description |
+| ------ | ----------- |
+| `--template, -t` | Template to use (`pydanticai`, `langgraph`, `crewai`, `langchain`) |
+| `--directory, -d` | Directory to create project in |
 
 Generated structure:
 
 - `app.py` with an `App` instance
-- `models/` for Pydantic schemas
-- `endpoints/` with sample decorators
-- `config/settings.yaml` and `.env`
-- `tests/test_contracts.py` for schema parity
-
-## `fastagentic add endpoint`
-
-Create decorator stubs within an existing project.
-
-```bash
-fastagentic add endpoint support triage --type agent --stream --durable
-```
-
-| Option        | Description                                                       |
-| ------------- | ----------------------------------------------------------------- |
-| `--type`      | `tool`, `resource`, `prompt`, or `agent`                          |
-| `--path`      | REST path to register                                             |
-| `--stream`    | Enable streaming boilerplate                                      |
-| `--durable`   | Include checkpointing helpers                                     |
-| `--scopes`    | Comma-delimited list of required scopes                           |
-
-The generator creates files under `endpoints/` or `prompts/` with Pydantic model placeholders.
+- `models.py` for Pydantic schemas
+- `agent.py` for the agent/workflow
+- `tests/` for tests
+- `config/` for configuration
 
 ## `fastagentic run`
 
@@ -71,11 +49,12 @@ fastagentic run --server gunicorn --workers 4 --max-concurrent 100
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--server, -s` | uvicorn | Server type: `uvicorn` or `gunicorn` |
-| `--host` | 127.0.0.1 | Bind address for the server |
-| `--port` | 8000 | Port for HTTP traffic |
-| `--workers` | 1 | Number of worker processes |
-| `--reload` | false | Enable auto-reload (dev only, forces 1 worker) |
+| `app_path` | `app:app` | Path to the app module (e.g., `app:app` or `main:application`) |
+| `--host` | `127.0.0.1` | Bind address for the server |
+| `--port` | `8000` | Port for HTTP traffic |
+| `--server, -s` | `uvicorn` | Server type: `uvicorn` or `gunicorn` |
+| `--workers` | `1` | Number of worker processes |
+| `--reload` | `false` | Enable auto-reload (dev only, forces 1 worker) |
 
 ### Scalability Options
 
@@ -83,15 +62,14 @@ fastagentic run --server gunicorn --workers 4 --max-concurrent 100
 |--------|---------|-------------|
 | `--max-concurrent` | unlimited | Maximum concurrent requests per worker |
 | `--instance-id` | auto | Instance ID for cluster metrics |
-| `--timeout-graceful` | 30 | Graceful shutdown timeout (seconds) |
 
 ### Connection Pool Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--redis-pool-size` | 10 | Redis connection pool size per worker |
-| `--db-pool-size` | 5 | Database connection pool size per worker |
-| `--db-max-overflow` | 10 | Database pool overflow connections |
+| `--redis-pool-size` | `10` | Redis connection pool size per worker |
+| `--db-pool-size` | `5` | Database connection pool size per worker |
+| `--db-max-overflow` | `10` | Database pool overflow connections |
 
 ### Examples
 
@@ -113,130 +91,196 @@ fastagentic run \
 
 See the [Scaling Guide](scaling.md) for detailed production deployment documentation.
 
-## `fastagentic tail`
+## `fastagentic info`
 
-Streams logs, events, and telemetry in real time.
+Display information about the current FastAgentic application.
 
 ```bash
-fastagentic tail --runs 10 --events token,node_start
+fastagentic info
 ```
 
-| Option          | Description                                              |
-| --------------- | -------------------------------------------------------- |
-| `--runs`        | Limit to the most recent N runs                          |
-| `--events`      | Comma-delimited list of event types to display           |
-| `--follow`      | Continue streaming until interrupted                     |
-| `--json`        | Emit structured JSON rather than formatted text          |
+## `fastagentic inspect`
 
-`tail` can connect to local or remote deployments by reading configuration from environment variables or the specified config file.
+Inspect registered decorators, schemas, and configuration.
+
+```bash
+# Show summary of all registered items
+fastagentic inspect
+
+# List specific item types
+fastagentic inspect --list tools
+fastagentic inspect --list resources
+fastagentic inspect --list prompts
+fastagentic inspect --list agents
+
+# Show schema for a specific item
+fastagentic inspect --schema get_time
+
+# Show configuration
+fastagentic inspect --config
+```
+
+| Option | Description |
+|--------|-------------|
+| `--list, -l` | List items: `tools`, `resources`, `prompts`, `agents` |
+| `--schema, -s` | Show schema for a specific item by name |
+| `--config, -c` | Show current configuration |
+| `--json, -j` | Output as JSON |
+
+## `fastagentic templates`
+
+Manage project templates.
+
+```bash
+# List all available templates
+fastagentic templates list
+
+# List by category
+fastagentic templates list --category official
+fastagentic templates list --category community
+
+# Search for templates
+fastagentic templates search "agent"
+
+# Show template details
+fastagentic templates info pydanticai
+
+# Refresh template cache
+fastagentic templates refresh
+```
+
+| Subcommand | Description |
+|------------|-------------|
+| `list [--category]` | List available templates |
+| `search <query>` | Search templates by name or description |
+| `info <name>` | Show details about a template |
+| `refresh` | Refresh template cache from remote |
+
+## `fastagentic config`
+
+Manage FastAgentic configuration.
+
+```bash
+# Show current configuration
+fastagentic config show
+
+# Show with secrets (masked)
+fastagentic config show --secrets
+
+# Validate a configuration file
+fastagentic config validate config/settings.yaml
+
+# Generate default configuration
+fastagentic config init -o settings.yaml
+```
+
+| Subcommand | Description |
+|------------|-------------|
+| `show [--secrets]` | Display resolved configuration |
+| `validate <path>` | Validate a configuration file |
+| `init -o <path>` | Generate default configuration file |
 
 ## `fastagentic test contract`
 
 Validates that REST and MCP schemas remain in sync.
 
 ```bash
-fastagentic test contract --fail-on-drift
+fastagentic test contract
 ```
 
-| Option             | Description                                          |
-| ------------------ | ---------------------------------------------------- |
-| `--fail-on-drift`  | Exit with non-zero status when discrepancies detected |
-| `--output PATH`    | Write diff report to file                            |
-| `--json`           | Emit diff as JSON                                    |
+| Option | Description |
+| ------ | ----------- |
+| `app_path` | Path to the app module (default: `app:app`) |
 
 The command compares:
 
 - OpenAPI operation IDs vs. MCP tool names
 - Security scopes across both surfaces
 - Pydantic model serialization for inputs/outputs
-- Prompt metadata and example alignments
-
-## `fastagentic inspect`
-
-Interactively explore registered decorators, schemas, and runtime configuration.
-
-```bash
-fastagentic inspect --schema tool:summaries
-```
-
-| Option          | Description                                             |
-| --------------- | ------------------------------------------------------- |
-| `--schema`      | Print the schema for a specific tool/resource/prompt    |
-| `--list`        | List registered assets (`tools`, `resources`, `prompts`, `agents`) |
-| `--runs`        | Show active runs and their statuses                     |
-| `--config`      | Display resolved configuration values                   |
-
-## `fastagentic templates`
-
-Manage project templates.
-
-### `templates list`
-
-```bash
-fastagentic templates list [--category official|community] [--verbose]
-```
-
-| Option | Description |
-|--------|-------------|
-| `--category` | Filter by `official`, `community`, or `all` |
-| `--verbose` | Show detailed template info |
-
-### `templates search`
-
-```bash
-fastagentic templates search "multi-agent"
-```
-
-### `templates info`
-
-```bash
-fastagentic templates info pydanticai
-```
-
-### `templates refresh`
-
-Refresh template cache from remote repository.
-
-```bash
-fastagentic templates refresh
-```
 
 ## `fastagentic mcp`
 
 MCP protocol operations.
+
+### `mcp serve`
+
+Run the app as an MCP server via stdio.
+
+```bash
+fastagentic mcp serve app:app
+```
+
+This enables the app to be used with MCP clients like Claude Desktop, VS Code extensions, etc.
+
+In `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "my-agent": {
+      "command": "fastagentic",
+      "args": ["mcp", "serve", "app:app"]
+    }
+  }
+}
+```
 
 ### `mcp validate`
 
 Validate MCP schema against specification.
 
 ```bash
-fastagentic mcp validate [--spec-version 2025-11-25]
+fastagentic mcp validate
 ```
 
-### `mcp manifest`
+### `mcp schema`
 
-Generate MCP manifest file.
+Print the MCP schema.
 
 ```bash
-fastagentic mcp manifest > mcp.json
-fastagentic mcp manifest -o mcp.yaml --format yaml
+fastagentic mcp schema
 ```
+
+### `mcp export`
+
+Export MCP manifest to a file.
+
+```bash
+# Export as JSON
+fastagentic mcp export -o mcp_manifest.json
+
+# Export as YAML
+fastagentic mcp export -o mcp_manifest.yaml --format yaml
+```
+
+| Option | Description |
+|--------|-------------|
+| `--output, -o` | Output file path (default: `mcp_manifest.json`) |
+| `--format, -f` | Output format (`json`, `yaml`) |
 
 ### `mcp call`
 
-Test tool invocation.
+Call an MCP tool directly for testing.
 
 ```bash
-fastagentic mcp call summarize_text --input '{"text": "..."}'
-fastagentic mcp call analyze_data --file input.json
+# Call with JSON input
+fastagentic mcp call get_time --input '{"timezone": "UTC"}'
+
+# Call with file input
+fastagentic mcp call analyze --file input.json
 ```
+
+| Option | Description |
+|--------|-------------|
+| `tool_name` | Name of the tool to call |
+| `--input, -i` | Input JSON string |
+| `--file, -f` | Input JSON file |
 
 ### `mcp stdio`
 
-Start interactive stdio session.
+Run interactive stdio session for MCP (alias for `mcp serve`).
 
 ```bash
-fastagentic mcp stdio --interactive
+fastagentic mcp stdio
 ```
 
 ## `fastagentic a2a`
@@ -245,45 +289,66 @@ A2A protocol operations.
 
 ### `a2a validate`
 
-Validate A2A Agent Card.
+Validate A2A Agent Card compliance.
 
 ```bash
-fastagentic a2a validate [--spec-version 0.3]
+fastagentic a2a validate
 ```
 
 ### `a2a card`
 
-Display or export Agent Card.
+Display the A2A Agent Card.
 
 ```bash
 fastagentic a2a card
-fastagentic a2a card -o agent.json --extended
 ```
 
 ### `a2a list`
 
-List registered agents.
+List registered A2A skills.
 
 ```bash
-fastagentic a2a list [--internal] [--external]
+fastagentic a2a list
 ```
 
-### `a2a invoke`
+Shows a table of all registered skills with their paths, descriptions, and streaming capability.
 
-Invoke an agent skill.
+### `a2a export`
+
+Export A2A Agent Card to a file.
 
 ```bash
-fastagentic a2a invoke support-triage --input '{"title": "..."}'
-fastagentic a2a invoke deep-research --stream --input '{"query": "..."}'
+# Export as JSON
+fastagentic a2a export -o agent_card.json
+
+# Export as YAML
+fastagentic a2a export -o agent_card.yaml --format yaml
 ```
+
+| Option | Description |
+|--------|-------------|
+| `--output, -o` | Output file path (default: `agent_card.json`) |
+| `--format, -f` | Output format (`json`, `yaml`) |
 
 ### `a2a ping`
 
-Check connectivity to external agent.
+Check connectivity to an external A2A agent.
 
 ```bash
-fastagentic a2a ping https://external-agent.example.com
+fastagentic a2a ping https://agent.example.com
 ```
+
+Pings an external agent's `.well-known/agent.json` endpoint and displays agent information.
+
+### `a2a invoke`
+
+Invoke a local A2A skill (shows how to call it).
+
+```bash
+fastagentic a2a invoke chat --input '{"message": "hello"}'
+```
+
+Note: For local skills, this shows the HTTP request format since invocation requires a running server.
 
 ## `fastagentic agent`
 
@@ -296,7 +361,6 @@ Start an interactive chat session.
 ```bash
 fastagentic agent chat
 fastagentic agent chat --url http://localhost:8000 --endpoint /chat
-fastagentic agent chat --verbose
 ```
 
 | Option | Description |
@@ -391,46 +455,6 @@ Conversations are stored in `~/.fastagentic/history/`.
 
 See the [Agent CLI Guide](cli-agent.md) for detailed documentation.
 
-## `fastagentic config`
-
-Configuration management.
-
-### `config show`
-
-Display resolved configuration.
-
-```bash
-fastagentic config show [--env production] [--secrets]
-```
-
-### `config validate`
-
-Validate configuration file.
-
-```bash
-fastagentic config validate config/settings.yaml
-```
-
-### `config init`
-
-Generate default configuration.
-
-```bash
-fastagentic config init -o config/settings.yaml
-fastagentic config init -o .env --format env
-```
-
-## Environments and Configuration
-
-CLI commands read configuration in this order:
-
-1. Command-line flags
-2. Environment variables (`FASTAGENTIC_*`)
-3. Project `config/settings.yaml`
-4. Local `.env` file
-
-This hierarchy keeps local development flexible while preserving predictable deployment behavior.
-
 ## Environment Variables
 
 ### General
@@ -489,3 +513,15 @@ fastagentic --install-completion zsh
 fastagentic --install-completion fish
 ```
 
+---
+
+## Planned CLI Commands (Roadmap)
+
+The following commands are planned for future releases:
+
+| Command | Description |
+|---------|-------------|
+| `fastagentic add endpoint` | Create decorator stubs within an existing project |
+| `fastagentic tail` | Stream logs, events, and telemetry in real time |
+
+See the [Roadmap](roadmap.md) for more details.

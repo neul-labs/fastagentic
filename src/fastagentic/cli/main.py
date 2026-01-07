@@ -13,6 +13,10 @@ from rich.console import Console
 from rich.table import Table
 
 from fastagentic import __version__
+from fastagentic.cli.config_cli import config_app
+
+# Import command subgroups at module level to avoid circular imports
+from fastagentic.cli.templates import templates_app
 
 app = typer.Typer(
     name="fastagentic",
@@ -850,6 +854,149 @@ def info() -> None:
         console.print(f"[red]Error loading app: {e}[/red]")
 
 
+@app.command()
+def inspect(
+    list_type: Annotated[
+        str | None,
+        typer.Option("--list", "-l", help="List registered items (tools, resources, prompts, agents, endpoints)"),
+    ] = None,
+    schema: Annotated[
+        str | None,
+        typer.Option("--schema", "-s", help="Show schema for a specific item"),
+    ] = None,
+    config: Annotated[
+        bool,
+        typer.Option("--config", "-c", help="Show configuration"),
+    ] = False,
+    _json_output: Annotated[
+        bool,
+        typer.Option("--json", "-j", help="Output as JSON (reserved)"),
+    ] = False,
+) -> None:
+    """Inspect registered decorators, schemas, and configuration.
+
+    Use --list to see all registered items, --schema to see details of a specific item.
+    """
+    from fastagentic.decorators import get_endpoints, get_prompts, get_resources, get_tools
+
+    # Show configuration
+    if config:
+        import os
+        console.print("[bold]Configuration[/bold]\n")
+        env_vars = [
+            ("FASTAGENTIC_ENV", "Environment"),
+            ("FASTAGENTIC_SERVER", "Server"),
+            ("FASTAGENTIC_HOST", "Host"),
+            ("FASTAGENTIC_PORT", "Port"),
+            ("FASTAGENTIC_WORKERS", "Workers"),
+            ("FASTAGENTIC_LOG_LEVEL", "Log Level"),
+        ]
+        table = Table()
+        table.add_column("Variable", style="cyan")
+        table.add_column("Value", style="green")
+        for var, _name in env_vars:
+            val = os.environ.get(var, "[yellow]not set[/yellow]")
+            table.add_row(var, val)
+        console.print(table)
+        return
+
+    # Show schema for specific item
+    if schema:
+        tools = get_tools()
+        resources = get_resources()
+        prompts = get_prompts()
+
+        if schema in tools:
+            tool_defn, _ = tools[schema]
+            console.print(f"[bold]Tool: {schema}[/bold]")
+            console.print(f"Description: {tool_defn.description}")
+            if tool_defn.inputSchema:
+                console.print("Input Schema:")
+                import json
+                console.print(json.dumps(tool_defn.inputSchema, indent=2))
+        elif schema in resources:
+            resource_defn, _ = resources[schema]
+            console.print(f"[bold]Resource: {schema}[/bold]")
+            console.print(f"URI: {resource_defn.uri}")
+            console.print(f"MIME Type: {resource_defn.mimeType}")
+        elif schema in prompts:
+            prompt_defn, _ = prompts[schema]
+            console.print(f"[bold]Prompt: {schema}[/bold]")
+            console.print(f"Description: {prompt_defn.description}")
+        else:
+            console.print(f"[red]Item '{schema}' not found[/red]")
+        return
+
+    # List registered items
+    if list_type:
+        if list_type == "tools":
+            tools = get_tools()
+            console.print(f"[bold]Tools ({len(tools)})[/bold]\n")
+            table = Table()
+            table.add_column("Name", style="cyan")
+            table.add_column("Description", style="green")
+            for name, (tool_defn, _) in tools.items():
+                desc = tool_defn.description[:50] + "..." if tool_defn.description and len(tool_defn.description) > 50 else tool_defn.description or ""
+                table.add_row(name, desc or "-")
+            console.print(table)
+        elif list_type == "resources":
+            resources = get_resources()
+            console.print(f"[bold]Resources ({len(resources)})[/bold]\n")
+            table = Table()
+            table.add_column("Name", style="cyan")
+            table.add_column("URI", style="green")
+            for name, (resource_defn, _) in resources.items():
+                table.add_row(name, resource_defn.uri)
+            console.print(table)
+        elif list_type == "prompts":
+            prompts = get_prompts()
+            console.print(f"[bold]Prompts ({len(prompts)})[/bold]\n")
+            table = Table()
+            table.add_column("Name", style="cyan")
+            table.add_column("Description", style="green")
+            for name, (prompt_defn, _) in prompts.items():
+                desc = prompt_defn.description[:50] + "..." if prompt_defn.description and len(prompt_defn.description) > 50 else prompt_defn.description or ""
+                table.add_row(name, desc or "-")
+            console.print(table)
+        elif list_type == "agents" or list_type == "endpoints":
+            endpoints = get_endpoints()
+            console.print(f"[bold]Agent Endpoints ({len(endpoints)})[/bold]\n")
+            table = Table()
+            table.add_column("Path", style="cyan")
+            table.add_column("Skill", style="green")
+            table.add_column("Stream", style="blue")
+            for path, (endpoint_defn, _) in endpoints.items():
+                skill = endpoint_defn.a2a_skill or "-"
+                stream = "Yes" if endpoint_defn.stream else "No"
+                table.add_row(path, skill, stream)
+            console.print(table)
+        else:
+            console.print(f"[red]Unknown type: {list_type}[/red]")
+            console.print("Use: tools, resources, prompts, agents, or endpoints")
+        return
+
+    # Default: show summary
+    console.print(f"[bold blue]FastAgentic Application Inspection[/bold blue] v{__version__}\n")
+
+    tools = get_tools()
+    resources = get_resources()
+    prompts = get_prompts()
+    endpoints = get_endpoints()
+
+    table = Table(title="Registered Items")
+    table.add_column("Type", style="cyan")
+    table.add_column("Count", style="green")
+
+    table.add_row("Tools", str(len(tools)))
+    table.add_row("Resources", str(len(resources)))
+    table.add_row("Prompts", str(len(prompts)))
+    table.add_row("Agent Endpoints", str(len(endpoints)))
+
+    console.print(table)
+
+    console.print("\n[dim]Use --list <type> to see details, --schema <name> for schema[/dim]")
+
+
 # Test commands
 test_app = typer.Typer(help="Run tests")
 app.add_typer(test_app, name="test")
@@ -1088,6 +1235,199 @@ def mcp_schema(
     console.print(f"\nPrompts: {len(prompts)}")
     for name, (prompt_defn, _) in prompts.items():
         console.print(f"  - {name}: {prompt_defn.description[:50] if prompt_defn.description else 'No description'}...")
+
+
+@mcp_app.command("export")
+def mcp_export(
+    _app_path: Annotated[
+        str,
+        typer.Argument(help="Path to the app module"),
+    ] = "app:app",
+    output: Annotated[
+        Path,
+        typer.Option("--output", "-o", help="Output file path"),
+    ] = Path("mcp_manifest.json"),
+    format: Annotated[
+        str,
+        typer.Option("--format", "-f", help="Output format (json, yaml)"),
+    ] = "json",
+) -> None:
+    """Export MCP manifest to a file."""
+    import json
+
+    from fastagentic.decorators import get_prompts, get_resources, get_tools
+
+    tools = get_tools()
+    resources = get_resources()
+    prompts = get_prompts()
+
+    # Build manifest
+    manifest = {
+        "name": "FastAgentic Server",
+        "version": "1.0.0",
+        "tools": [
+            {
+                "name": name,
+                "description": tool_defn.description,
+                "inputSchema": tool_defn.inputSchema,
+            }
+            for name, (tool_defn, _) in tools.items()
+        ],
+        "resources": [
+            {
+                "name": name,
+                "uri": resource_defn.uri,
+                "description": resource_defn.description,
+                "mimeType": resource_defn.mimeType,
+            }
+            for name, (resource_defn, _) in resources.items()
+        ],
+        "prompts": [
+            {
+                "name": name,
+                "description": prompt_defn.description,
+                "arguments": [
+                    {"name": arg.name, "description": arg.description, "required": arg.required}
+                    for arg in (prompt_defn.arguments or [])
+                ] if prompt_defn.arguments else []
+            }
+            for name, (prompt_defn, _) in prompts.items()
+        ],
+    }
+
+    # Write output
+    if format == "yaml":
+        try:
+            import yaml
+            output.write_text(yaml.dump(manifest, default_flow_style=False))
+        except ImportError:
+            console.print("[red]PyYAML not installed. Use --format json or install pyyaml.[/red]")
+            raise typer.Exit(1)
+    else:
+        output.write_text(json.dumps(manifest, indent=2))
+
+    console.print(f"[green]MCP manifest exported to: {output}[/green]")
+    console.print(f"  Tools: {len(tools)}")
+    console.print(f"  Resources: {len(resources)}")
+    console.print(f"  Prompts: {len(prompts)}")
+
+
+@mcp_app.command("call")
+def mcp_call(
+    tool_name: Annotated[
+        str,
+        typer.Argument(help="Name of the tool to call"),
+    ],
+    _app_path: Annotated[
+        str,
+        typer.Argument(help="Path to the app module"),
+    ] = "app:app",
+    input_json: Annotated[
+        str | None,
+        typer.Option("--input", "-i", help="Input JSON string"),
+    ] = None,
+    input_file: Annotated[
+        Path | None,
+        typer.Option("--file", "-f", help="Input JSON file"),
+    ] = None,
+) -> None:
+    """Call an MCP tool directly."""
+    import json
+
+    from fastagentic.decorators import get_tools
+
+    tools = get_tools()
+
+    if tool_name not in tools:
+        console.print(f"[red]Tool '{tool_name}' not found[/red]")
+        console.print(f"Available tools: {', '.join(tools.keys())}")
+        raise typer.Exit(1)
+
+    # Parse input
+    input_data = {}
+    if input_json:
+        try:
+            input_data = json.loads(input_json)
+        except json.JSONDecodeError as e:
+            console.print(f"[red]Invalid JSON input: {e}[/red]")
+            raise typer.Exit(1)
+    elif input_file:
+        try:
+            input_data = json.loads(input_file.read_text())
+        except FileNotFoundError:
+            console.print(f"[red]File not found: {input_file}[/red]")
+            raise typer.Exit(1)
+        except json.JSONDecodeError as e:
+            console.print(f"[red]Invalid JSON in file: {e}[/red]")
+            raise typer.Exit(1)
+
+    # Call tool
+    tool_defn, tool_fn = tools[tool_name]
+    console.print(f"[bold]Calling tool: {tool_name}[/bold]")
+    console.print(f"Input: {json.dumps(input_data, indent=2)}")
+
+    try:
+        import asyncio
+        result = asyncio.run(tool_fn(**input_data))
+        console.print(f"\n[bold]Result:[/bold]")
+        if isinstance(result, str):
+            console.print(result)
+        else:
+            console.print(json.dumps(result, indent=2, default=str))
+    except TypeError as e:
+        console.print(f"[red]Invalid arguments: {e}[/red]")
+        console.print(f"Expected input schema: {json.dumps(tool_defn.inputSchema, indent=2)}")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"[red]Error calling tool: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@mcp_app.command("stdio")
+def mcp_stdio(
+    app_path: Annotated[
+        str,
+        typer.Argument(help="Path to the app module"),
+    ] = "app:app",
+) -> None:
+    """Run interactive stdio session for MCP.
+
+    This is an alias for 'mcp serve' for compatibility.
+    """
+    # Re-use the serve command logic
+    import asyncio
+
+    # Parse module:attribute format
+    if ":" in app_path:
+        module_path, attr_name = app_path.rsplit(":", 1)
+    else:
+        module_path = app_path
+        attr_name = "app"
+
+    try:
+        spec = importlib.util.spec_from_file_location(
+            module_path, f"{module_path.replace('.', '/')}.py"
+        )
+        if spec and spec.loader:
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[module_path] = module
+            spec.loader.exec_module(module)
+            app_instance = getattr(module, attr_name)
+
+            from fastagentic.protocols.mcp_stdio import serve_stdio
+
+            console.print("[bold green]Starting MCP stdio session...[/bold green]")
+            console.print("[dim]Press Ctrl+C to exit[/dim]")
+            asyncio.run(serve_stdio(app_instance))
+        else:
+            console.print(f"[red]Error: Could not load module '{app_path}'[/red]")
+            raise typer.Exit(1)
+    except FileNotFoundError:
+        console.print(f"[red]Error: Could not find module '{app_path}'[/red]")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1)
 
 
 # Agent CLI commands
@@ -1445,7 +1785,7 @@ def a2a_card(
     endpoints = get_endpoints()
 
     skills = []
-    for path, (defn, _) in endpoints.items():
+    for _path, (defn, _) in endpoints.items():
         if defn.a2a_skill:
             skills.append(defn.a2a_skill)
 
@@ -1454,6 +1794,206 @@ def a2a_card(
     for skill in skills:
         console.print(f"  - {skill}")
 
+
+@a2a_app.command("list")
+def a2a_list(
+    _app_path: Annotated[
+        str,
+        typer.Argument(help="Path to the app module"),
+    ] = "app:app",
+) -> None:
+    """List registered A2A skills."""
+    from fastagentic.decorators import get_endpoints
+
+    endpoints = get_endpoints()
+
+    console.print("[bold]Registered A2A Skills[/bold]\n")
+
+    skills_found = False
+    table = Table()
+    table.add_column("Skill", style="cyan")
+    table.add_column("Path", style="green")
+    table.add_column("Description", style="blue")
+    table.add_column("Stream", style="magenta")
+
+    for path, (defn, _) in endpoints.items():
+        if defn.a2a_skill:
+            skills_found = True
+            desc = defn.description[:50] if defn.description else "-"
+            stream = "Yes" if defn.stream else "No"
+            table.add_row(defn.a2a_skill, path, desc, stream)
+
+    if skills_found:
+        console.print(table)
+    else:
+        console.print("[yellow]No A2A skills registered[/yellow]")
+        console.print("[dim]Add a2a_skill to agent_endpoint decorators to register skills[/dim]")
+
+
+@a2a_app.command("export")
+def a2a_export(
+    _app_path: Annotated[
+        str,
+        typer.Argument(help="Path to the app module"),
+    ] = "app:app",
+    output: Annotated[
+        Path,
+        typer.Option("--output", "-o", help="Output file path"),
+    ] = Path("agent_card.json"),
+    format: Annotated[
+        str,
+        typer.Option("--format", "-f", help="Output format (json, yaml)"),
+    ] = "json",
+) -> None:
+    """Export A2A Agent Card to a file."""
+    import json
+
+    from fastagentic.decorators import get_endpoints
+
+    endpoints = get_endpoints()
+
+    # Build agent card
+    skills = []
+    for path, (defn, _) in endpoints.items():
+        if defn.a2a_skill:
+            skills.append({
+                "id": defn.a2a_skill,
+                "name": defn.a2a_skill,
+                "description": defn.description,
+                "url": f"http://localhost:8000{path}",
+                "capabilities": {
+                    "streaming": defn.stream,
+                },
+            })
+
+    agent_card = {
+        "name": "FastAgentic Server",
+        "version": "1.0.0",
+        "skills": skills,
+    }
+
+    # Write output
+    if format == "yaml":
+        try:
+            import yaml
+            output.write_text(yaml.dump(agent_card, default_flow_style=False))
+        except ImportError:
+            console.print("[red]PyYAML not installed. Use --format json or install pyyaml.[/red]")
+            raise typer.Exit(1)
+    else:
+        output.write_text(json.dumps(agent_card, indent=2))
+
+    console.print(f"[green]Agent Card exported to: {output}[/green]")
+    console.print(f"  Skills: {len(skills)}")
+
+
+@a2a_app.command("ping")
+def a2a_ping(
+    url: Annotated[
+        str,
+        typer.Argument(help="Agent URL to ping"),
+    ],
+) -> None:
+    """Check connectivity to an external A2A agent."""
+    import json
+
+    console.print(f"[bold]Pinging A2A agent: {url}[/bold]\n")
+
+    try:
+        import httpx
+        # Get agent card
+        card_url = f"{url.rstrip('/')}/.well-known/agent.json"
+
+        with httpx.Client(timeout=10.0) as client:
+            response = client.get(card_url)
+            if response.status_code == 200:
+                agent_card = response.json()
+                console.print("[green]Agent found![/green]\n")
+                console.print(f"Name: {agent_card.get('name', 'Unknown')}")
+                console.print(f"Version: {agent_card.get('version', 'Unknown')}")
+                skills = agent_card.get("skills", [])
+                console.print(f"Skills: {len(skills)}")
+                for skill in skills[:5]:
+                    console.print(f"  - {skill.get('id')}: {skill.get('description', 'No description')[:50]}")
+                if len(skills) > 5:
+                    console.print(f"  ... and {len(skills) - 5} more")
+            else:
+                console.print(f"[red]Agent not responding: HTTP {response.status_code}[/red]")
+                raise typer.Exit(1)
+    except httpx.RequestError as e:
+        console.print(f"[red]Connection error: {e}[/red]")
+        raise typer.Exit(1)
+    except json.JSONDecodeError:
+        console.print("[red]Invalid agent card format[/red]")
+        raise typer.Exit(1)
+
+
+@a2a_app.command("invoke")
+def a2a_invoke(
+    skill: Annotated[
+        str,
+        typer.Argument(help="Skill ID to invoke"),
+    ],
+    _app_path: Annotated[
+        str,
+        typer.Argument(help="Path to the app module"),
+    ] = "app:app",
+    input_json: Annotated[
+        str | None,
+        typer.Option("--input", "-i", help="Input JSON string"),
+    ] = None,
+    stream: Annotated[
+        bool,
+        typer.Option("--stream/--no-stream", help="Enable streaming response"),
+    ] = False,
+) -> None:
+    """Invoke a local A2A skill."""
+    import json
+
+    from fastagentic.decorators import get_endpoints
+
+    endpoints = get_endpoints()
+
+    # Find the endpoint with matching skill
+    target_endpoint = None
+    for path, (defn, _) in endpoints.items():
+        if defn.a2a_skill == skill:
+            target_endpoint = (path, defn)
+            break
+
+    if not target_endpoint:
+        console.print(f"[red]Skill '{skill}' not found[/red]")
+        console.print("Available skills:")
+        for path, (defn, _) in endpoints.items():
+            if defn.a2a_skill:
+                console.print(f"  - {defn.a2a_skill} at {path}")
+        raise typer.Exit(1)
+
+    path, defn = target_endpoint
+
+    # Parse input
+    input_data = {}
+    if input_json:
+        try:
+            input_data = json.loads(input_json)
+        except json.JSONDecodeError as e:
+            console.print(f"[red]Invalid JSON input: {e}[/red]")
+            raise typer.Exit(1)
+
+    console.print(f"[bold]Invoking skill: {skill}[/bold]")
+    console.print(f"Endpoint: {path}")
+    console.print(f"Input: {json.dumps(input_data, indent=2)}\n")
+
+    # For now, just show how to invoke (actual invocation requires HTTP call)
+    console.print("[yellow]Local skill invocation requires HTTP server running[/yellow]")
+    console.print(f"\nTo invoke this skill, make a POST request to: http://localhost:8000{path}")
+    console.print(f"Headers: Content-Type: application/json")
+    console.print(f"Body: {json.dumps(input_data, indent=2)}")
+
+
+# Register command subgroups
+app.add_typer(templates_app, name="templates")
+app.add_typer(config_app, name="config")
 
 if __name__ == "__main__":
     app()
