@@ -109,14 +109,16 @@ class PIIPattern:
             end = min(len(text), match.end() + 20)
             context = text[start:end]
 
-            matches.append(PIIMatch(
-                type=self.type,
-                value=value,
-                start=match.start(),
-                end=match.end(),
-                confidence=confidence,
-                context=context,
-            ))
+            matches.append(
+                PIIMatch(
+                    type=self.type,
+                    value=value,
+                    start=match.start(),
+                    end=match.end(),
+                    confidence=confidence,
+                    context=context,
+                )
+            )
 
         return matches
 
@@ -126,92 +128,80 @@ DEFAULT_PATTERNS: list[PIIPattern] = [
     # Email
     PIIPattern(
         type=PIIType.EMAIL,
-        pattern=r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
+        pattern=r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
         confidence=0.95,
     ),
-
     # Phone (various formats)
     PIIPattern(
         type=PIIType.PHONE,
-        pattern=r'\b(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}\b',
+        pattern=r"\b(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}\b",
         confidence=0.85,
     ),
-
     # SSN
     PIIPattern(
         type=PIIType.SSN,
-        pattern=r'\b[0-9]{3}[-\s]?[0-9]{2}[-\s]?[0-9]{4}\b',
+        pattern=r"\b[0-9]{3}[-\s]?[0-9]{2}[-\s]?[0-9]{4}\b",
         confidence=0.9,
-        validator=lambda x: len(re.sub(r'[-\s]', '', x)) == 9,
+        validator=lambda x: len(re.sub(r"[-\s]", "", x)) == 9,
     ),
-
     # Credit Card (Luhn validation would improve this)
     PIIPattern(
         type=PIIType.CREDIT_CARD,
-        pattern=r'\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b',
+        pattern=r"\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b",
         confidence=0.9,
     ),
-
     # Credit Card with spaces/dashes
     PIIPattern(
         type=PIIType.CREDIT_CARD,
-        pattern=r'\b[0-9]{4}[-\s]?[0-9]{4}[-\s]?[0-9]{4}[-\s]?[0-9]{4}\b',
+        pattern=r"\b[0-9]{4}[-\s]?[0-9]{4}[-\s]?[0-9]{4}[-\s]?[0-9]{4}\b",
         confidence=0.8,
     ),
-
     # IP Address
     PIIPattern(
         type=PIIType.IP_ADDRESS,
-        pattern=r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b',
+        pattern=r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b",
         confidence=0.95,
     ),
-
     # IPv6 (simplified)
     PIIPattern(
         type=PIIType.IP_ADDRESS,
-        pattern=r'\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b',
+        pattern=r"\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b",
         confidence=0.95,
     ),
-
     # Date of Birth (various formats)
     PIIPattern(
         type=PIIType.DATE_OF_BIRTH,
-        pattern=r'\b(?:0?[1-9]|1[0-2])[/\-](?:0?[1-9]|[12][0-9]|3[01])[/\-](?:19|20)[0-9]{2}\b',
+        pattern=r"\b(?:0?[1-9]|1[0-2])[/\-](?:0?[1-9]|[12][0-9]|3[01])[/\-](?:19|20)[0-9]{2}\b",
         confidence=0.7,
     ),
-
     # ZIP Code (US)
     PIIPattern(
         type=PIIType.ZIP_CODE,
-        pattern=r'\b[0-9]{5}(?:-[0-9]{4})?\b',
+        pattern=r"\b[0-9]{5}(?:-[0-9]{4})?\b",
         confidence=0.6,  # Lower confidence as many numbers match
     ),
-
     # API Key patterns
     PIIPattern(
         type=PIIType.API_KEY,
-        pattern=r'\b(?:sk|pk|api|key)[-_]?[a-zA-Z0-9]{20,}\b',
+        pattern=r"\b(?:sk|pk|api|key)[-_]?[a-zA-Z0-9]{20,}\b",
         confidence=0.85,
     ),
-
     # Bearer tokens
     PIIPattern(
         type=PIIType.ACCESS_TOKEN,
-        pattern=r'\bBearer\s+[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\b',
+        pattern=r"\bBearer\s+[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\b",
         confidence=0.95,
     ),
-
     # Password in common formats
     PIIPattern(
         type=PIIType.PASSWORD,
         pattern=r'(?:password|passwd|pwd)\s*[:=]\s*["\']?([^"\'\s]+)["\']?',
         confidence=0.9,
     ),
-
     # IBAN
     PIIPattern(
         type=PIIType.IBAN,
-        pattern=r'\b[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}(?:[A-Z0-9]?){0,16}\b',
+        pattern=r"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}(?:[A-Z0-9]?){0,16}\b",
         confidence=0.9,
     ),
 ]
@@ -293,19 +283,24 @@ class PIIDetector:
                 pos = text.find(blocked, start)
                 if pos == -1:
                     break
-                matches.append(PIIMatch(
-                    type=PIIType.CUSTOM,
-                    value=blocked,
-                    start=pos,
-                    end=pos + len(blocked),
-                    confidence=1.0,
-                ))
+                matches.append(
+                    PIIMatch(
+                        type=PIIType.CUSTOM,
+                        value=blocked,
+                        start=pos,
+                        end=pos + len(blocked),
+                        confidence=1.0,
+                    )
+                )
                 start = pos + 1
 
         # Run pattern matching
         for pattern in self._patterns:
             # Skip disabled types
-            if self.config.enabled_types is not None and pattern.type not in self.config.enabled_types:
+            if (
+                self.config.enabled_types is not None
+                and pattern.type not in self.config.enabled_types
+            ):
                 continue
 
             for match in pattern.find_matches(text):
@@ -450,7 +445,7 @@ class PIIMasker:
                 else:
                     masked = val[:2] + mask_char * (len(val) - 4) + val[-2:]
 
-            result = result[:match.start] + masked + result[match.end:]
+            result = result[: match.start] + masked + result[match.end :]
 
         return result
 
@@ -492,9 +487,7 @@ class PIIMasker:
             if isinstance(value, str):
                 result[key] = self.mask(value, mask_char=mask_char)
             elif isinstance(value, dict) and deep:
-                result[key] = self.get_masked_dict(
-                    value, mask_char=mask_char, deep=True
-                )
+                result[key] = self.get_masked_dict(value, mask_char=mask_char, deep=True)
             elif isinstance(value, list) and deep:
                 result[key] = [
                     self.get_masked_dict(v, mask_char=mask_char, deep=True)

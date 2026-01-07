@@ -1,8 +1,9 @@
 """Tests for Redis memory provider."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 import json
+from unittest.mock import AsyncMock
+
+import pytest
 
 from fastagentic.memory.redis import RedisProvider
 

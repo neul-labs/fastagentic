@@ -62,32 +62,18 @@ DEFAULT_PRICING: dict[str, ModelPricing] = {
     "o1": ModelPricing("o1", 0.015, 0.06),
     "o1-mini": ModelPricing("o1-mini", 0.003, 0.012),
     # Anthropic
-    "claude-3-5-sonnet-20241022": ModelPricing(
-        "claude-3-5-sonnet-20241022", 0.003, 0.015, 0.0003
-    ),
-    "claude-3-5-haiku-20241022": ModelPricing(
-        "claude-3-5-haiku-20241022", 0.0008, 0.004, 0.00008
-    ),
-    "claude-3-opus-20240229": ModelPricing(
-        "claude-3-opus-20240229", 0.015, 0.075, 0.0015
-    ),
-    "claude-3-sonnet-20240229": ModelPricing(
-        "claude-3-sonnet-20240229", 0.003, 0.015, 0.0003
-    ),
-    "claude-3-haiku-20240307": ModelPricing(
-        "claude-3-haiku-20240307", 0.00025, 0.00125, 0.000025
-    ),
+    "claude-3-5-sonnet-20241022": ModelPricing("claude-3-5-sonnet-20241022", 0.003, 0.015, 0.0003),
+    "claude-3-5-haiku-20241022": ModelPricing("claude-3-5-haiku-20241022", 0.0008, 0.004, 0.00008),
+    "claude-3-opus-20240229": ModelPricing("claude-3-opus-20240229", 0.015, 0.075, 0.0015),
+    "claude-3-sonnet-20240229": ModelPricing("claude-3-sonnet-20240229", 0.003, 0.015, 0.0003),
+    "claude-3-haiku-20240307": ModelPricing("claude-3-haiku-20240307", 0.00025, 0.00125, 0.000025),
     # Google
     "gemini-1.5-pro": ModelPricing("gemini-1.5-pro", 0.00125, 0.005),
     "gemini-1.5-flash": ModelPricing("gemini-1.5-flash", 0.000075, 0.0003),
     "gemini-2.0-flash": ModelPricing("gemini-2.0-flash", 0.0001, 0.0004),
     # Aliases
-    "claude-3.5-sonnet": ModelPricing(
-        "claude-3.5-sonnet", 0.003, 0.015, 0.0003
-    ),
-    "claude-3.5-haiku": ModelPricing(
-        "claude-3.5-haiku", 0.0008, 0.004, 0.00008
-    ),
+    "claude-3.5-sonnet": ModelPricing("claude-3.5-sonnet", 0.003, 0.015, 0.0003),
+    "claude-3.5-haiku": ModelPricing("claude-3.5-haiku", 0.0008, 0.004, 0.00008),
 }
 
 

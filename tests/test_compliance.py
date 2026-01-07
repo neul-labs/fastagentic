@@ -1,18 +1,15 @@
 """Tests for compliance module."""
 
-import pytest
-
 from fastagentic.compliance import (
-    PIIDetector,
-    PIIType,
-    PIIMatch,
-    PIIMasker,
     PIIConfig,
     PIIDetectionHook,
+    PIIDetector,
+    PIIMasker,
     PIIMaskingHook,
+    PIIMatch,
+    PIIType,
 )
 from fastagentic.compliance.pii import PIIPattern
-
 
 # ============================================================================
 # PIIDetector Tests

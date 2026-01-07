@@ -10,11 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from fastagentic.templates.base import (
-    Template,
-    TemplateCategory,
-    TemplateMetadata,
-)
+from fastagentic.templates.base import Template, TemplateCategory, TemplateMetadata
 from fastagentic.templates.registry import RemoteRegistry, RemoteRegistryConfig
 
 

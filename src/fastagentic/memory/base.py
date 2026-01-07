@@ -77,9 +77,7 @@ class MemoryProvider(ABC):
         ...
 
     @abstractmethod
-    async def get_all(
-        self, user_id: str, limit: int = 100
-    ) -> list[dict[str, Any]]:
+    async def get_all(self, user_id: str, limit: int = 100) -> list[dict[str, Any]]:
         """Get all memories for a user.
 
         Args:
@@ -152,9 +150,7 @@ class SessionMemory(ABC):
         ...
 
     @abstractmethod
-    async def add_message(
-        self, session_id: str, message: dict[str, Any]
-    ) -> None:
+    async def add_message(self, session_id: str, message: dict[str, Any]) -> None:
         """Add a message to session history.
 
         Args:

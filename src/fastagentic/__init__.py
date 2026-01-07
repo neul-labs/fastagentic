@@ -91,13 +91,7 @@ from fastagentic.prompts import (
     PromptVariant,
     PromptVersion,
 )
-from fastagentic.reliability import (
-    CircuitBreaker,
-    FallbackChain,
-    RateLimit,
-    RetryPolicy,
-    Timeout,
-)
+from fastagentic.reliability import CircuitBreaker, FallbackChain, RateLimit, RetryPolicy, Timeout
 from fastagentic.sdk import (
     AsyncFastAgenticClient,
     AuthenticationError,
@@ -115,9 +109,7 @@ from fastagentic.sdk import (
     ToolResult,
     ValidationError,
 )
-from fastagentic.sdk import (
-    TimeoutError as SDKTimeoutError,
-)
+from fastagentic.sdk import TimeoutError as SDKTimeoutError
 
 __version__ = "1.2.0"
 

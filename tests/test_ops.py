@@ -1,18 +1,15 @@
 """Tests for ops module."""
 
-import os
-
 import pytest
 
 from fastagentic.ops import (
-    ReadinessChecker,
-    ReadinessCheck,
     CheckResult,
     CheckStatus,
+    ReadinessCheck,
+    ReadinessChecker,
     ReadinessReport,
 )
 from fastagentic.ops.readiness import CheckCategory
-
 
 # ============================================================================
 # CheckResult Tests
@@ -193,9 +190,7 @@ class TestReadinessChecker:
     async def test_run_checks_by_category(self):
         """Test running checks for specific category."""
         checker = ReadinessChecker()
-        report = await checker.run_checks(
-            categories=[CheckCategory.SECURITY]
-        )
+        report = await checker.run_checks(categories=[CheckCategory.SECURITY])
 
         # All results should be security category
         for result in report.results:
@@ -251,12 +246,14 @@ class TestReadinessChecker:
                 category=CheckCategory.CONFIGURATION,
             )
 
-        checker.add_check(ReadinessCheck(
-            name="custom",
-            description="Custom check",
-            category=CheckCategory.CONFIGURATION,
-            check_fn=custom_check,
-        ))
+        checker.add_check(
+            ReadinessCheck(
+                name="custom",
+                description="Custom check",
+                category=CheckCategory.CONFIGURATION,
+                check_fn=custom_check,
+            )
+        )
 
         report = await checker.run_checks()
 
@@ -272,12 +269,14 @@ class TestReadinessChecker:
         def failing_check(config):
             raise ValueError("Check failed unexpectedly")
 
-        checker.add_check(ReadinessCheck(
-            name="failing",
-            description="Failing check",
-            category=CheckCategory.CONFIGURATION,
-            check_fn=failing_check,
-        ))
+        checker.add_check(
+            ReadinessCheck(
+                name="failing",
+                description="Failing check",
+                category=CheckCategory.CONFIGURATION,
+                check_fn=failing_check,
+            )
+        )
 
         # Should not raise, but mark as failed
         report = await checker.run_checks()

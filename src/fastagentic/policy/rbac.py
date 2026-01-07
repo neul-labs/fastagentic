@@ -34,9 +34,7 @@ class Permission:
         """
         if not self._matches_resource(resource):
             return False
-        if not self._matches_action(action):
-            return False
-        return True
+        return self._matches_action(action)
 
     def _matches_resource(self, resource: str | None) -> bool:
         """Check if resource matches the permission pattern."""
@@ -223,9 +221,7 @@ class RBACPolicy(Policy):
             role_name: Name of the role to revoke
         """
         if user_id in self._user_roles:
-            self._user_roles[user_id] = [
-                r for r in self._user_roles[user_id] if r != role_name
-            ]
+            self._user_roles[user_id] = [r for r in self._user_roles[user_id] if r != role_name]
 
     def get_user_roles(self, user_id: str) -> list[str]:
         """Get roles assigned to a user.
@@ -271,6 +267,4 @@ class RBACPolicy(Policy):
             if role and role.has_permission(ctx.resource, ctx.action, self._roles):
                 return PolicyResult.allow(f"Granted by role: {role_name}")
 
-        return PolicyResult.deny(
-            f"No permission for {ctx.action} on {ctx.resource}"
-        )
+        return PolicyResult.deny(f"No permission for {ctx.action} on {ctx.resource}")

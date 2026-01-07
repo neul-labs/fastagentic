@@ -26,17 +26,19 @@ from rich.text import Text
 from rich.theme import Theme
 
 # Custom theme for agent CLI
-AGENT_THEME = Theme({
-    "agent": "bold cyan",
-    "user": "bold green",
-    "tool": "bold yellow",
-    "tool_result": "dim yellow",
-    "error": "bold red",
-    "info": "dim",
-    "success": "bold green",
-    "thinking": "dim italic",
-    "code": "bright_black on grey23",
-})
+AGENT_THEME = Theme(
+    {
+        "agent": "bold cyan",
+        "user": "bold green",
+        "tool": "bold yellow",
+        "tool_result": "dim yellow",
+        "error": "bold red",
+        "info": "dim",
+        "success": "bold green",
+        "thinking": "dim italic",
+        "code": "bright_black on grey23",
+    }
+)
 
 console = Console(theme=AGENT_THEME)
 
@@ -266,12 +268,14 @@ class AgentClient:
                 for path, methods in spec.get("paths", {}).items():
                     for method, details in methods.items():
                         if method.upper() == "POST":
-                            endpoints.append({
-                                "path": path,
-                                "method": method.upper(),
-                                "summary": details.get("summary", ""),
-                                "description": details.get("description", ""),
-                            })
+                            endpoints.append(
+                                {
+                                    "path": path,
+                                    "method": method.upper(),
+                                    "summary": details.get("summary", ""),
+                                    "description": details.get("description", ""),
+                                }
+                            )
                 return endpoints
         except (json.JSONDecodeError, ValueError):
             pass
@@ -301,14 +305,16 @@ class AgentREPL:
     def _print_welcome(self) -> None:
         """Print welcome message."""
         console.print()
-        console.print(Panel.fit(
-            "[bold cyan]FastAgentic Agent CLI[/bold cyan]\n"
-            "Interactive agent testing and development\n\n"
-            f"[dim]Server:[/dim] {self.config.base_url}\n"
-            f"[dim]Endpoint:[/dim] {self.config.endpoint}",
-            title="[bold]Welcome[/bold]",
-            border_style="cyan",
-        ))
+        console.print(
+            Panel.fit(
+                "[bold cyan]FastAgentic Agent CLI[/bold cyan]\n"
+                "Interactive agent testing and development\n\n"
+                f"[dim]Server:[/dim] {self.config.base_url}\n"
+                f"[dim]Endpoint:[/dim] {self.config.endpoint}",
+                title="[bold]Welcome[/bold]",
+                border_style="cyan",
+            )
+        )
         console.print()
         console.print("[dim]Commands:[/dim]")
         console.print("  [bold]/help[/bold]      - Show all commands")
@@ -370,12 +376,14 @@ class AgentREPL:
         console.print()
         console.print(f"[tool]⚙ Tool Call:[/tool] {name}")
         if args:
-            console.print(Syntax(
-                json.dumps(args, indent=2),
-                "json",
-                theme="monokai",
-                line_numbers=False,
-            ))
+            console.print(
+                Syntax(
+                    json.dumps(args, indent=2),
+                    "json",
+                    theme="monokai",
+                    line_numbers=False,
+                )
+            )
 
     def _format_tool_result(self, _name: str, result: Any) -> None:
         """Format and print a tool result."""
@@ -384,12 +392,14 @@ class AgentREPL:
 
         console.print("[tool_result]↳ Result:[/tool_result]")
         if isinstance(result, (dict, list)):
-            console.print(Syntax(
-                json.dumps(result, indent=2),
-                "json",
-                theme="monokai",
-                line_numbers=False,
-            ))
+            console.print(
+                Syntax(
+                    json.dumps(result, indent=2),
+                    "json",
+                    theme="monokai",
+                    line_numbers=False,
+                )
+            )
         else:
             console.print(f"  {result}")
         console.print()
@@ -411,7 +421,9 @@ class AgentREPL:
         latency = usage.get("latency_ms", 0)
 
         console.print()
-        console.print(f"[info]📊 Tokens: {tokens} | Cost: ${cost:.4f} | Latency: {latency}ms[/info]")
+        console.print(
+            f"[info]📊 Tokens: {tokens} | Cost: ${cost:.4f} | Latency: {latency}ms[/info]"
+        )
 
     async def _handle_command(self, command: str) -> bool:
         """Handle a slash command. Returns True if should continue REPL."""
@@ -445,7 +457,9 @@ class AgentREPL:
                 path = self.config.history_dir / f"{arg}.json"
                 if path.exists():
                     self.conversation = Conversation.load(path)
-                    console.print(f"[success]Loaded {len(self.conversation.messages)} messages[/success]")
+                    console.print(
+                        f"[success]Loaded {len(self.conversation.messages)} messages[/success]"
+                    )
                 else:
                     console.print(f"[error]File not found: {path}[/error]")
             else:
@@ -465,7 +479,9 @@ class AgentREPL:
             if self.conversation and self.conversation.messages:
                 for msg in self.conversation.messages:
                     role_style = "user" if msg.role == "user" else "agent"
-                    console.print(f"[{role_style}]{msg.role}:[/{role_style}] {msg.content[:100]}...")
+                    console.print(
+                        f"[{role_style}]{msg.role}:[/{role_style}] {msg.content[:100]}..."
+                    )
             else:
                 console.print("[info]No messages in conversation[/info]")
 
@@ -562,7 +578,9 @@ class AgentREPL:
 
         elif cmd == "/export":
             if self.conversation:
-                path = Path(arg).expanduser() if arg else Path(f"conversation-{int(time.time())}.md")
+                path = (
+                    Path(arg).expanduser() if arg else Path(f"conversation-{int(time.time())}.md")
+                )
 
                 lines = [f"# Conversation {self.conversation.id}\n"]
                 for msg in self.conversation.messages:
@@ -725,7 +743,9 @@ class AgentREPL:
             healthy = await client.health_check()
             if not healthy:
                 console.print("[error]Warning: Server is not responding[/error]")
-                console.print(f"[info]Make sure the server is running at {self.config.base_url}[/info]")
+                console.print(
+                    f"[info]Make sure the server is running at {self.config.base_url}[/info]"
+                )
                 console.print()
 
             self._print_welcome()

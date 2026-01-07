@@ -84,9 +84,7 @@ class DSPyAdapter(BaseAdapter):
         except Exception as e:
             raise RuntimeError(f"DSPy invocation failed: {e}") from e
 
-    async def _run_module(
-        self, kwargs: dict[str, Any], _ctx: AdapterContext
-    ) -> Any:
+    async def _run_module(self, kwargs: dict[str, Any], _ctx: AdapterContext) -> Any:
         """Run the DSPy module."""
         import asyncio
 
@@ -101,9 +99,7 @@ class DSPyAdapter(BaseAdapter):
 
         return result
 
-    async def stream(
-        self, input: Any, ctx: AdapterContext | Any
-    ) -> AsyncIterator[StreamEvent]:
+    async def stream(self, input: Any, ctx: AdapterContext | Any) -> AsyncIterator[StreamEvent]:
         """Stream events from DSPy module.
 
         Note: DSPy doesn't natively support streaming, so this
@@ -226,9 +222,7 @@ class DSPyAdapter(BaseAdapter):
 
         return str(result)
 
-    def _format_result(
-        self, result: Any, _ctx: AdapterContext
-    ) -> dict[str, Any]:
+    def _format_result(self, result: Any, _ctx: AdapterContext) -> dict[str, Any]:
         """Format DSPy result."""
         output: dict[str, Any] = {}
 
@@ -355,9 +349,7 @@ class DSPyProgramAdapter(DSPyAdapter):
         super().__init__(program, lm=lm, trace=trace)
         self.include_retrieval = include_retrieval
 
-    async def _run_module(
-        self, kwargs: dict[str, Any], ctx: AdapterContext
-    ) -> Any:
+    async def _run_module(self, kwargs: dict[str, Any], ctx: AdapterContext) -> Any:
         """Run the compiled DSPy program."""
         import asyncio
 
@@ -377,9 +369,7 @@ class DSPyProgramAdapter(DSPyAdapter):
 
         return result
 
-    def _format_result(
-        self, result: Any, ctx: AdapterContext
-    ) -> dict[str, Any]:
+    def _format_result(self, result: Any, ctx: AdapterContext) -> dict[str, Any]:
         """Format compiled program result with retrieval info."""
         output = super()._format_result(result, ctx)
 

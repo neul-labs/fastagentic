@@ -18,10 +18,9 @@ Targeted mutations:
 
 import pytest
 
-from fastagentic.context import UserInfo
-from fastagentic.policy.base import Policy, PolicyContext, PolicyResult, PolicyAction
-from fastagentic.policy.engine import PolicyEngine, PolicyDecision, PolicyEngineConfig
-from fastagentic.policy.rbac import RBACPolicy, Permission, Role
+from fastagentic.policy.base import Policy, PolicyAction, PolicyContext, PolicyResult
+from fastagentic.policy.engine import PolicyDecision, PolicyEngine, PolicyEngineConfig
+from fastagentic.policy.rbac import Permission, RBACPolicy, Role
 
 
 class DenyPolicy(Policy):
@@ -146,9 +145,7 @@ class TestPolicyEngineFailModes:
         decision = await engine.evaluate(ctx)
 
         # Should allow due to fail_open mode
-        assert decision.action == PolicyAction.ALLOW, (
-            "Mutation caught: fail_open mode not enforced"
-        )
+        assert decision.action == PolicyAction.ALLOW, "Mutation caught: fail_open mode not enforced"
 
 
 class TestPolicyResultAggregation:
@@ -206,7 +203,12 @@ class TestPolicyActionEnumMutations:
 
         decision = await engine.evaluate(ctx)
 
-        valid_actions = {PolicyAction.ALLOW, PolicyAction.DENY, PolicyAction.WARN, PolicyAction.LIMIT}
+        valid_actions = {
+            PolicyAction.ALLOW,
+            PolicyAction.DENY,
+            PolicyAction.WARN,
+            PolicyAction.LIMIT,
+        }
         assert decision.action in valid_actions
 
 
@@ -344,10 +346,9 @@ class TestRBACPolicyBasic:
         rbac = RBACPolicy()
 
         # Add role with permission
-        rbac.add_role(Role(
-            name="user",
-            permissions=[Permission(resource="tools/*", actions=["invoke"])]
-        ))
+        rbac.add_role(
+            Role(name="user", permissions=[Permission(resource="tools/*", actions=["invoke"])])
+        )
         rbac.assign_role("test-user", "user")
 
         ctx = policy_context_factory(
@@ -366,10 +367,9 @@ class TestRBACPolicyBasic:
         rbac = RBACPolicy()
 
         # Add role with limited permission
-        rbac.add_role(Role(
-            name="reader",
-            permissions=[Permission(resource="tools/*", actions=["read"])]
-        ))
+        rbac.add_role(
+            Role(name="reader", permissions=[Permission(resource="tools/*", actions=["read"])])
+        )
         rbac.assign_role("test-user", "reader")
 
         ctx = policy_context_factory(

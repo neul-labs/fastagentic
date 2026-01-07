@@ -1,20 +1,17 @@
 """Tests for A2A protocol."""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
 from fastapi.testclient import TestClient
 
 from fastagentic import App
+from fastagentic.decorators import agent_endpoint
 from fastagentic.protocols.a2a import (
-    configure_a2a,
     A2A_VERSION,
     A2ATask,
-    TaskStatus,
     InMemoryTaskStore,
-    get_task_store,
+    TaskStatus,
+    configure_a2a,
 )
-from fastagentic.decorators import agent_endpoint
 
 
 class TestA2ATaskStatus:
@@ -34,11 +31,7 @@ class TestA2ATask:
 
     def test_create_task(self):
         """Test creating an A2A task."""
-        task = A2ATask(
-            task_id="test-123",
-            skill="test_skill",
-            input={"message": "hello"}
-        )
+        task = A2ATask(task_id="test-123", skill="test_skill", input={"message": "hello"})
         assert task.task_id == "test-123"
         assert task.skill == "test_skill"
         assert task.input["message"] == "hello"
@@ -49,12 +42,7 @@ class TestA2ATask:
 
     def test_task_with_custom_status(self):
         """Test task with custom initial status."""
-        task = A2ATask(
-            task_id="test-456",
-            skill="skill2",
-            input={},
-            status=TaskStatus.RUNNING
-        )
+        task = A2ATask(task_id="test-456", skill="skill2", input={}, status=TaskStatus.RUNNING)
         assert task.status == TaskStatus.RUNNING
 
     def test_task_with_result(self):
@@ -64,7 +52,7 @@ class TestA2ATask:
             skill="skill3",
             input={},
             status=TaskStatus.COMPLETED,
-            result={"output": "success"}
+            result={"output": "success"},
         )
         assert task.result == {"output": "success"}
 
@@ -80,11 +68,7 @@ class TestInMemoryTaskStore:
     @pytest.mark.asyncio
     async def test_create_task(self, store):
         """Test creating a task."""
-        task = A2ATask(
-            task_id="create-1",
-            skill="test_skill",
-            input={"key": "value"}
-        )
+        task = A2ATask(task_id="create-1", skill="test_skill", input={"key": "value"})
         await store.create(task)
 
         retrieved = await store.get("create-1")
@@ -100,11 +84,7 @@ class TestInMemoryTaskStore:
     @pytest.mark.asyncio
     async def test_update_task(self, store):
         """Test updating a task."""
-        task = A2ATask(
-            task_id="update-1",
-            skill="test",
-            input={}
-        )
+        task = A2ATask(task_id="update-1", skill="test", input={})
         await store.create(task)
 
         task.status = TaskStatus.RUNNING
@@ -118,11 +98,7 @@ class TestInMemoryTaskStore:
     @pytest.mark.asyncio
     async def test_cancel_pending_task(self, store):
         """Test cancelling a pending task."""
-        task = A2ATask(
-            task_id="cancel-1",
-            skill="test",
-            input={}
-        )
+        task = A2ATask(task_id="cancel-1", skill="test", input={})
         await store.create(task)
 
         result = await store.cancel("cancel-1")
@@ -140,7 +116,7 @@ class TestInMemoryTaskStore:
             skill="test",
             input={},
             status=TaskStatus.COMPLETED,
-            result={"done": True}
+            result={"done": True},
         )
         await store.create(task)
 
@@ -261,10 +237,7 @@ class TestA2ATasksEndpoints:
         configure_a2a(app)
 
         client = TestClient(app.fastapi)
-        response = client.post(
-            "/a2a/tasks",
-            json={"input": {"message": "hello"}}
-        )
+        response = client.post("/a2a/tasks", json={"input": {"message": "hello"}})
 
         assert response.status_code == 400
         assert "skill" in response.json()["error"].lower()
@@ -275,11 +248,8 @@ class TestA2AWithEndpoints:
 
     def test_create_task_with_skill(self):
         """Test creating task with registered skill."""
-        @agent_endpoint(
-            path="/test-endpoint",
-            name="test_endpoint",
-            a2a_skill="my_test_skill"
-        )
+
+        @agent_endpoint(path="/test-endpoint", name="test_endpoint", a2a_skill="my_test_skill")
         async def my_handler(input: dict) -> dict:
             return {"result": "handled"}
 
@@ -288,11 +258,7 @@ class TestA2AWithEndpoints:
 
         client = TestClient(app.fastapi)
         response = client.post(
-            "/a2a/tasks",
-            json={
-                "skill": "my_test_skill",
-                "input": {"message": "test"}
-            }
+            "/a2a/tasks", json={"skill": "my_test_skill", "input": {"message": "test"}}
         )
 
         assert response.status_code == 200
@@ -303,11 +269,8 @@ class TestA2AWithEndpoints:
 
     def test_create_task_skill_not_found(self):
         """Test creating task with unknown skill returns 404."""
-        @agent_endpoint(
-            path="/handler",
-            name="test_endpoint",
-            a2a_skill="known_skill"
-        )
+
+        @agent_endpoint(path="/handler", name="test_endpoint", a2a_skill="known_skill")
         async def handler(input: dict) -> dict:
             return {}
 
@@ -315,13 +278,7 @@ class TestA2AWithEndpoints:
         configure_a2a(app)
 
         client = TestClient(app.fastapi)
-        response = client.post(
-            "/a2a/tasks",
-            json={
-                "skill": "unknown_skill",
-                "input": {}
-            }
-        )
+        response = client.post("/a2a/tasks", json={"skill": "unknown_skill", "input": {}})
 
         assert response.status_code == 404
         data = response.json()

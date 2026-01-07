@@ -88,9 +88,7 @@ class BaseAdapter(ABC):
         # Make this an async generator
         yield  # type: ignore[misc]
 
-    def _ensure_adapter_context(
-        self, ctx: AdapterContext | AgentContext
-    ) -> AdapterContext:
+    def _ensure_adapter_context(self, ctx: AdapterContext | AgentContext) -> AdapterContext:
         """Convert AgentContext to AdapterContext if needed."""
         if isinstance(ctx, AdapterContext):
             return ctx

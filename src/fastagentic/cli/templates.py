@@ -50,12 +50,14 @@ def _get_all_templates() -> list[dict]:
 
     # Add built-in templates
     for _key, data in BUILTIN_TEMPLATES.items():
-        templates.append({
-            "name": data["name"],
-            "category": data["category"],
-            "description": data["description"],
-            "source": "builtin",
-        })
+        templates.append(
+            {
+                "name": data["name"],
+                "category": data["category"],
+                "description": data["description"],
+                "source": "builtin",
+            }
+        )
 
     # Check for cached remote templates
     cache_dir = Path.home() / ".fastagentic" / "templates"
@@ -63,13 +65,16 @@ def _get_all_templates() -> list[dict]:
         for cache_file in cache_dir.glob("*.json"):
             try:
                 import json
+
                 data = json.loads(cache_file.read_text())
-                templates.append({
-                    "name": data.get("name", cache_file.stem),
-                    "category": data.get("category", "community"),
-                    "description": data.get("description", ""),
-                    "source": "cached",
-                })
+                templates.append(
+                    {
+                        "name": data.get("name", cache_file.stem),
+                        "category": data.get("category", "community"),
+                        "description": data.get("description", ""),
+                        "source": "cached",
+                    }
+                )
             except Exception:
                 pass
 
@@ -136,7 +141,8 @@ def templates_search(
 
     # Filter templates matching the query
     matching = [
-        t for t in templates
+        t
+        for t in templates
         if query_lower in t["name"].lower() or query_lower in t["description"].lower()
     ]
 
@@ -181,6 +187,7 @@ def templates_info(
     if cache_file.exists():
         try:
             import json
+
             data = json.loads(cache_file.read_text())
             console.print(f"[bold cyan]{data.get('name', name)}[/bold cyan]")
             console.print(f"Category: {data.get('category', 'community')}")

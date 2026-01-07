@@ -114,9 +114,7 @@ class RedisProvider(MemoryProvider):
             return json.loads(data)
         return None
 
-    async def get_all(
-        self, user_id: str, limit: int = 100
-    ) -> list[dict[str, Any]]:
+    async def get_all(self, user_id: str, limit: int = 100) -> list[dict[str, Any]]:
         """Get all memories for a user."""
         client = await self._get_client()
         pattern = self._key(user_id)
@@ -236,9 +234,7 @@ class RedisSessionMemory(SessionMemory):
             return json.loads(data)
         return []
 
-    async def add_message(
-        self, session_id: str, message: dict[str, Any]
-    ) -> None:
+    async def add_message(self, session_id: str, message: dict[str, Any]) -> None:
         """Add a message to session history."""
         messages = await self.get_messages(session_id)
         messages.append(message)

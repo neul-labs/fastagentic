@@ -1,10 +1,9 @@
 """Tests for MCP protocol endpoints."""
 
-import pytest
 from fastapi.testclient import TestClient
 
 from fastagentic import App
-from fastagentic.protocols.mcp import configure_mcp, MCP_VERSION
+from fastagentic.protocols.mcp import MCP_VERSION, configure_mcp
 
 
 class TestMCPDiscoveryEndpoint:
@@ -96,10 +95,7 @@ class TestMCPToolsEndpoint:
         configure_mcp(app, path_prefix="/mcp")
 
         client = TestClient(app.fastapi)
-        response = client.post(
-            "/mcp/tools/nonexistent_tool",
-            json={"arguments": {}}
-        )
+        response = client.post("/mcp/tools/nonexistent_tool", json={"arguments": {}})
 
         assert response.status_code == 404
         data = response.json()
@@ -111,10 +107,7 @@ class TestMCPToolsEndpoint:
         configure_mcp(app, path_prefix="/mcp")
 
         client = TestClient(app.fastapi)
-        response = client.post(
-            "/mcp/tools/invalid@name!",
-            json={"arguments": {}}
-        )
+        response = client.post("/mcp/tools/invalid@name!", json={"arguments": {}})
 
         assert response.status_code == 422
 
@@ -168,10 +161,7 @@ class TestMCPPromptsEndpoint:
         configure_mcp(app, path_prefix="/mcp")
 
         client = TestClient(app.fastapi)
-        response = client.post(
-            "/mcp/prompts/nonexistent",
-            json={"arguments": {}}
-        )
+        response = client.post("/mcp/prompts/nonexistent", json={"arguments": {}})
 
         assert response.status_code == 404
 

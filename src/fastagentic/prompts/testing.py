@@ -212,9 +212,7 @@ class ABTest:
         self.min_impressions = min_impressions
         self.confidence_threshold = confidence_threshold
 
-        self._metrics: dict[str, VariantMetrics] = {
-            v.name: VariantMetrics() for v in variants
-        }
+        self._metrics: dict[str, VariantMetrics] = {v.name: VariantMetrics() for v in variants}
         self._started_at = time.time()
         self._ended_at: float | None = None
         self._winner: str | None = None

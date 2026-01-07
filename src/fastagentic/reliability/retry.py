@@ -52,9 +52,7 @@ class RetryPolicy:
     max_delay_ms: int = 60000
     multiplier: float = 2.0
     jitter: bool = True
-    retry_on: list[str] = field(
-        default_factory=lambda: ["rate_limit", "timeout", "server_error"]
-    )
+    retry_on: list[str] = field(default_factory=lambda: ["rate_limit", "timeout", "server_error"])
 
     def get_delay(self, attempt: int) -> float:
         """Calculate delay for a given attempt number.

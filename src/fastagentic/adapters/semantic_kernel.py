@@ -90,9 +90,7 @@ class SemanticKernelAdapter(BaseAdapter):
         except Exception as e:
             raise RuntimeError(f"Semantic Kernel invocation failed: {e}") from e
 
-    async def _invoke_agent(
-        self, arguments: dict[str, Any], ctx: AdapterContext
-    ) -> Any:
+    async def _invoke_agent(self, arguments: dict[str, Any], ctx: AdapterContext) -> Any:
         """Invoke SK agent."""
         assert self.agent is not None
         # Get message from arguments
@@ -114,9 +112,7 @@ class SemanticKernelAdapter(BaseAdapter):
 
         return response
 
-    async def _invoke_function(
-        self, arguments: dict[str, Any], _ctx: AdapterContext
-    ) -> Any:
+    async def _invoke_function(self, arguments: dict[str, Any], _ctx: AdapterContext) -> Any:
         """Invoke SK function."""
         # Get function from kernel
         if self.plugin_name:
@@ -137,9 +133,7 @@ class SemanticKernelAdapter(BaseAdapter):
 
         return result
 
-    async def _invoke_prompt(
-        self, arguments: dict[str, Any], _ctx: AdapterContext
-    ) -> Any:
+    async def _invoke_prompt(self, arguments: dict[str, Any], _ctx: AdapterContext) -> Any:
         """Invoke SK with a prompt template."""
         prompt = arguments.get("message", arguments.get("prompt", ""))
 
@@ -150,9 +144,7 @@ class SemanticKernelAdapter(BaseAdapter):
 
         return result
 
-    async def stream(
-        self, input: Any, ctx: AdapterContext | Any
-    ) -> AsyncIterator[StreamEvent]:
+    async def stream(self, input: Any, ctx: AdapterContext | Any) -> AsyncIterator[StreamEvent]:
         """Stream events from Semantic Kernel.
 
         Args:

@@ -7,13 +7,13 @@ These tests cover:
 """
 
 import asyncio
-import time
 
 import pytest
-from hypothesis import given, strategies as st, assume, settings
+from hypothesis import assume, given
+from hypothesis import strategies as st
 
+from fastagentic.reliability.circuit_breaker import CircuitBreaker, CircuitOpenError, CircuitState
 from fastagentic.reliability.rate_limit import RateLimit, RateLimitError
-from fastagentic.reliability.circuit_breaker import CircuitBreaker, CircuitState, CircuitOpenError
 
 
 class TestRateLimitConcurrency:
@@ -29,6 +29,7 @@ class TestRateLimitConcurrency:
 
         This tests race conditions in the rate limit check.
         """
+
         # Make concurrent requests up to the limit
         async def make_request():
             try:
@@ -37,10 +38,7 @@ class TestRateLimitConcurrency:
             except RateLimitError:
                 return False
 
-        results = await asyncio.gather(*[
-            make_request()
-            for _ in range(10)
-        ])
+        results = await asyncio.gather(*[make_request() for _ in range(10)])
 
         # All 10 should succeed
         assert all(results), f"Not all requests succeeded: {results}"
@@ -61,10 +59,7 @@ class TestRateLimitConcurrency:
                 return False
 
         # Try 20 concurrent requests with limit of 10
-        results = await asyncio.gather(*[
-            make_request()
-            for _ in range(20)
-        ])
+        results = await asyncio.gather(*[make_request() for _ in range(20)])
 
         allowed = sum(1 for r in results if r)
         denied = sum(1 for r in results if not r)
@@ -91,10 +86,7 @@ class TestRateLimitConcurrency:
             except RateLimitError:
                 return False
 
-        results = await asyncio.gather(*[
-            user_b_request()
-            for _ in range(5)
-        ])
+        results = await asyncio.gather(*[user_b_request() for _ in range(5)])
 
         assert all(results), "User B blocked by User A's rate limit"
 
@@ -134,10 +126,7 @@ class TestRateLimitConcurrency:
             except RateLimitError:
                 return False
 
-        results = await asyncio.gather(*[
-            check_request()
-            for _ in range(50)
-        ])
+        results = await asyncio.gather(*[check_request() for _ in range(50)])
 
         # Old entries should be cleaned, new ones allowed
         allowed = sum(1 for r in results if r)
@@ -213,6 +202,7 @@ class TestCircuitBreakerTiming:
 
         Mutation: >= changed to > would require 4 failures
         """
+
         async def failing_func():
             raise RuntimeError("Simulated failure")
 
@@ -221,9 +211,7 @@ class TestCircuitBreakerTiming:
             with pytest.raises(RuntimeError):
                 await breaker.execute(failing_func)
 
-        assert breaker.state == CircuitState.OPEN, (
-            "Circuit didn't open at threshold"
-        )
+        assert breaker.state == CircuitState.OPEN, "Circuit didn't open at threshold"
 
     @pytest.mark.asyncio
     async def test_below_threshold_stays_closed(self, breaker):
@@ -231,6 +219,7 @@ class TestCircuitBreakerTiming:
 
         Mutation: >= changed to > would open at 2
         """
+
         async def failing_func():
             raise RuntimeError("Simulated failure")
 
@@ -238,13 +227,12 @@ class TestCircuitBreakerTiming:
             with pytest.raises(RuntimeError):
                 await breaker.execute(failing_func)
 
-        assert breaker.state == CircuitState.CLOSED, (
-            "Circuit opened below threshold"
-        )
+        assert breaker.state == CircuitState.CLOSED, "Circuit opened below threshold"
 
     @pytest.mark.asyncio
     async def test_reset_after_timeout(self, breaker):
         """Circuit should transition to half-open after reset_timeout."""
+
         async def failing_func():
             raise RuntimeError("Simulated failure")
 
@@ -268,6 +256,7 @@ class TestCircuitBreakerTiming:
     @pytest.mark.asyncio
     async def test_just_before_timeout_stays_open(self, breaker):
         """Circuit should stay open just before timeout."""
+
         async def failing_func():
             raise RuntimeError("Simulated failure")
 
@@ -285,6 +274,7 @@ class TestCircuitBreakerTiming:
     @pytest.mark.asyncio
     async def test_half_open_success_closes(self, breaker):
         """Enough successes in half-open should close circuit."""
+
         async def failing_func():
             raise RuntimeError("Simulated failure")
 
@@ -310,6 +300,7 @@ class TestCircuitBreakerTiming:
     @pytest.mark.asyncio
     async def test_half_open_failure_reopens(self, breaker):
         """Failure in half-open should reopen circuit."""
+
         async def failing_func():
             raise RuntimeError("Simulated failure")
 
@@ -325,9 +316,7 @@ class TestCircuitBreakerTiming:
         with pytest.raises(RuntimeError):
             await breaker.execute(failing_func)
 
-        assert breaker.state == CircuitState.OPEN, (
-            "Circuit didn't reopen after half-open failure"
-        )
+        assert breaker.state == CircuitState.OPEN, "Circuit didn't reopen after half-open failure"
 
 
 class TestCircuitBreakerFailureWindow:
@@ -361,9 +350,7 @@ class TestCircuitBreakerFailureWindow:
         with pytest.raises(RuntimeError):
             await breaker.execute(failing_func)
 
-        assert breaker.state == CircuitState.CLOSED, (
-            "Old failures not cleaned from window"
-        )
+        assert breaker.state == CircuitState.CLOSED, "Old failures not cleaned from window"
 
     @pytest.mark.asyncio
     async def test_failures_within_window_counted(self):
@@ -384,9 +371,7 @@ class TestCircuitBreakerFailureWindow:
                 await breaker.execute(failing_func)
             await asyncio.sleep(0.1)
 
-        assert breaker.state == CircuitState.OPEN, (
-            "Failures within window not counted correctly"
-        )
+        assert breaker.state == CircuitState.OPEN, "Failures within window not counted correctly"
 
 
 class TestCircuitBreakerConcurrency:
@@ -412,10 +397,7 @@ class TestCircuitBreakerConcurrency:
                 pass
 
         # Record failures concurrently
-        await asyncio.gather(*[
-            try_execute()
-            for _ in range(10)
-        ])
+        await asyncio.gather(*[try_execute() for _ in range(10)])
 
         assert breaker.state == CircuitState.OPEN
 
@@ -433,10 +415,7 @@ class TestCircuitBreakerConcurrency:
             return True
 
         # Multiple concurrent checks
-        results = await asyncio.gather(*[
-            breaker.execute(success_func)
-            for _ in range(20)
-        ])
+        results = await asyncio.gather(*[breaker.execute(success_func) for _ in range(20)])
 
         # All should return True
         assert all(results)

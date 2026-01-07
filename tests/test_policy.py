@@ -4,25 +4,14 @@ import pytest
 
 from fastagentic.context import UserInfo
 from fastagentic.policy.base import Policy, PolicyAction, PolicyContext, PolicyResult
+from fastagentic.policy.budget import Budget, BudgetPeriod, BudgetPolicy, UsageRecord
+from fastagentic.policy.engine import PolicyEngine, PolicyEngineConfig, create_default_engine
 from fastagentic.policy.rbac import Permission, RBACPolicy, Role
 from fastagentic.policy.scopes import (
     COMMON_SCOPES,
     Scope,
     ScopePolicy,
     create_scope_policy_with_defaults,
-)
-from fastagentic.policy.budget import (
-    Budget,
-    BudgetPeriod,
-    BudgetPolicy,
-    InMemoryUsageStore,
-    UsageRecord,
-)
-from fastagentic.policy.engine import (
-    PolicyDecision,
-    PolicyEngine,
-    PolicyEngineConfig,
-    create_default_engine,
 )
 
 
@@ -198,10 +187,12 @@ class TestRBACPolicy:
     @pytest.mark.asyncio
     async def test_role_grants_access(self):
         policy = RBACPolicy()
-        policy.add_role(Role(
-            name="admin",
-            permissions=[Permission(resource="*", actions=["*"])],
-        ))
+        policy.add_role(
+            Role(
+                name="admin",
+                permissions=[Permission(resource="*", actions=["*"])],
+            )
+        )
         policy.assign_role("user-123", "admin")
 
         ctx = PolicyContext(
@@ -217,10 +208,12 @@ class TestRBACPolicy:
     @pytest.mark.asyncio
     async def test_default_role(self):
         policy = RBACPolicy(default_role="user")
-        policy.add_role(Role(
-            name="user",
-            permissions=[Permission(resource="tools/*", actions=["invoke"])],
-        ))
+        policy.add_role(
+            Role(
+                name="user",
+                permissions=[Permission(resource="tools/*", actions=["invoke"])],
+            )
+        )
 
         ctx = PolicyContext(
             user=UserInfo(id="user-123"),
@@ -300,10 +293,12 @@ class TestScopePolicy:
     @pytest.mark.asyncio
     async def test_scope_inheritance(self):
         policy = ScopePolicy()
-        policy.add_scope(Scope(
-            name="admin",
-            implies=["tools:*", "endpoints:*"],
-        ))
+        policy.add_scope(
+            Scope(
+                name="admin",
+                implies=["tools:*", "endpoints:*"],
+            )
+        )
         policy.add_scope(Scope(name="tools:*", implies=["tools:read", "tools:invoke"]))
 
         ctx = PolicyContext(
@@ -416,11 +411,13 @@ class TestBudgetPolicy:
     @pytest.mark.asyncio
     async def test_budget_warning(self):
         policy = BudgetPolicy()
-        policy.set_global_budget(Budget(
-            max_cost=100.0,
-            soft_limit_percent=80,
-            period=BudgetPeriod.DAY,
-        ))
+        policy.set_global_budget(
+            Budget(
+                max_cost=100.0,
+                soft_limit_percent=80,
+                period=BudgetPeriod.DAY,
+            )
+        )
 
         await policy._store.increment_usage("global", cost=85.0)
 

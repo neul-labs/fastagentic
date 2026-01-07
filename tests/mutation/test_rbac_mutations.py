@@ -15,11 +15,12 @@ Targeted mutations:
 """
 
 import pytest
-from hypothesis import given, strategies as st, assume
+from hypothesis import assume, given
+from hypothesis import strategies as st
 
 from fastagentic.context import UserInfo
-from fastagentic.policy.rbac import RBACPolicy, Permission, Role
-from fastagentic.policy.base import PolicyAction, PolicyContext
+from fastagentic.policy.base import PolicyContext
+from fastagentic.policy.rbac import Permission, RBACPolicy, Role
 
 
 class TestPermissionWildcardMatching:
@@ -225,16 +226,19 @@ class TestRBACPolicyEvaluation:
                 resource=resource,
                 action=action,
             )
+
         return create
 
     @pytest.mark.asyncio
     async def test_role_permission_grant(self, context_factory):
         """User with matching role permission should be allowed."""
         policy = RBACPolicy()
-        policy.add_role(Role(
-            name="user",
-            permissions=[Permission(resource="tools/*", actions=["invoke"])],
-        ))
+        policy.add_role(
+            Role(
+                name="user",
+                permissions=[Permission(resource="tools/*", actions=["invoke"])],
+            )
+        )
         policy.assign_role("test-user", "user")
 
         ctx = context_factory(
@@ -250,10 +254,12 @@ class TestRBACPolicyEvaluation:
     async def test_role_without_permission_denied(self, context_factory):
         """User without matching permission should be denied."""
         policy = RBACPolicy()
-        policy.add_role(Role(
-            name="user",
-            permissions=[Permission(resource="tools/*", actions=["read"])],
-        ))
+        policy.add_role(
+            Role(
+                name="user",
+                permissions=[Permission(resource="tools/*", actions=["read"])],
+            )
+        )
         policy.assign_role("test-user", "user")
 
         ctx = context_factory(
@@ -272,10 +278,12 @@ class TestRBACPolicyEvaluation:
         Mutation: Allowing unknown roles
         """
         policy = RBACPolicy()
-        policy.add_role(Role(
-            name="admin",
-            permissions=[Permission(resource="*", actions=["*"])],
-        ))
+        policy.add_role(
+            Role(
+                name="admin",
+                permissions=[Permission(resource="*", actions=["*"])],
+            )
+        )
         # Assign a different role (unknown to user)
         policy.assign_role("other-user", "admin")
 
@@ -292,8 +300,12 @@ class TestRBACPolicyEvaluation:
     async def test_multiple_roles_any_grants(self, context_factory):
         """If any role grants permission, should be allowed."""
         policy = RBACPolicy()
-        policy.add_role(Role(name="reader", permissions=[Permission(resource="*", actions=["read"])]))
-        policy.add_role(Role(name="writer", permissions=[Permission(resource="*", actions=["write"])]))
+        policy.add_role(
+            Role(name="reader", permissions=[Permission(resource="*", actions=["read"])])
+        )
+        policy.add_role(
+            Role(name="writer", permissions=[Permission(resource="*", actions=["write"])])
+        )
         policy.assign_role("test-user", "reader")
         policy.assign_role("test-user", "writer")
 
@@ -313,10 +325,12 @@ class TestRBACPolicyEvaluation:
         Mutation: Allowing empty roles
         """
         policy = RBACPolicy(deny_unauthenticated=True)
-        policy.add_role(Role(
-            name="user",
-            permissions=[Permission(resource="*", actions=["*"])],
-        ))
+        policy.add_role(
+            Role(
+                name="user",
+                permissions=[Permission(resource="*", actions=["*"])],
+            )
+        )
 
         ctx = context_factory(user_id=None)  # No user
         result = await policy.evaluate(ctx)
@@ -344,20 +358,25 @@ class TestRoleInheritance:
                 resource=resource,
                 action=action,
             )
+
         return create
 
     @pytest.mark.asyncio
     async def test_parent_role_permissions(self, context_factory):
         """Admin role should have all permissions."""
         policy = RBACPolicy()
-        policy.add_role(Role(
-            name="admin",
-            permissions=[Permission(resource="*", actions=["*"])],
-        ))
-        policy.add_role(Role(
-            name="user",
-            permissions=[Permission(resource="tools/*", actions=["read"])],
-        ))
+        policy.add_role(
+            Role(
+                name="admin",
+                permissions=[Permission(resource="*", actions=["*"])],
+            )
+        )
+        policy.add_role(
+            Role(
+                name="user",
+                permissions=[Permission(resource="tools/*", actions=["read"])],
+            )
+        )
         policy.assign_role("test-user", "admin")
 
         ctx = context_factory(

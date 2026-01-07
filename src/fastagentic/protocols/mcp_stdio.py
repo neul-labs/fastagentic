@@ -159,7 +159,7 @@ class MCPStdioTransport:
         from fastagentic.decorators import get_tools
 
         tools = []
-        for name, (definition, _) in get_tools().items():
+        for _name, (definition, _) in get_tools().items():
             tool_schema = {
                 "name": definition.name,
                 "description": definition.description,
@@ -271,7 +271,7 @@ class MCPStdioTransport:
         from fastagentic.decorators import get_prompts
 
         prompts = []
-        for name, (definition, _) in get_prompts().items():
+        for _name, (definition, _) in get_prompts().items():
             prompt_schema = {
                 "name": definition.name,
                 "description": definition.description,

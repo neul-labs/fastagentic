@@ -1,13 +1,9 @@
 """Tests for MCP stdio transport."""
 
-import asyncio
-import json
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from io import StringIO
 
 from fastagentic import App
-from fastagentic.protocols.mcp_stdio import MCPStdioTransport, MCPMessage
+from fastagentic.protocols.mcp_stdio import MCPMessage, MCPStdioTransport
 
 
 class TestMCPMessage:

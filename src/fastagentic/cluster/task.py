@@ -201,8 +201,8 @@ class TaskQueue:
         """
         self._store = store or InMemoryTaskStore()
         self._max_queue_size = max_queue_size
-        self._queue: asyncio.PriorityQueue[tuple[int, float, str]] = (
-            asyncio.PriorityQueue(maxsize=max_queue_size)
+        self._queue: asyncio.PriorityQueue[tuple[int, float, str]] = asyncio.PriorityQueue(
+            maxsize=max_queue_size
         )
         self._pending_count = 0
 
@@ -248,9 +248,7 @@ class TaskQueue:
 
         # Add to priority queue (lower priority value = higher priority)
         # Use negative priority so higher priority tasks come first
-        await self._queue.put(
-            (-priority.value, task.created_at, task.id)
-        )
+        await self._queue.put((-priority.value, task.created_at, task.id))
         self._pending_count += 1
 
         return task
@@ -356,9 +354,7 @@ class TaskQueue:
             await self._store.update(task)
 
             # Re-queue
-            await self._queue.put(
-                (-task.priority.value, time.time(), task.id)
-            )
+            await self._queue.put((-task.priority.value, time.time(), task.id))
             self._pending_count += 1
 
             return TaskResult(

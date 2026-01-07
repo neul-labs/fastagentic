@@ -62,9 +62,7 @@ class ApprovalRequest:
         """Check if request is still pending."""
         if self.status != ApprovalStatus.PENDING:
             return False
-        if self.expires_at and time.time() > self.expires_at:
-            return False
-        return True
+        return not (self.expires_at and time.time() > self.expires_at)
 
     @property
     def is_expired(self) -> bool:

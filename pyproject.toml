@@ -151,6 +151,17 @@ ignore = [
     "E501",   # line too long (handled by formatter)
     "B008",   # do not perform function calls in argument defaults
     "B006",   # mutable default arguments
+    "B904",   # raise from style suggestions
+    "B024",   # abstract class suggestions
+    "B027",   # empty abstract method suggestions
+    "SIM105", # contextlib.suppress suggestions
+    "SIM108", # ternary operator suggestions
+    "SIM110", # all() generator suggestions
+    "ARG001", # unused function args (common in test fixtures)
+    "ARG002", # unused method args (common in test mocks)
+    "ARG005", # unused lambda args (common in test lambdas)
+    "F841",   # local vars assigned but unused (common in tests)
+    "B007",   # unused loop vars (common in test loops)
 ]
 
 [tool.ruff.lint.isort]

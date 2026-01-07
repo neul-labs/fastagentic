@@ -5,6 +5,7 @@ from datetime import datetime
 
 import pytest
 
+from fastagentic.audit.hooks import AuditHook
 from fastagentic.audit.logger import (
     AuditEvent,
     AuditEventType,
@@ -13,9 +14,8 @@ from fastagentic.audit.logger import (
     InMemoryAuditStore,
     LoggingAuditStore,
 )
-from fastagentic.audit.hooks import AuditHook
+from fastagentic.context import UserInfo
 from fastagentic.hooks.base import HookContext, HookResultAction
-from fastagentic.context import UserInfo, UsageInfo
 
 
 class TestAuditEventType:
@@ -139,14 +139,18 @@ class TestInMemoryAuditStore:
     @pytest.mark.asyncio
     async def test_query_by_user(self):
         store = InMemoryAuditStore()
-        await store.write(AuditEvent(
-            event_type=AuditEventType.ACCESS_GRANTED,
-            user_id="user-A",
-        ))
-        await store.write(AuditEvent(
-            event_type=AuditEventType.ACCESS_GRANTED,
-            user_id="user-B",
-        ))
+        await store.write(
+            AuditEvent(
+                event_type=AuditEventType.ACCESS_GRANTED,
+                user_id="user-A",
+            )
+        )
+        await store.write(
+            AuditEvent(
+                event_type=AuditEventType.ACCESS_GRANTED,
+                user_id="user-B",
+            )
+        )
 
         events = await store.query(user_id="user-A")
 
@@ -156,14 +160,18 @@ class TestInMemoryAuditStore:
     @pytest.mark.asyncio
     async def test_query_by_severity(self):
         store = InMemoryAuditStore()
-        await store.write(AuditEvent(
-            event_type=AuditEventType.ACCESS_GRANTED,
-            severity=AuditSeverity.INFO,
-        ))
-        await store.write(AuditEvent(
-            event_type=AuditEventType.SECURITY_ALERT,
-            severity=AuditSeverity.CRITICAL,
-        ))
+        await store.write(
+            AuditEvent(
+                event_type=AuditEventType.ACCESS_GRANTED,
+                severity=AuditSeverity.INFO,
+            )
+        )
+        await store.write(
+            AuditEvent(
+                event_type=AuditEventType.SECURITY_ALERT,
+                severity=AuditSeverity.CRITICAL,
+            )
+        )
 
         events = await store.query(severity=AuditSeverity.CRITICAL)
 
@@ -175,10 +183,12 @@ class TestInMemoryAuditStore:
         store = InMemoryAuditStore(max_events=5)
 
         for i in range(10):
-            await store.write(AuditEvent(
-                event_type=AuditEventType.ACCESS_GRANTED,
-                user_id=f"user-{i}",
-            ))
+            await store.write(
+                AuditEvent(
+                    event_type=AuditEventType.ACCESS_GRANTED,
+                    user_id=f"user-{i}",
+                )
+            )
 
         events = await store.query(limit=100)
         assert len(events) == 5

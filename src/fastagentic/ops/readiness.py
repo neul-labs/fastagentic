@@ -180,127 +180,159 @@ class ReadinessChecker:
     def _register_default_checks(self) -> None:
         """Register default readiness checks."""
         # Security checks
-        self.add_check(ReadinessCheck(
-            name="auth_configured",
-            description="Authentication is configured",
-            category=CheckCategory.SECURITY,
-            check_fn=self._check_auth_configured,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="auth_configured",
+                description="Authentication is configured",
+                category=CheckCategory.SECURITY,
+                check_fn=self._check_auth_configured,
+            )
+        )
 
-        self.add_check(ReadinessCheck(
-            name="https_enabled",
-            description="HTTPS/TLS is enabled",
-            category=CheckCategory.SECURITY,
-            check_fn=self._check_https,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="https_enabled",
+                description="HTTPS/TLS is enabled",
+                category=CheckCategory.SECURITY,
+                check_fn=self._check_https,
+            )
+        )
 
-        self.add_check(ReadinessCheck(
-            name="secrets_not_in_code",
-            description="Secrets are not hardcoded",
-            category=CheckCategory.SECURITY,
-            check_fn=self._check_secrets,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="secrets_not_in_code",
+                description="Secrets are not hardcoded",
+                category=CheckCategory.SECURITY,
+                check_fn=self._check_secrets,
+            )
+        )
 
-        self.add_check(ReadinessCheck(
-            name="rate_limiting",
-            description="Rate limiting is configured",
-            category=CheckCategory.SECURITY,
-            check_fn=self._check_rate_limiting,
-            required=False,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="rate_limiting",
+                description="Rate limiting is configured",
+                category=CheckCategory.SECURITY,
+                check_fn=self._check_rate_limiting,
+                required=False,
+            )
+        )
 
         # Reliability checks
-        self.add_check(ReadinessCheck(
-            name="retry_policy",
-            description="Retry policy is configured",
-            category=CheckCategory.RELIABILITY,
-            check_fn=self._check_retry_policy,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="retry_policy",
+                description="Retry policy is configured",
+                category=CheckCategory.RELIABILITY,
+                check_fn=self._check_retry_policy,
+            )
+        )
 
-        self.add_check(ReadinessCheck(
-            name="timeout_configured",
-            description="Timeouts are configured",
-            category=CheckCategory.RELIABILITY,
-            check_fn=self._check_timeouts,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="timeout_configured",
+                description="Timeouts are configured",
+                category=CheckCategory.RELIABILITY,
+                check_fn=self._check_timeouts,
+            )
+        )
 
-        self.add_check(ReadinessCheck(
-            name="error_handling",
-            description="Error handling is configured",
-            category=CheckCategory.RELIABILITY,
-            check_fn=self._check_error_handling,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="error_handling",
+                description="Error handling is configured",
+                category=CheckCategory.RELIABILITY,
+                check_fn=self._check_error_handling,
+            )
+        )
 
         # Observability checks
-        self.add_check(ReadinessCheck(
-            name="logging_configured",
-            description="Logging is configured",
-            category=CheckCategory.OBSERVABILITY,
-            check_fn=self._check_logging,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="logging_configured",
+                description="Logging is configured",
+                category=CheckCategory.OBSERVABILITY,
+                check_fn=self._check_logging,
+            )
+        )
 
-        self.add_check(ReadinessCheck(
-            name="metrics_enabled",
-            description="Metrics collection is enabled",
-            category=CheckCategory.OBSERVABILITY,
-            check_fn=self._check_metrics,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="metrics_enabled",
+                description="Metrics collection is enabled",
+                category=CheckCategory.OBSERVABILITY,
+                check_fn=self._check_metrics,
+            )
+        )
 
-        self.add_check(ReadinessCheck(
-            name="health_endpoint",
-            description="Health endpoint is available",
-            category=CheckCategory.OBSERVABILITY,
-            check_fn=self._check_health_endpoint,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="health_endpoint",
+                description="Health endpoint is available",
+                category=CheckCategory.OBSERVABILITY,
+                check_fn=self._check_health_endpoint,
+            )
+        )
 
         # Performance checks
-        self.add_check(ReadinessCheck(
-            name="caching_configured",
-            description="Caching is configured",
-            category=CheckCategory.PERFORMANCE,
-            check_fn=self._check_caching,
-            required=False,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="caching_configured",
+                description="Caching is configured",
+                category=CheckCategory.PERFORMANCE,
+                check_fn=self._check_caching,
+                required=False,
+            )
+        )
 
-        self.add_check(ReadinessCheck(
-            name="connection_pooling",
-            description="Connection pooling is enabled",
-            category=CheckCategory.PERFORMANCE,
-            check_fn=self._check_connection_pooling,
-            required=False,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="connection_pooling",
+                description="Connection pooling is enabled",
+                category=CheckCategory.PERFORMANCE,
+                check_fn=self._check_connection_pooling,
+                required=False,
+            )
+        )
 
         # Compliance checks
-        self.add_check(ReadinessCheck(
-            name="pii_detection",
-            description="PII detection is enabled",
-            category=CheckCategory.COMPLIANCE,
-            check_fn=self._check_pii_detection,
-            required=False,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="pii_detection",
+                description="PII detection is enabled",
+                category=CheckCategory.COMPLIANCE,
+                check_fn=self._check_pii_detection,
+                required=False,
+            )
+        )
 
-        self.add_check(ReadinessCheck(
-            name="audit_logging",
-            description="Audit logging is enabled",
-            category=CheckCategory.COMPLIANCE,
-            check_fn=self._check_audit_logging,
-            required=False,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="audit_logging",
+                description="Audit logging is enabled",
+                category=CheckCategory.COMPLIANCE,
+                check_fn=self._check_audit_logging,
+                required=False,
+            )
+        )
 
         # Configuration checks
-        self.add_check(ReadinessCheck(
-            name="environment_configured",
-            description="Environment is properly configured",
-            category=CheckCategory.CONFIGURATION,
-            check_fn=self._check_environment,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="environment_configured",
+                description="Environment is properly configured",
+                category=CheckCategory.CONFIGURATION,
+                check_fn=self._check_environment,
+            )
+        )
 
-        self.add_check(ReadinessCheck(
-            name="dependencies_available",
-            description="Required dependencies are available",
-            category=CheckCategory.CONFIGURATION,
-            check_fn=self._check_dependencies,
-        ))
+        self.add_check(
+            ReadinessCheck(
+                name="dependencies_available",
+                description="Required dependencies are available",
+                category=CheckCategory.CONFIGURATION,
+                check_fn=self._check_dependencies,
+            )
+        )
 
     def add_check(self, check: ReadinessCheck) -> None:
         """Add a readiness check.

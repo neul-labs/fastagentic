@@ -81,9 +81,7 @@ class CrewAIAdapter(BaseAdapter):
 
         return result
 
-    async def stream(
-        self, input: Any, ctx: AdapterContext | Any
-    ) -> AsyncIterator[StreamEvent]:
+    async def stream(self, input: Any, ctx: AdapterContext | Any) -> AsyncIterator[StreamEvent]:
         """Stream events from the CrewAI crew execution.
 
         Yields events for agent starts/ends and task completions.
@@ -225,6 +223,7 @@ class CrewAIAdapter(BaseAdapter):
         self.crew.verbose = True
 
         try:
+
             async def capture_output() -> Any:
                 loop = asyncio.get_event_loop()
                 return await loop.run_in_executor(

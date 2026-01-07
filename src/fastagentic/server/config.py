@@ -108,10 +108,14 @@ class ServerConfig:
             port=int(os.environ.get("FASTAGENTIC_PORT", "8000")),
             workers=int(os.environ.get("FASTAGENTIC_WORKERS", "1")),
             reload=os.environ.get("FASTAGENTIC_RELOAD", "").lower() == "true",
-            max_concurrent=int(mc) if (mc := os.environ.get("FASTAGENTIC_MAX_CONCURRENT")) else None,
+            max_concurrent=int(mc)
+            if (mc := os.environ.get("FASTAGENTIC_MAX_CONCURRENT"))
+            else None,
             instance_id=os.environ.get("FASTAGENTIC_INSTANCE_ID") or _generate_instance_id(),
             timeout_keep_alive=int(os.environ.get("FASTAGENTIC_TIMEOUT_KEEP_ALIVE", "5")),
-            timeout_graceful_shutdown=int(os.environ.get("FASTAGENTIC_TIMEOUT_GRACEFUL_SHUTDOWN", "30")),
+            timeout_graceful_shutdown=int(
+                os.environ.get("FASTAGENTIC_TIMEOUT_GRACEFUL_SHUTDOWN", "30")
+            ),
             pool=PoolConfig.from_env(),
         )
 

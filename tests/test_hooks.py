@@ -1,18 +1,19 @@
 """Tests for FastAgentic hooks module."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
+import pytest
+
+from fastagentic.context import UsageInfo, UserInfo
 from fastagentic.hooks.base import (
     Hook,
     HookContext,
     HookResult,
     HookResultAction,
-    hook,
-    get_registered_hooks,
     _hook_registry,
+    get_registered_hooks,
+    hook,
 )
-from fastagentic.context import UserInfo, UsageInfo
 
 
 class TestHookResultAction:

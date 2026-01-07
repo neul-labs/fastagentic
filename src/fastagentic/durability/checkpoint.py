@@ -209,10 +209,7 @@ class CheckpointManager:
             List of Checkpoint objects
         """
         checkpoint_data = await self.store.list_checkpoints(run_id)
-        return [
-            Checkpoint.from_dict(cp.get("data", cp))
-            for cp in checkpoint_data
-        ]
+        return [Checkpoint.from_dict(cp.get("data", cp)) for cp in checkpoint_data]
 
     async def delete_checkpoint(
         self,

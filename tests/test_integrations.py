@@ -1,10 +1,11 @@
 """Tests for FastAgentic integrations."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
-from fastagentic.integrations.base import Integration, IntegrationConfig
-from fastagentic.hooks.base import HookContext, HookResult, HookResultAction
+import pytest
+
+from fastagentic.hooks.base import HookContext, HookResultAction
+from fastagentic.integrations.base import IntegrationConfig
 
 
 class TestIntegrationBase:
@@ -150,7 +151,7 @@ class TestLakeraIntegration:
     @pytest.mark.asyncio
     async def test_lakera_hook_format_messages(self):
         """Test message formatting for scanning."""
-        from fastagentic.integrations.lakera import LakeraHook, LakeraConfig
+        from fastagentic.integrations.lakera import LakeraConfig, LakeraHook
 
         config = LakeraConfig(api_key="test")
         hook = LakeraHook(config)
@@ -205,7 +206,7 @@ class TestLakeraHookBehavior:
     @pytest.fixture
     def hook(self):
         """Create a Lakera hook for testing."""
-        from fastagentic.integrations.lakera import LakeraHook, LakeraConfig
+        from fastagentic.integrations.lakera import LakeraConfig, LakeraHook
 
         config = LakeraConfig(
             api_key="test-key",
@@ -219,14 +220,13 @@ class TestLakeraHookBehavior:
         return HookContext(
             run_id="test-run",
             endpoint="/test",
-            messages=[
-                {"role": "user", "content": "Hello, how are you?"}
-            ],
+            messages=[{"role": "user", "content": "Hello, how are you?"}],
         )
 
     @pytest.mark.asyncio
     async def test_hook_proceeds_when_not_flagged(self, hook, hook_context):
         """Test hook proceeds when content is not flagged."""
+
         # Mock the scan to return not flagged
         async def mock_scan(*args, **kwargs):
             return {"flagged": False, "categories": {}}
@@ -239,6 +239,7 @@ class TestLakeraHookBehavior:
     @pytest.mark.asyncio
     async def test_hook_rejects_when_flagged_and_blocking(self, hook, hook_context):
         """Test hook rejects when content is flagged and blocking enabled."""
+
         # Mock the scan to return flagged
         async def mock_scan(*args, **kwargs):
             return {
@@ -257,7 +258,7 @@ class TestLakeraHookBehavior:
     @pytest.mark.asyncio
     async def test_hook_proceeds_when_flagged_but_not_blocking(self, hook_context):
         """Test hook proceeds when flagged but blocking disabled."""
-        from fastagentic.integrations.lakera import LakeraHook, LakeraConfig
+        from fastagentic.integrations.lakera import LakeraConfig, LakeraHook
 
         config = LakeraConfig(
             api_key="test-key",

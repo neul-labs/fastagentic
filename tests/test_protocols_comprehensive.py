@@ -1,14 +1,7 @@
 """Comprehensive tests for MCP and A2A protocols."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-
-from fastagentic.protocols.mcp import (
-    get_tools,
-    get_resources,
-    get_prompts,
-)
-from fastagentic.decorators import tool, resource, prompt
+from fastagentic.decorators import prompt, resource, tool
+from fastagentic.protocols.mcp import get_prompts, get_resources, get_tools
 
 
 class TestMCPProtocol:
@@ -35,6 +28,7 @@ class TestMCPToolDecorator:
 
     def test_tool_registration(self):
         """Test that @tool decorator registers tools."""
+
         @tool(name="test_mcp_tool_1", description="A test tool")
         async def my_test_tool(query: str) -> str:
             return f"Result: {query}"
@@ -44,6 +38,7 @@ class TestMCPToolDecorator:
 
     def test_tool_with_schema(self):
         """Test tool with input schema."""
+
         @tool(
             name="test_schema_tool_1",
             description="A tool with schema",
@@ -60,6 +55,7 @@ class TestMCPResourceDecorator:
 
     def test_resource_registration(self):
         """Test that @resource decorator registers resources."""
+
         @resource(
             name="test_mcp_resource_1",
             uri="test://resource",
@@ -77,6 +73,7 @@ class TestMCPPromptDecorator:
 
     def test_prompt_registration(self):
         """Test that @prompt decorator registers prompts."""
+
         @prompt(name="test_mcp_prompt_1", description="A test prompt")
         def my_test_prompt(name: str) -> str:
             return f"Hello, {name}!"
@@ -90,6 +87,7 @@ class TestProtocolIntegration:
 
     def test_tool_execution(self):
         """Test that registered tools can be executed."""
+
         @tool(name="integration_tool_1", description="Integration test tool")
         async def integration_tool(x: int, y: int) -> int:
             return x + y
@@ -103,6 +101,7 @@ class TestProtocolIntegration:
 
     def test_resource_execution(self):
         """Test that registered resources can be accessed."""
+
         @resource(
             name="integration_resource_1",
             uri="test://integration",
@@ -116,6 +115,7 @@ class TestProtocolIntegration:
 
     def test_prompt_execution(self):
         """Test that registered prompts can be called."""
+
         @prompt(name="integration_prompt_1", description="Integration test prompt")
         def integration_prompt(message: str) -> str:
             return f"Prompt: {message}"

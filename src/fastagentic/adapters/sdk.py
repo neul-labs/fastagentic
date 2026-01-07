@@ -91,9 +91,7 @@ class CommunityAdapter(BaseAdapter):
     def get_metadata(cls) -> AdapterMetadata:
         """Get adapter metadata."""
         if not hasattr(cls, "metadata"):
-            raise NotImplementedError(
-                f"{cls.__name__} must define a 'metadata' class attribute"
-            )
+            raise NotImplementedError(f"{cls.__name__} must define a 'metadata' class attribute")
         return cls.metadata
 
     def validate_config(self, _config: dict[str, Any]) -> list[str]:
@@ -195,9 +193,7 @@ class SimpleAdapter(CommunityAdapter):
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(None, self.invoke_fn, extracted_input)
 
-    async def stream(
-        self, input: Any, ctx: AdapterContext | Any
-    ) -> AsyncIterator[StreamEvent]:
+    async def stream(self, input: Any, ctx: AdapterContext | Any) -> AsyncIterator[StreamEvent]:
         """Stream from the wrapped function."""
         adapter_ctx = self._ensure_adapter_context(ctx)
         extracted_input = self._extract_input(input)
@@ -331,11 +327,7 @@ class AdapterRegistry:
         Returns:
             List of matching adapter classes
         """
-        return [
-            cls
-            for cls in self._adapters.values()
-            if cls.get_metadata().framework == framework
-        ]
+        return [cls for cls in self._adapters.values() if cls.get_metadata().framework == framework]
 
     def find_by_capability(self, capability: str) -> list[type[CommunityAdapter]]:
         """Find adapters by capability.
@@ -347,9 +339,7 @@ class AdapterRegistry:
             List of matching adapter classes
         """
         return [
-            cls
-            for cls in self._adapters.values()
-            if capability in cls.get_metadata().capabilities
+            cls for cls in self._adapters.values() if capability in cls.get_metadata().capabilities
         ]
 
 

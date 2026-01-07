@@ -1,8 +1,6 @@
 """Tests for integration hooks behavior."""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
 
 from fastagentic.hooks.base import HookContext, HookResult, HookResultAction
 

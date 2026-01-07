@@ -127,6 +127,7 @@ class Mem0Hook(Hook):
 
         except Exception as e:
             import structlog
+
             logger = structlog.get_logger()
             logger.warning("mem0_search_error", error=str(e))
 
@@ -174,6 +175,7 @@ class Mem0Hook(Hook):
 
         except Exception as e:
             import structlog
+
             logger = structlog.get_logger()
             logger.warning("mem0_add_error", error=str(e))
 

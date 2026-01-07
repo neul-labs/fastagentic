@@ -1,7 +1,8 @@
 """Tests for FastAgentic context classes."""
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from fastagentic.context import AgentContext, RunContext, UsageInfo, UserInfo
 

@@ -94,9 +94,7 @@ class AutoGenAdapter(BaseAdapter):
         except Exception as e:
             raise RuntimeError(f"AutoGen invocation failed: {e}") from e
 
-    async def _invoke_two_agent(
-        self, message: str, _ctx: AdapterContext
-    ) -> dict[str, Any]:
+    async def _invoke_two_agent(self, message: str, _ctx: AdapterContext) -> dict[str, Any]:
         """Invoke two-agent conversation."""
         # Register message callback
         self._register_message_callback()
@@ -113,9 +111,7 @@ class AutoGenAdapter(BaseAdapter):
         # Extract result
         return self._extract_chat_result(chat_result)
 
-    async def _invoke_group_chat(
-        self, message: str, _ctx: AdapterContext
-    ) -> dict[str, Any]:
+    async def _invoke_group_chat(self, message: str, _ctx: AdapterContext) -> dict[str, Any]:
         """Invoke group chat conversation."""
         from autogen import GroupChatManager
 
@@ -139,9 +135,7 @@ class AutoGenAdapter(BaseAdapter):
 
         return self._extract_chat_result(chat_result)
 
-    async def stream(
-        self, input: Any, ctx: AdapterContext | Any
-    ) -> AsyncIterator[StreamEvent]:
+    async def stream(self, input: Any, ctx: AdapterContext | Any) -> AsyncIterator[StreamEvent]:
         """Stream events from AutoGen conversation.
 
         Args:
@@ -280,7 +274,9 @@ class AutoGenAdapter(BaseAdapter):
                     "sender": getattr(sender, "name", str(sender)),
                     "recipient": getattr(recipient, "name", str(recipient)),
                     "content": message if isinstance(message, str) else message.get("content", ""),
-                    "role": message.get("role", "assistant") if isinstance(message, dict) else "assistant",
+                    "role": message.get("role", "assistant")
+                    if isinstance(message, dict)
+                    else "assistant",
                 }
             )
 
@@ -296,9 +292,7 @@ class AutoGenAdapter(BaseAdapter):
         """Register streaming callback."""
         self._register_message_callback()
 
-    def _message_to_event(
-        self, msg: dict[str, Any], ctx: AdapterContext
-    ) -> StreamEvent:
+    def _message_to_event(self, msg: dict[str, Any], ctx: AdapterContext) -> StreamEvent:
         """Convert message to stream event."""
         content = msg.get("content", "")
         sender = msg.get("sender", "agent")

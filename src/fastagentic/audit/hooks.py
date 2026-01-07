@@ -218,11 +218,7 @@ class AuditHook(Hook):
 
         # Check if tool errored
         tool_error = ctx.metadata.get("tool_error")
-        event_type = (
-            AuditEventType.TOOL_ERROR
-            if tool_error
-            else AuditEventType.TOOL_COMPLETE
-        )
+        event_type = AuditEventType.TOOL_ERROR if tool_error else AuditEventType.TOOL_COMPLETE
 
         await self._logger.log_tool(
             event_type=event_type,

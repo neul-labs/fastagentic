@@ -137,9 +137,7 @@ class InstanceMetricsMiddleware(BaseHTTPMiddleware):
             instance_id: Unique identifier for this instance
         """
         super().__init__(app)
-        self.instance_id = instance_id or os.environ.get(
-            "FASTAGENTIC_INSTANCE_ID", "unknown"
-        )
+        self.instance_id = instance_id or os.environ.get("FASTAGENTIC_INSTANCE_ID", "unknown")
         self._request_count = 0
         self._error_count = 0
         self._lock = asyncio.Lock()

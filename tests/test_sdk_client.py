@@ -1,15 +1,6 @@
 """Tests for SDK client."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-import httpx
-
-from fastagentic.sdk.client import (
-    ClientConfig,
-    AsyncFastAgenticClient,
-    FastAgenticClient,
-)
-from fastagentic.sdk.models import RunResponse, StreamEvent, StreamEventType
+from fastagentic.sdk.client import AsyncFastAgenticClient, ClientConfig, FastAgenticClient
 
 
 class TestClientConfig:
@@ -49,28 +40,20 @@ class TestClientConfig:
 
     def test_get_headers_with_api_key(self):
         """Test getting headers with API key."""
-        config = ClientConfig(
-            base_url="http://localhost:8000",
-            api_key="secret-key"
-        )
+        config = ClientConfig(base_url="http://localhost:8000", api_key="secret-key")
         headers = config.get_headers()
         assert headers["Authorization"] == "Bearer secret-key"
 
     def test_get_headers_with_custom_headers(self):
         """Test getting headers with custom headers."""
-        config = ClientConfig(
-            base_url="http://localhost:8000",
-            headers={"X-Custom": "value"}
-        )
+        config = ClientConfig(base_url="http://localhost:8000", headers={"X-Custom": "value"})
         headers = config.get_headers()
         assert headers["X-Custom"] == "value"
 
     def test_headers_merge_api_key_and_custom(self):
         """Test that API key Authorization header is added to custom headers."""
         config = ClientConfig(
-            base_url="http://localhost:8000",
-            api_key="my-key",
-            headers={"X-Custom": "value"}
+            base_url="http://localhost:8000", api_key="my-key", headers={"X-Custom": "value"}
         )
         headers = config.get_headers()
         assert headers["Authorization"] == "Bearer my-key"
@@ -138,12 +121,12 @@ class TestFastAgenticClient:
     def test_sync_client_attributes(self):
         """Test sync client has expected attributes."""
         client = FastAgenticClient(base_url="http://localhost:8000")
-        assert hasattr(client, 'config')
-        assert hasattr(client, '_client')
-        assert hasattr(client, 'run')
-        assert hasattr(client, 'stream')
-        assert hasattr(client, 'close')
-        assert hasattr(client, 'list_tools')
-        assert hasattr(client, 'invoke_tool')
-        assert hasattr(client, 'health')
-        assert hasattr(client, 'info')
+        assert hasattr(client, "config")
+        assert hasattr(client, "_client")
+        assert hasattr(client, "run")
+        assert hasattr(client, "stream")
+        assert hasattr(client, "close")
+        assert hasattr(client, "list_tools")
+        assert hasattr(client, "invoke_tool")
+        assert hasattr(client, "health")
+        assert hasattr(client, "info")

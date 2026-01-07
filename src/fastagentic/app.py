@@ -18,6 +18,7 @@ from fastagentic.context import AgentContext, RunContext
 from fastagentic.decorators import get_endpoints, get_prompts, get_resources, get_tools
 
 if TYPE_CHECKING:
+    from fastagentic.context import UserInfo
     from fastagentic.hooks.base import Hook
     from fastagentic.memory import MemoryProvider
 
@@ -155,6 +156,7 @@ class App:
     def _generate_instance_id(self) -> str:
         """Generate a unique instance ID."""
         import socket
+
         hostname = socket.gethostname()
         pid = os.getpid()
         return f"{hostname}-{pid}"
@@ -164,6 +166,7 @@ class App:
         # Add concurrency limit middleware if configured
         if self.config.max_concurrent:
             from fastagentic.server.middleware import ConcurrencyLimitMiddleware
+
             self._fastapi.add_middleware(
                 ConcurrencyLimitMiddleware,
                 max_concurrent=self.config.max_concurrent,
@@ -175,6 +178,7 @@ class App:
 
         # Add instance metrics middleware
         from fastagentic.server.middleware import InstanceMetricsMiddleware
+
         self._fastapi.add_middleware(
             InstanceMetricsMiddleware,
             instance_id=self._instance_id,
@@ -261,8 +265,9 @@ class App:
 
                 # Create async engine with pool configuration
                 self._db_engine = create_async_engine(
-                    store_url.replace("postgres://", "postgresql+asyncpg://")
-                    .replace("postgresql://", "postgresql+asyncpg://"),
+                    store_url.replace("postgres://", "postgresql+asyncpg://").replace(
+                        "postgresql://", "postgresql+asyncpg://"
+                    ),
                     pool_size=self.config.db_pool_size,
                     max_overflow=self.config.db_max_overflow,
                     pool_timeout=30.0,
@@ -400,14 +405,10 @@ class App:
                             "description": defn.description,
                             "endpoint": path,
                             "inputSchema": (
-                                defn.input_model.model_json_schema()
-                                if defn.input_model
-                                else {}
+                                defn.input_model.model_json_schema() if defn.input_model else {}
                             ),
                             "outputSchema": (
-                                defn.output_model.model_json_schema()
-                                if defn.output_model
-                                else {}
+                                defn.output_model.model_json_schema() if defn.output_model else {}
                             ),
                         }
                     )

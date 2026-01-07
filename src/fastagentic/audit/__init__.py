@@ -5,12 +5,7 @@ and operational monitoring of agentic applications.
 """
 
 from fastagentic.audit.hooks import AuditHook
-from fastagentic.audit.logger import (
-    AuditEvent,
-    AuditEventType,
-    AuditLogger,
-    AuditSeverity,
-)
+from fastagentic.audit.logger import AuditEvent, AuditEventType, AuditLogger, AuditSeverity
 
 __all__ = [
     "AuditLogger",

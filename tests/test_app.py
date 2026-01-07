@@ -1,8 +1,5 @@
 """Tests for the FastAgentic App class."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-
 from fastagentic import App
 from fastagentic.app import AppConfig
 
@@ -63,6 +60,7 @@ class TestApp:
         assert hasattr(app, "fastapi")
         # Should be a FastAPI instance
         from fastapi import FastAPI
+
         assert isinstance(app.fastapi, FastAPI)
 
     def test_app_with_hooks(self):

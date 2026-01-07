@@ -60,9 +60,7 @@ class LlamaIndexAdapter(BaseAdapter):
             similarity_top_k: Number of similar documents to retrieve
         """
         if not any([agent, query_engine, chat_engine]):
-            raise ValueError(
-                "Must provide at least one of: agent, query_engine, chat_engine"
-            )
+            raise ValueError("Must provide at least one of: agent, query_engine, chat_engine")
 
         self.agent = agent
         self.query_engine = query_engine
@@ -143,9 +141,7 @@ class LlamaIndexAdapter(BaseAdapter):
 
         return response
 
-    async def stream(
-        self, input: Any, ctx: AdapterContext | Any
-    ) -> AsyncIterator[StreamEvent]:
+    async def stream(self, input: Any, ctx: AdapterContext | Any) -> AsyncIterator[StreamEvent]:
         """Stream events from LlamaIndex.
 
         Args:
@@ -176,18 +172,14 @@ class LlamaIndexAdapter(BaseAdapter):
                 run_id=adapter_ctx.run_id,
             )
 
-    async def _stream_agent(
-        self, query: str, ctx: AdapterContext
-    ) -> AsyncIterator[StreamEvent]:
+    async def _stream_agent(self, query: str, ctx: AdapterContext) -> AsyncIterator[StreamEvent]:
         """Stream from LlamaIndex agent."""
         assert self.agent is not None
         chat_history = ctx.state.get("chat_history", [])
         full_response = ""
 
         if hasattr(self.agent, "astream_chat"):
-            response_gen = await self.agent.astream_chat(
-                query, chat_history=chat_history
-            )
+            response_gen = await self.agent.astream_chat(query, chat_history=chat_history)
 
             async for token in response_gen.async_response_gen():
                 full_response += token
@@ -241,9 +233,7 @@ class LlamaIndexAdapter(BaseAdapter):
         full_response = ""
 
         if hasattr(self.chat_engine, "astream_chat"):
-            response_gen = await self.chat_engine.astream_chat(
-                query, chat_history=chat_history
-            )
+            response_gen = await self.chat_engine.astream_chat(query, chat_history=chat_history)
 
             async for token in response_gen.async_response_gen():
                 full_response += token
@@ -388,9 +378,7 @@ class LlamaIndexAdapter(BaseAdapter):
                 {
                     "text": getattr(node, "text", "")[:500],
                     "score": getattr(node, "score", None),
-                    "metadata": getattr(node.node, "metadata", {})
-                    if hasattr(node, "node")
-                    else {},
+                    "metadata": getattr(node.node, "metadata", {}) if hasattr(node, "node") else {},
                 }
                 for node in response.source_nodes
             ]

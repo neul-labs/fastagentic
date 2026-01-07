@@ -11,11 +11,7 @@ from fastagentic.templates.base import (
     TemplateVariable,
     TemplateVersion,
 )
-from fastagentic.templates.composer import (
-    ComposedTemplate,
-    CompositionConfig,
-    TemplateComposer,
-)
+from fastagentic.templates.composer import ComposedTemplate, CompositionConfig, TemplateComposer
 from fastagentic.templates.marketplace import (
     Marketplace,
     MarketplaceConfig,

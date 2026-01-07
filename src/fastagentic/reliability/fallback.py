@@ -197,9 +197,10 @@ class StrategyFallback:
                 error_str = str(e).lower()
 
                 # Check if this error triggers fallback to next strategy
-                should_continue = any(
-                    cond.lower() in error_str for cond in on_conditions
-                ) or "error" in on_conditions
+                should_continue = (
+                    any(cond.lower() in error_str for cond in on_conditions)
+                    or "error" in on_conditions
+                )
 
                 if not should_continue:
                     raise

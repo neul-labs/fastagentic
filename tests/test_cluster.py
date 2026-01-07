@@ -5,19 +5,17 @@ import asyncio
 import pytest
 
 from fastagentic.cluster import (
-    Worker,
-    WorkerStatus,
-    WorkerConfig,
-    WorkerPool,
-    Task,
-    TaskStatus,
-    TaskResult,
-    TaskQueue,
-    TaskPriority,
     Coordinator,
     CoordinatorConfig,
+    Task,
+    TaskPriority,
+    TaskQueue,
+    TaskStatus,
+    Worker,
+    WorkerConfig,
+    WorkerPool,
+    WorkerStatus,
 )
-
 
 # ============================================================================
 # Worker Tests
@@ -462,9 +460,7 @@ class TestCoordinator:
     @pytest.mark.asyncio
     async def test_start_stop_coordinator(self):
         """Test starting and stopping coordinator."""
-        coordinator = Coordinator(
-            config=CoordinatorConfig(min_workers=1, auto_scale=False)
-        )
+        coordinator = Coordinator(config=CoordinatorConfig(min_workers=1, auto_scale=False))
         await coordinator.start()
         assert coordinator.is_running
 
@@ -485,9 +481,7 @@ class TestCoordinator:
     @pytest.mark.asyncio
     async def test_submit_task(self):
         """Test submitting a task."""
-        coordinator = Coordinator(
-            config=CoordinatorConfig(min_workers=1, auto_scale=False)
-        )
+        coordinator = Coordinator(config=CoordinatorConfig(min_workers=1, auto_scale=False))
 
         @coordinator.handler("double")
         async def double(data):
@@ -502,9 +496,7 @@ class TestCoordinator:
     @pytest.mark.asyncio
     async def test_submit_async_and_wait(self):
         """Test async submit and wait."""
-        coordinator = Coordinator(
-            config=CoordinatorConfig(min_workers=1, auto_scale=False)
-        )
+        coordinator = Coordinator(config=CoordinatorConfig(min_workers=1, auto_scale=False))
 
         @coordinator.handler("process")
         async def process(data):
@@ -528,9 +520,7 @@ class TestCoordinator:
     @pytest.mark.asyncio
     async def test_coordinator_stats(self):
         """Test coordinator statistics."""
-        coordinator = Coordinator(
-            config=CoordinatorConfig(min_workers=2, auto_scale=False)
-        )
+        coordinator = Coordinator(config=CoordinatorConfig(min_workers=2, auto_scale=False))
         await coordinator.start()
 
         stats = coordinator.get_stats()
@@ -557,9 +547,7 @@ class TestCoordinator:
     @pytest.mark.asyncio
     async def test_coordinator_get_workers(self):
         """Test getting worker list."""
-        coordinator = Coordinator(
-            config=CoordinatorConfig(min_workers=2, auto_scale=False)
-        )
+        coordinator = Coordinator(config=CoordinatorConfig(min_workers=2, auto_scale=False))
         await coordinator.start()
 
         workers = await coordinator.get_workers()

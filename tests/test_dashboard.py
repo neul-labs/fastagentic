@@ -5,20 +5,18 @@ import time
 import pytest
 
 from fastagentic.dashboard import (
-    StatsCollector,
-    RunStats,
-    EndpointStats,
-    SystemStats,
-    TimeSeriesPoint,
-    MetricsRegistry,
     Counter,
-    Gauge,
-    Histogram,
-    PrometheusExporter,
     DashboardAPI,
     DashboardConfig,
+    EndpointStats,
+    Gauge,
+    Histogram,
+    MetricsRegistry,
+    PrometheusExporter,
+    RunStats,
+    StatsCollector,
+    SystemStats,
 )
-
 
 # ============================================================================
 # Stats Tests

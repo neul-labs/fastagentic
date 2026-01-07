@@ -8,12 +8,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
-from fastagentic.cluster.task import (
-    Task,
-    TaskPriority,
-    TaskQueue,
-    TaskResult,
-)
+from fastagentic.cluster.task import Task, TaskPriority, TaskQueue, TaskResult
 from fastagentic.cluster.worker import (
     InMemoryWorkerRegistry,
     WorkerConfig,

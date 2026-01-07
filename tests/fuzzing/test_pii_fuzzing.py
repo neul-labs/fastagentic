@@ -10,19 +10,13 @@ These tests use property-based testing to find edge cases in:
 - ReDoS vulnerability prevention
 """
 
-import re
 import time
-from typing import Any
 
 import pytest
-from hypothesis import given, strategies as st, assume, settings
+from hypothesis import assume, given
+from hypothesis import strategies as st
 
-from fastagentic.compliance.pii import (
-    PIIDetector,
-    PIIMasker,
-    PIIType,
-    PIIMatch,
-)
+from fastagentic.compliance.pii import PIIDetector, PIIMasker, PIIType
 
 
 class TestPIIDetectorFuzzing:
@@ -98,7 +92,9 @@ class TestPIIDetectorFuzzing:
         subscriber=st.integers(min_value=0, max_value=9999),
         separator=st.sampled_from(["-", ".", " ", ""]),
     )
-    def test_us_phone_formats(self, detector, area: int, exchange: int, subscriber: int, separator: str):
+    def test_us_phone_formats(
+        self, detector, area: int, exchange: int, subscriber: int, separator: str
+    ):
         """Test various US phone number formats."""
         phone = f"{area}{separator}{exchange}{separator}{subscriber:04d}"
         text = f"Call me at {phone}"
@@ -368,7 +364,7 @@ class TestPIIDetectorOverlapping:
 
         # Should not have overlapping matches returned
         for i, m1 in enumerate(matches):
-            for m2 in matches[i+1:]:
+            for m2 in matches[i + 1 :]:
                 # Check no overlap (or same type with higher confidence wins)
                 has_overlap = m1.start < m2.end and m2.start < m1.end
                 if has_overlap:

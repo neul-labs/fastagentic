@@ -420,9 +420,7 @@ class TestRunSingleQuery:
 
             with patch("fastagentic.cli.agent.AgentClient") as mock_client_cls:
                 mock_client = AsyncMock()
-                mock_client.invoke = AsyncMock(
-                    return_value={"response": "Saved response"}
-                )
+                mock_client.invoke = AsyncMock(return_value={"response": "Saved response"})
                 mock_client.__aenter__ = AsyncMock(return_value=mock_client)
                 mock_client.__aexit__ = AsyncMock(return_value=None)
                 mock_client_cls.return_value = mock_client

@@ -57,7 +57,10 @@ class PromptVariable:
         # Type checking
         type_valid = self._check_type(value)
         if not type_valid:
-            return False, f"Variable '{self.name}' expected {self.type.value}, got {type(value).__name__}"
+            return (
+                False,
+                f"Variable '{self.name}' expected {self.type.value}, got {type(value).__name__}",
+            )
 
         # Custom validation
         if self.validator is not None:
@@ -303,6 +306,7 @@ def _process_variables(template: str, context: dict[str, Any]) -> str:
             str_value = "true" if value else "false"
         elif isinstance(value, (list, dict)):
             import json
+
             str_value = json.dumps(value)
         else:
             str_value = str(value)

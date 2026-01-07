@@ -332,7 +332,7 @@ class PromptRegistry:
         for v in existing_versions:
             existing = await self._store.load(name, v)
             if existing:
-                existing.is_active = (v == version)
+                existing.is_active = v == version
                 await self._store.save(name, existing)
 
         # Update cache

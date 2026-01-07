@@ -322,9 +322,7 @@ class AuditLogger:
 
             logger.log(
                 level,
-                f"AUDIT: [{event.event_type.value}] "
-                f"user={event.user_id} "
-                f"outcome={event.outcome}",
+                f"AUDIT: [{event.event_type.value}] user={event.user_id} outcome={event.outcome}",
             )
 
     async def log_access(
@@ -356,15 +354,9 @@ class AuditLogger:
             metadata: Additional context
         """
         event_type = (
-            AuditEventType.ACCESS_GRANTED
-            if outcome == "success"
-            else AuditEventType.ACCESS_DENIED
+            AuditEventType.ACCESS_GRANTED if outcome == "success" else AuditEventType.ACCESS_DENIED
         )
-        severity = (
-            AuditSeverity.INFO
-            if outcome == "success"
-            else AuditSeverity.WARNING
-        )
+        severity = AuditSeverity.INFO if outcome == "success" else AuditSeverity.WARNING
 
         event = AuditEvent(
             event_type=event_type,
@@ -493,9 +485,7 @@ class AuditLogger:
             metadata: Additional context
         """
         severity = (
-            AuditSeverity.ERROR
-            if event_type == AuditEventType.TOOL_ERROR
-            else AuditSeverity.INFO
+            AuditSeverity.ERROR if event_type == AuditEventType.TOOL_ERROR else AuditSeverity.INFO
         )
 
         event = AuditEvent(
