@@ -1,14 +1,34 @@
 [project]
 name = "fastagentic"
-version = "1.0.0"
+version = "1.0.1"
 description = "The deployment layer for agentic applications. Build agents with anything. Ship them with FastAgentic."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 authors = [
-    { name = "FastAgentic Team" }
+    { name = "Dipankar Sarkar", email = "me@dipankar.name" },
+    { name = "Neul Labs" }
 ]
-keywords = ["agents", "ai", "mcp", "a2a", "llm", "deployment", "fastapi"]
+keywords = [
+    "agents",
+    "agentic",
+    "ai",
+    "mcp",
+    "mcp-server",
+    "a2a",
+    "llm",
+    "llmops",
+    "tool-calling",
+    "deployment",
+    "fastapi",
+    "orchestration",
+    "framework",
+    "autonomous",
+    "pydantic",
+    "langgraph",
+    "crewai",
+    "langchain",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
