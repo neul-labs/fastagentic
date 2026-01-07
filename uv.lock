@@ -1340,6 +1340,7 @@ testing = [
     { name = "hypothesis" },
     { name = "hypothesis-jsonschema" },
     { name = "mutmut" },
+    { name = "pytest-asyncio" },
     { name = "pytest-benchmark" },
     { name = "pytest-timeout" },
 ]
@@ -1400,6 +1401,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.6.0,<3.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24.0" },
+    { name = "pytest-asyncio", marker = "extra == 'testing'", specifier = ">=0.24.0" },
     { name = "pytest-benchmark", marker = "extra == 'testing'", specifier = ">=4.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0.0" },
     { name = "pytest-timeout", marker = "extra == 'testing'", specifier = ">=2.3.0" },
