@@ -155,7 +155,7 @@ jobs:
   release:
     name: Release
     needs: build
-    if: needs.build.outputs.version_changed == 'true'
+    if: ${{ needs.build.outputs.version_changed == 'true' }}
     uses: ./.github/workflows/release.yml
     permissions:
       contents: write
