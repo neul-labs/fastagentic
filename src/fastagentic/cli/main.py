@@ -2010,7 +2010,209 @@ def a2a_invoke(
     console.print(f"Body: {json.dumps(input_data, indent=2)}")
 
 
+# Runs commands - checkpoint and resume management
+runs_app = typer.Typer(help="Run management commands for checkpointing and resume")
+
+
+@runs_app.command("show")
+def runs_show(
+    run_id: Annotated[str, typer.Argument(help="Run ID to display")],
+    store_path: Annotated[
+        str,
+        typer.Option("--store", "-s", help="Path to checkpoint store"),
+    ] = ".checkpoints",
+) -> None:
+    """Show execution graph for a run.
+
+    Displays the step-by-step progress of a run including status,
+    tokens used, and timing for each step.
+
+    Example:
+        fastagentic runs show run-abc123
+        fastagentic runs show run-abc123 --store ./my-checkpoints
+    """
+    import asyncio
+
+    from fastagentic.checkpoint import FileCheckpointStore
+
+    async def _show():
+        store = FileCheckpointStore(store_path)
+        checkpoints = await store.list_checkpoints(run_id)
+
+        if not checkpoints:
+            console.print(f"[red]No checkpoints found for run: {run_id}[/red]")
+            raise typer.Exit(1)
+
+        # Get latest checkpoint
+        latest = await store.load_latest(run_id)
+        if not latest:
+            console.print(f"[red]Could not load checkpoint for run: {run_id}[/red]")
+            raise typer.Exit(1)
+
+        # Build execution graph from checkpoint state
+        table = Table(
+            title=f"Run: {run_id}",
+            show_header=True,
+            header_style="bold cyan",
+        )
+        table.add_column("Step", style="cyan", width=15)
+        table.add_column("Status", width=20)
+        table.add_column("Tokens", justify="right", width=10)
+        table.add_column("Time", justify="right", width=10)
+
+        total_tokens = 0
+        total_time = 0
+
+        # Extract steps from checkpoint state
+        if "graph" in latest.state:
+            graph_data = latest.state["graph"]
+            steps = graph_data.get("steps", [])
+
+            status_styles = {
+                "pending": "[dim]○ pending[/dim]",
+                "in_progress": "[yellow]● in_progress[/yellow]",
+                "completed": "[green]✓ completed[/green]",
+                "failed": "[red]✗ failed[/red]",
+                "skipped": "[blue]↷ skipped[/blue]",
+            }
+
+            for i, step in enumerate(steps, 1):
+                status = status_styles.get(step.get("status", ""), step.get("status", ""))
+                tokens = step.get("tokens", 0)
+                duration = step.get("duration_ms", 0)
+
+                tokens_str = f"{tokens:,}" if tokens else "-"
+                time_str = f"{duration / 1000:.1f}s" if duration else "-"
+
+                total_tokens += tokens
+                total_time += duration
+
+                table.add_row(f"{i}. {step.get('name', 'unknown')}", status, tokens_str, time_str)
+
+        # Add total row
+        table.add_section()
+        table.add_row(
+            "Total",
+            f"[bold]{latest.metadata.status.value}[/bold]",
+            f"{total_tokens:,}",
+            f"{total_time / 1000:.1f}s",
+            style="bold",
+        )
+
+        console.print(table)
+        console.print(f"\nCheckpoints: {len(checkpoints)}")
+        console.print(f"Created: {latest.metadata.created_at}")
+
+    asyncio.run(_show())
+
+
+@runs_app.command("list")
+def runs_list(
+    limit: Annotated[int, typer.Option("--limit", "-n", help="Maximum runs to show")] = 10,
+    store_path: Annotated[
+        str,
+        typer.Option("--store", "-s", help="Path to checkpoint store"),
+    ] = ".checkpoints",
+) -> None:
+    """List recent runs with their status.
+
+    Example:
+        fastagentic runs list
+        fastagentic runs list --limit 20
+    """
+    import asyncio
+    from pathlib import Path
+
+    async def _list():
+        store_dir = Path(store_path)
+        if not store_dir.exists():
+            console.print(f"[yellow]No checkpoint store found at: {store_path}[/yellow]")
+            return
+
+        # List run directories
+        run_dirs = [d for d in store_dir.iterdir() if d.is_dir() and d.name.startswith("run-")]
+        run_dirs.sort(key=lambda d: d.stat().st_mtime, reverse=True)
+        run_dirs = run_dirs[:limit]
+
+        if not run_dirs:
+            console.print("[yellow]No runs found[/yellow]")
+            return
+
+        table = Table(title="Recent Runs", show_header=True, header_style="bold cyan")
+        table.add_column("Run ID", style="cyan")
+        table.add_column("Status")
+        table.add_column("Checkpoints", justify="right")
+        table.add_column("Last Modified")
+
+        from fastagentic.checkpoint import FileCheckpointStore
+
+        store = FileCheckpointStore(store_path)
+
+        for run_dir in run_dirs:
+            run_id = run_dir.name
+
+            # Get checkpoint info
+            checkpoints = await store.list_checkpoints(run_id)
+            latest = await store.load_latest(run_id)
+
+            status = "[yellow]unknown[/yellow]"
+            if latest:
+                status_val = latest.metadata.status.value
+                if status_val == "completed":
+                    status = "[green]completed[/green]"
+                elif status_val == "failed":
+                    status = "[red]failed[/red]"
+                elif status_val == "active":
+                    status = "[yellow]active[/yellow]"
+
+            # Format last modified
+            import datetime
+
+            mtime = datetime.datetime.fromtimestamp(run_dir.stat().st_mtime)
+            modified = mtime.strftime("%Y-%m-%d %H:%M")
+
+            table.add_row(run_id, status, str(len(checkpoints)), modified)
+
+        console.print(table)
+
+    asyncio.run(_list())
+
+
+@runs_app.command("delete")
+def runs_delete(
+    run_id: Annotated[str, typer.Argument(help="Run ID to delete")],
+    store_path: Annotated[
+        str,
+        typer.Option("--store", "-s", help="Path to checkpoint store"),
+    ] = ".checkpoints",
+    force: Annotated[bool, typer.Option("--force", "-f", help="Skip confirmation")] = False,
+) -> None:
+    """Delete all checkpoints for a run.
+
+    Example:
+        fastagentic runs delete run-abc123
+        fastagentic runs delete run-abc123 --force
+    """
+    import asyncio
+
+    from fastagentic.checkpoint import FileCheckpointStore
+
+    if not force:
+        confirm = typer.confirm(f"Delete all checkpoints for {run_id}?")
+        if not confirm:
+            console.print("[yellow]Cancelled[/yellow]")
+            raise typer.Exit()
+
+    async def _delete():
+        store = FileCheckpointStore(store_path)
+        count = await store.delete_run(run_id)
+        console.print(f"[green]Deleted {count} checkpoints for {run_id}[/green]")
+
+    asyncio.run(_delete())
+
+
 # Register command subgroups
+app.add_typer(runs_app, name="runs")
 app.add_typer(templates_app, name="templates")
 app.add_typer(config_app, name="config")
 

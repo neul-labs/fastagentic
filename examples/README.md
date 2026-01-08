@@ -6,6 +6,7 @@ Working examples demonstrating FastAgentic features.
 
 | Example | Description | Framework |
 |---------|-------------|-----------|
+| [deep-research](deep-research/) | **Crash & resume demo** - production-safe agents | PydanticAI |
 | [pydanticai-chat](pydanticai-chat/) | Simple chat agent | PydanticAI |
 | [langgraph-workflow](langgraph-workflow/) | Stateful research workflow | LangGraph |
 | [crewai-multi-agent](crewai-multi-agent/) | Multi-agent collaboration | CrewAI |

@@ -27,3 +27,4 @@ logs
 *.pyo
 
 .hypothesis
+.checkpoints
