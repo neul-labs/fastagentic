@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/policy/__init__.py
-# hypothesis_version: 6.148.7
-
-['Budget', 'BudgetPeriod', 'BudgetPolicy', 'Permission', 'Policy', 'PolicyAction', 'PolicyContext', 'PolicyEngine', 'PolicyResult', 'RBACPolicy', 'Role', 'Scope', 'ScopePolicy']

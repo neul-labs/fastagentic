@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/checkpoint/base.py
-# hypothesis_version: 6.148.7
-
-[0.0, 300.0, 100, 'active', 'checkpoint_id', 'completed', 'context', 'created_at', 'error', 'expired', 'failed', 'messages', 'metadata', 'parent_id', 'run_id', 'sequence', 'state', 'status', 'step_name', 'tags', 'tool_calls', 'ttl_seconds']

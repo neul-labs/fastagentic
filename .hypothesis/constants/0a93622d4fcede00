@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/policy/scopes.py
-# hypothesis_version: 6.148.7
-
-['*', ':*', 'Full endpoint access', 'Full resource access', 'Full tool access', 'Invoke tools', 'No scopes provided', 'Read resources', 'Write resources', 'admin', 'endpoints:*', 'endpoints:invoke', 'endpoints:read', 'resources:*', 'resources:read', 'resources:write', 'scope', 'scopes', 'tools:*', 'tools:invoke', 'tools:read']

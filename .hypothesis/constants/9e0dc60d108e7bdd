@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/policy/rbac.py
-# hypothesis_version: 6.148.7
-
-[100, '*', '/*', 'User ID required', 'rbac']

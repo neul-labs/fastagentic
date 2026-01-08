@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/adapters/dspy.py
-# hypothesis_version: 6.148.7
-
-['_', '__dict__', '_trace', 'answer', 'completions', 'content', 'error', 'forward', 'input', 'input_fields', 'model_dump', 'output', 'output_fields', 'passages', 'processing', 'prompt', 'question', 'rationale', 'reasoning', 'response', 'result', 'retrieved_passages', 'signature', 'sources', 'status', 'text']

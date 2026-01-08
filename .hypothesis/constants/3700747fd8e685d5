@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/server/runners.py
-# hypothesis_version: 6.148.7
-
-[1000, 10000, '-', 'accesslog', 'bind', 'capture_output', 'errorlog', 'graceful_timeout', 'info', 'keepalive', 'loglevel', 'max_requests', 'max_requests_jitter', 'preload_app', 'timeout', 'worker_class', 'workers']

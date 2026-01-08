@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/checkpoint/stores.py
-# hypothesis_version: 6.148.7
-
-[100, '*.json', '/', 'Body', 'CommonPrefixes', 'Contents', 'Key', 'Objects', 'Prefix', 'application/json', 'checkpoint_id', 'checkpoints', 'checkpoints/', 'created_at', 'list_objects_v2', 'sequence']

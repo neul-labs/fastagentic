@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/cluster/coordinator.py
-# hypothesis_version: 6.148.7
-
-[1.0, 10.0, 30.0, 300.0, 'auto_scale', 'config', 'dispatcher', 'max_workers', 'min_workers', 'queue', 'running', 'workers']

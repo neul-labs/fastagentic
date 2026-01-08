@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/adapters/semantic_kernel.py
-# hypothesis_version: 6.148.7
-
-['assistant', 'chat_history', 'content', 'error', 'input', 'message', 'model_dump', 'prompt', 'result', 'role', 'user', 'value']

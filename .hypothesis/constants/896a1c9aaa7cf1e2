@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/cost/tracker.py
-# hypothesis_version: 6.148.7
-
-[0.0, 2.5e-05, 7.5e-05, 8e-05, 0.0001, 0.00015, 0.00025, 0.0003, 0.0004, 0.0005, 0.0006, 0.0008, 0.00125, 0.0015, 0.0025, 0.003, 0.004, 0.005, 0.01, 0.012, 0.015, 0.03, 0.06, 0.075, 1000, 10000, 100000, 'claude-3.5-haiku', 'claude-3.5-sonnet', 'day', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', 'hour', 'month', 'o1', 'o1-mini', 'week']
