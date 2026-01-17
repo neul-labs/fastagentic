@@ -141,13 +141,11 @@ class CrewAIAdapter(BaseAdapter):
 
         try:
             # Try native event bus streaming first (CrewAI 0.30+)
-            has_event_bus = False
-            try:
-                from crewai.utilities.events import crewai_event_bus
+            import importlib.util
 
-                has_event_bus = True
-            except ImportError:
-                pass
+            has_event_bus = (
+                importlib.util.find_spec("crewai.utilities.events") is not None
+            )
 
             if has_event_bus:
                 async for event in self._stream_with_event_bus(
