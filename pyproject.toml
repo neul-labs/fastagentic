@@ -149,10 +149,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/fastagentic"]
-include = [
-    "/LICENSE*",
-    "/LICENSE",
-]
 
 [tool.ruff]
 target-version = "py310"
