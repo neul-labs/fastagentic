@@ -49,6 +49,7 @@ class LlamaIndexAdapter(BaseAdapter):
         *,
         streaming: bool = True,
         similarity_top_k: int | None = None,
+        checkpoint_queries: bool = True,
     ) -> None:
         """Initialize the LlamaIndex adapter.
 
@@ -58,6 +59,7 @@ class LlamaIndexAdapter(BaseAdapter):
             chat_engine: A LlamaIndex chat engine
             streaming: Whether to use streaming by default
             similarity_top_k: Number of similar documents to retrieve
+            checkpoint_queries: Whether to create checkpoints after queries
         """
         if not any([agent, query_engine, chat_engine]):
             raise ValueError("Must provide at least one of: agent, query_engine, chat_engine")
@@ -67,6 +69,7 @@ class LlamaIndexAdapter(BaseAdapter):
         self.chat_engine = chat_engine
         self.streaming = streaming
         self.similarity_top_k = similarity_top_k
+        self.checkpoint_queries = checkpoint_queries
 
     async def invoke(self, input: Any, ctx: AdapterContext | Any) -> Any:
         """Run LlamaIndex and return the result.
@@ -79,6 +82,13 @@ class LlamaIndexAdapter(BaseAdapter):
             The query or agent response
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
+
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        if checkpoint:
+            adapter_ctx.state["chat_history"] = checkpoint.get("messages", [])
+            adapter_ctx.agent_ctx.run._is_resumed = True
+
         query = self._extract_query(input)
 
         try:
@@ -89,7 +99,23 @@ class LlamaIndexAdapter(BaseAdapter):
             else:
                 result = await self._invoke_query_engine(query, adapter_ctx)
 
-            return self._format_response(result)
+            formatted_result = self._format_response(result)
+
+            # Create checkpoint
+            if self.checkpoint_queries:
+                await self.on_checkpoint(
+                    {
+                        "state": {"completed": True, "query": query},
+                        "messages": adapter_ctx.state.get("chat_history", []),
+                        "context": {
+                            "result": formatted_result,
+                            "sources": formatted_result.get("sources", []),
+                        },
+                    },
+                    adapter_ctx,
+                )
+
+            return formatted_result
 
         except Exception as e:
             raise RuntimeError(f"LlamaIndex invocation failed: {e}") from e
@@ -152,6 +178,18 @@ class LlamaIndexAdapter(BaseAdapter):
             StreamEvent objects for tokens, sources, etc.
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
+
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        if checkpoint:
+            adapter_ctx.state["chat_history"] = checkpoint.get("messages", [])
+            adapter_ctx.agent_ctx.run._is_resumed = True
+            yield StreamEvent(
+                type=StreamEventType.NODE_START,
+                data={"name": "__resume__", "checkpoint": checkpoint},
+                run_id=adapter_ctx.run_id,
+            )
+
         query = self._extract_query(input)
 
         try:
@@ -177,6 +215,8 @@ class LlamaIndexAdapter(BaseAdapter):
         assert self.agent is not None
         chat_history = ctx.state.get("chat_history", [])
         full_response = ""
+        tool_calls: list[dict[str, Any]] = []
+        sources: list[dict[str, Any]] = []
 
         if hasattr(self.agent, "astream_chat"):
             response_gen = await self.agent.astream_chat(query, chat_history=chat_history)
@@ -189,16 +229,42 @@ class LlamaIndexAdapter(BaseAdapter):
                     run_id=ctx.run_id,
                 )
 
+            # Extract and yield tool events if available
+            if hasattr(response_gen, "sources") or hasattr(response_gen, "tool_output"):
+                tool_outputs = getattr(response_gen, "sources", []) or []
+                for tool_out in tool_outputs:
+                    if hasattr(tool_out, "tool_name"):
+                        tool_name = tool_out.tool_name
+                        tool_input = getattr(tool_out, "raw_input", {})
+                        tool_output = getattr(tool_out, "content", str(tool_out))
+
+                        tool_calls.append(
+                            {"name": tool_name, "input": tool_input, "output": tool_output}
+                        )
+
+                        yield StreamEvent(
+                            type=StreamEventType.TOOL_CALL,
+                            data={"name": tool_name, "input": tool_input},
+                            run_id=ctx.run_id,
+                        )
+                        yield StreamEvent(
+                            type=StreamEventType.TOOL_RESULT,
+                            data={"name": tool_name, "output": tool_output},
+                            run_id=ctx.run_id,
+                        )
+
             # Yield source nodes if available
             if hasattr(response_gen, "source_nodes"):
                 for node in response_gen.source_nodes:
+                    source_data = {
+                        "text": node.text[:500],
+                        "score": getattr(node, "score", None),
+                        "metadata": getattr(node, "metadata", {}),
+                    }
+                    sources.append(source_data)
                     yield StreamEvent(
                         type=StreamEventType.SOURCE,
-                        data={
-                            "text": node.text[:500],
-                            "score": getattr(node, "score", None),
-                            "metadata": getattr(node, "metadata", {}),
-                        },
+                        data=source_data,
                         run_id=ctx.run_id,
                     )
 
@@ -218,6 +284,23 @@ class LlamaIndexAdapter(BaseAdapter):
             {"role": "assistant", "content": full_response},
         ]
 
+        # Checkpoint
+        if self.checkpoint_queries:
+            await self.on_checkpoint(
+                {
+                    "state": {"completed": True, "query": query},
+                    "messages": ctx.state.get("chat_history", []),
+                    "tool_calls": tool_calls,
+                    "context": {"response": full_response, "sources": sources},
+                },
+                ctx,
+            )
+            yield StreamEvent(
+                type=StreamEventType.CHECKPOINT,
+                data={"step": "completed"},
+                run_id=ctx.run_id,
+            )
+
         yield StreamEvent(
             type=StreamEventType.DONE,
             data={"result": full_response},
@@ -231,6 +314,7 @@ class LlamaIndexAdapter(BaseAdapter):
         assert self.chat_engine is not None
         chat_history = ctx.state.get("chat_history", [])
         full_response = ""
+        sources: list[dict[str, Any]] = []
 
         if hasattr(self.chat_engine, "astream_chat"):
             response_gen = await self.chat_engine.astream_chat(query, chat_history=chat_history)
@@ -245,12 +329,14 @@ class LlamaIndexAdapter(BaseAdapter):
 
             if hasattr(response_gen, "source_nodes"):
                 for node in response_gen.source_nodes:
+                    source_data = {
+                        "text": node.text[:500],
+                        "score": getattr(node, "score", None),
+                    }
+                    sources.append(source_data)
                     yield StreamEvent(
                         type=StreamEventType.SOURCE,
-                        data={
-                            "text": node.text[:500],
-                            "score": getattr(node, "score", None),
-                        },
+                        data=source_data,
                         run_id=ctx.run_id,
                     )
 
@@ -269,6 +355,22 @@ class LlamaIndexAdapter(BaseAdapter):
             {"role": "assistant", "content": full_response},
         ]
 
+        # Checkpoint
+        if self.checkpoint_queries:
+            await self.on_checkpoint(
+                {
+                    "state": {"completed": True, "query": query},
+                    "messages": ctx.state.get("chat_history", []),
+                    "context": {"response": full_response, "sources": sources},
+                },
+                ctx,
+            )
+            yield StreamEvent(
+                type=StreamEventType.CHECKPOINT,
+                data={"step": "completed"},
+                run_id=ctx.run_id,
+            )
+
         yield StreamEvent(
             type=StreamEventType.DONE,
             data={"result": full_response},
@@ -281,6 +383,7 @@ class LlamaIndexAdapter(BaseAdapter):
         """Stream from LlamaIndex query engine."""
         assert self.query_engine is not None
         full_response = ""
+        sources: list[dict[str, Any]] = []
 
         if hasattr(self.query_engine, "aquery") and self.streaming:
             # Try streaming query
@@ -306,13 +409,15 @@ class LlamaIndexAdapter(BaseAdapter):
                 # Yield source nodes
                 if hasattr(response, "source_nodes"):
                     for node in response.source_nodes:
+                        source_data = {
+                            "text": getattr(node, "text", "")[:500],
+                            "score": getattr(node, "score", None),
+                            "metadata": getattr(node.node, "metadata", {}),
+                        }
+                        sources.append(source_data)
                         yield StreamEvent(
                             type=StreamEventType.SOURCE,
-                            data={
-                                "text": getattr(node, "text", "")[:500],
-                                "score": getattr(node, "score", None),
-                                "metadata": getattr(node.node, "metadata", {}),
-                            },
+                            data=source_data,
                             run_id=ctx.run_id,
                         )
 
@@ -333,6 +438,21 @@ class LlamaIndexAdapter(BaseAdapter):
             yield StreamEvent(
                 type=StreamEventType.TOKEN,
                 data={"content": full_response},
+                run_id=ctx.run_id,
+            )
+
+        # Checkpoint
+        if self.checkpoint_queries:
+            await self.on_checkpoint(
+                {
+                    "state": {"completed": True, "query": query},
+                    "context": {"response": full_response, "sources": sources},
+                },
+                ctx,
+            )
+            yield StreamEvent(
+                type=StreamEventType.CHECKPOINT,
+                data={"step": "completed"},
                 run_id=ctx.run_id,
             )
 
@@ -404,6 +524,7 @@ class LlamaIndexAdapter(BaseAdapter):
             chat_engine=self.chat_engine,
             streaming=self.streaming,
             similarity_top_k=self.similarity_top_k,
+            checkpoint_queries=self.checkpoint_queries,
         )
 
     def with_agent(self, agent: Any) -> LlamaIndexAdapter:
@@ -421,6 +542,7 @@ class LlamaIndexAdapter(BaseAdapter):
             chat_engine=self.chat_engine,
             streaming=self.streaming,
             similarity_top_k=self.similarity_top_k,
+            checkpoint_queries=self.checkpoint_queries,
         )
 
     def with_chat_engine(self, chat_engine: Any) -> LlamaIndexAdapter:
@@ -438,4 +560,23 @@ class LlamaIndexAdapter(BaseAdapter):
             chat_engine=chat_engine,
             streaming=self.streaming,
             similarity_top_k=self.similarity_top_k,
+            checkpoint_queries=self.checkpoint_queries,
+        )
+
+    def with_checkpoints(self, enabled: bool = True) -> LlamaIndexAdapter:
+        """Create a new adapter with checkpoint configuration.
+
+        Args:
+            enabled: Whether to create checkpoints after queries
+
+        Returns:
+            A new LlamaIndexAdapter with the specified checkpoint settings
+        """
+        return LlamaIndexAdapter(
+            agent=self.agent,
+            query_engine=self.query_engine,
+            chat_engine=self.chat_engine,
+            streaming=self.streaming,
+            similarity_top_k=self.similarity_top_k,
+            checkpoint_queries=enabled,
         )

@@ -44,6 +44,7 @@ class DSPyAdapter(BaseAdapter):
         *,
         lm: Any | None = None,
         trace: bool = False,
+        stream_fields: list[str] | None = None,
     ) -> None:
         """Initialize the DSPy adapter.
 
@@ -51,10 +52,12 @@ class DSPyAdapter(BaseAdapter):
             module: A DSPy module or program
             lm: Optional language model to use (overrides dspy.settings)
             trace: Whether to include trace information in responses
+            stream_fields: Output fields to stream (None = auto-detect)
         """
         self.module = module
         self.lm = lm
         self.trace = trace
+        self.stream_fields = stream_fields
 
     async def invoke(self, input: Any, ctx: AdapterContext | Any) -> Any:
         """Run DSPy module and return the result.
@@ -67,6 +70,16 @@ class DSPyAdapter(BaseAdapter):
             The module output
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
+
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        if checkpoint:
+            # DSPy doesn't have native resume; return cached result if completed
+            cached_result = checkpoint.get("context", {}).get("result")
+            if cached_result and checkpoint.get("state", {}).get("completed"):
+                adapter_ctx.agent_ctx.run._is_resumed = True
+                return cached_result
+
         kwargs = self._build_kwargs(input)
 
         try:
@@ -79,7 +92,21 @@ class DSPyAdapter(BaseAdapter):
             else:
                 result = await self._run_module(kwargs, adapter_ctx)
 
-            return self._format_result(result, adapter_ctx)
+            formatted_result = self._format_result(result, adapter_ctx)
+
+            # Create checkpoint with result
+            checkpoint_data: dict[str, Any] = {
+                "state": {"completed": True},
+                "context": {"result": formatted_result},
+            }
+            if self.trace:
+                trace_data = self._extract_trace(result)
+                if trace_data:
+                    checkpoint_data["context"]["trace"] = trace_data
+
+            await self.on_checkpoint(checkpoint_data, adapter_ctx)
+
+            return formatted_result
 
         except Exception as e:
             raise RuntimeError(f"DSPy invocation failed: {e}") from e
@@ -102,8 +129,8 @@ class DSPyAdapter(BaseAdapter):
     async def stream(self, input: Any, ctx: AdapterContext | Any) -> AsyncIterator[StreamEvent]:
         """Stream events from DSPy module.
 
-        Note: DSPy doesn't natively support streaming, so this
-        simulates streaming by yielding the result incrementally.
+        Supports native streaming via dspy.streamify() if available,
+        otherwise falls back to simulated streaming.
 
         Args:
             input: The input to the module
@@ -113,54 +140,47 @@ class DSPyAdapter(BaseAdapter):
             StreamEvent objects
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
+
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        if checkpoint:
+            cached_result = checkpoint.get("context", {}).get("result")
+            if cached_result and checkpoint.get("state", {}).get("completed"):
+                adapter_ctx.agent_ctx.run._is_resumed = True
+                yield StreamEvent(
+                    type=StreamEventType.NODE_START,
+                    data={"name": "__resume__", "cached": True},
+                    run_id=adapter_ctx.run_id,
+                )
+                # Stream cached result
+                output_text = (
+                    str(cached_result.get(self._get_output_fields()[0], ""))
+                    if self._get_output_fields()
+                    else str(cached_result)
+                )
+                for i in range(0, len(output_text), 20):
+                    yield StreamEvent(
+                        type=StreamEventType.TOKEN,
+                        data={"content": output_text[i : i + 20]},
+                        run_id=adapter_ctx.run_id,
+                    )
+                yield StreamEvent(
+                    type=StreamEventType.DONE,
+                    data={"result": cached_result},
+                    run_id=adapter_ctx.run_id,
+                )
+                return
+
         kwargs = self._build_kwargs(input)
 
         try:
-            # Yield start event
-            yield StreamEvent(
-                type=StreamEventType.MESSAGE,
-                data={"status": "processing"},
-                run_id=adapter_ctx.run_id,
-            )
-
-            # Run the module
-            if self.lm is not None:
-                import dspy
-
-                with dspy.context(lm=self.lm):
-                    result = await self._run_module(kwargs, adapter_ctx)
+            # Check if native streaming is available
+            if self._supports_native_streaming():
+                async for event in self._stream_native(kwargs, adapter_ctx):
+                    yield event
             else:
-                result = await self._run_module(kwargs, adapter_ctx)
-
-            # Extract output text
-            output_text = self._extract_output_text(result)
-
-            # Simulate streaming by chunking the output
-            chunk_size = 20
-            for i in range(0, len(output_text), chunk_size):
-                chunk = output_text[i : i + chunk_size]
-                yield StreamEvent(
-                    type=StreamEventType.TOKEN,
-                    data={"content": chunk},
-                    run_id=adapter_ctx.run_id,
-                )
-
-            # Yield trace if enabled
-            if self.trace:
-                trace_data = self._extract_trace(result)
-                if trace_data:
-                    yield StreamEvent(
-                        type=StreamEventType.TRACE,
-                        data=trace_data,
-                        run_id=adapter_ctx.run_id,
-                    )
-
-            # Yield done event
-            yield StreamEvent(
-                type=StreamEventType.DONE,
-                data={"result": self._format_result(result, adapter_ctx)},
-                run_id=adapter_ctx.run_id,
-            )
+                async for event in self._stream_simulated(kwargs, adapter_ctx):
+                    yield event
 
         except Exception as e:
             yield StreamEvent(
@@ -168,6 +188,273 @@ class DSPyAdapter(BaseAdapter):
                 data={"error": str(e)},
                 run_id=adapter_ctx.run_id,
             )
+
+    def _supports_native_streaming(self) -> bool:
+        """Check if DSPy native streaming is available."""
+        try:
+            import dspy
+
+            return hasattr(dspy, "streamify")
+        except ImportError:
+            return False
+
+    async def _stream_native(
+        self, kwargs: dict[str, Any], ctx: AdapterContext
+    ) -> AsyncIterator[StreamEvent]:
+        """Use DSPy's native streamify for true token streaming."""
+        import dspy
+
+        # Determine which fields to stream
+        fields_to_stream = self.stream_fields or self._get_output_fields()
+        if not fields_to_stream:
+            fields_to_stream = ["answer"]  # Default fallback
+
+        yield StreamEvent(
+            type=StreamEventType.NODE_START,
+            data={"name": self.module.__class__.__name__, "fields": fields_to_stream},
+            run_id=ctx.run_id,
+        )
+
+        try:
+            # Import streaming components
+            from dspy.streaming import StreamListener, StreamResponse
+
+            # Create stream listeners for each field
+            listeners = [
+                StreamListener(signature_field_name=field, allow_reuse=True)
+                for field in fields_to_stream
+                if isinstance(field, str)
+            ]
+
+            # Wrap module with streamify
+            stream_module = dspy.streamify(self.module, stream_listeners=listeners)
+
+            current_field: str | None = None
+            final_prediction: Any = None
+
+            # Execute with optional LM context
+            if self.lm is not None:
+                with dspy.context(lm=self.lm):
+                    output_generator = stream_module(**kwargs)
+            else:
+                output_generator = stream_module(**kwargs)
+
+            # Consume the generator
+            for chunk in output_generator:
+                if isinstance(chunk, StreamResponse):
+                    # Track field changes
+                    if chunk.signature_field_name != current_field:
+                        if current_field:
+                            yield StreamEvent(
+                                type=StreamEventType.NODE_END,
+                                data={"name": f"field:{current_field}"},
+                                run_id=ctx.run_id,
+                            )
+                        current_field = chunk.signature_field_name
+                        yield StreamEvent(
+                            type=StreamEventType.NODE_START,
+                            data={"name": f"field:{current_field}"},
+                            run_id=ctx.run_id,
+                        )
+
+                    yield StreamEvent(
+                        type=StreamEventType.TOKEN,
+                        data={"content": chunk.chunk, "field": chunk.signature_field_name},
+                        run_id=ctx.run_id,
+                    )
+                else:
+                    # Final prediction object
+                    final_prediction = chunk
+
+            # Close last field
+            if current_field:
+                yield StreamEvent(
+                    type=StreamEventType.NODE_END,
+                    data={"name": f"field:{current_field}"},
+                    run_id=ctx.run_id,
+                )
+
+            if final_prediction:
+                # Extract and yield tool events from ReAct trace
+                tool_events = self._extract_tool_events(final_prediction)
+                for tool_event in tool_events:
+                    if tool_event["type"] == "tool_call":
+                        yield StreamEvent(
+                            type=StreamEventType.TOOL_CALL,
+                            data={"name": tool_event["name"], "input": tool_event["input"]},
+                            run_id=ctx.run_id,
+                        )
+                    elif tool_event["type"] == "tool_result":
+                        yield StreamEvent(
+                            type=StreamEventType.TOOL_RESULT,
+                            data={"name": tool_event["name"], "output": tool_event["output"]},
+                            run_id=ctx.run_id,
+                        )
+
+                # Yield trace if enabled
+                if self.trace:
+                    trace_data = self._extract_trace(final_prediction)
+                    if trace_data:
+                        yield StreamEvent(
+                            type=StreamEventType.TRACE,
+                            data=trace_data,
+                            run_id=ctx.run_id,
+                        )
+
+                formatted_result = self._format_result(final_prediction, ctx)
+
+                # Checkpoint
+                await self.on_checkpoint(
+                    {
+                        "state": {"completed": True},
+                        "context": {"result": formatted_result},
+                    },
+                    ctx,
+                )
+                yield StreamEvent(
+                    type=StreamEventType.CHECKPOINT,
+                    data={"step": "completed"},
+                    run_id=ctx.run_id,
+                )
+
+                yield StreamEvent(
+                    type=StreamEventType.NODE_END,
+                    data={"name": self.module.__class__.__name__},
+                    run_id=ctx.run_id,
+                )
+
+                yield StreamEvent(
+                    type=StreamEventType.DONE,
+                    data={"result": formatted_result},
+                    run_id=ctx.run_id,
+                )
+
+        except ImportError:
+            # Fall back to simulated if streaming imports fail
+            async for event in self._stream_simulated(kwargs, ctx):
+                yield event
+
+    async def _stream_simulated(
+        self, kwargs: dict[str, Any], ctx: AdapterContext
+    ) -> AsyncIterator[StreamEvent]:
+        """Simulated streaming by chunking output."""
+        # Yield start event
+        yield StreamEvent(
+            type=StreamEventType.MESSAGE,
+            data={"status": "processing"},
+            run_id=ctx.run_id,
+        )
+
+        # Run the module
+        if self.lm is not None:
+            import dspy
+
+            with dspy.context(lm=self.lm):
+                result = await self._run_module(kwargs, ctx)
+        else:
+            result = await self._run_module(kwargs, ctx)
+
+        # Extract and yield tool events from ReAct trace
+        tool_events = self._extract_tool_events(result)
+        for tool_event in tool_events:
+            if tool_event["type"] == "tool_call":
+                yield StreamEvent(
+                    type=StreamEventType.TOOL_CALL,
+                    data={"name": tool_event["name"], "input": tool_event["input"]},
+                    run_id=ctx.run_id,
+                )
+            elif tool_event["type"] == "tool_result":
+                yield StreamEvent(
+                    type=StreamEventType.TOOL_RESULT,
+                    data={"name": tool_event["name"], "output": tool_event["output"]},
+                    run_id=ctx.run_id,
+                )
+
+        # Extract output text
+        output_text = self._extract_output_text(result)
+
+        # Simulate streaming by chunking the output
+        chunk_size = 20
+        for i in range(0, len(output_text), chunk_size):
+            chunk = output_text[i : i + chunk_size]
+            yield StreamEvent(
+                type=StreamEventType.TOKEN,
+                data={"content": chunk},
+                run_id=ctx.run_id,
+            )
+
+        # Yield trace if enabled
+        if self.trace:
+            trace_data = self._extract_trace(result)
+            if trace_data:
+                yield StreamEvent(
+                    type=StreamEventType.TRACE,
+                    data=trace_data,
+                    run_id=ctx.run_id,
+                )
+
+        formatted_result = self._format_result(result, ctx)
+
+        # Checkpoint
+        await self.on_checkpoint(
+            {
+                "state": {"completed": True},
+                "context": {"result": formatted_result},
+            },
+            ctx,
+        )
+        yield StreamEvent(
+            type=StreamEventType.CHECKPOINT,
+            data={"step": "completed"},
+            run_id=ctx.run_id,
+        )
+
+        # Yield done event
+        yield StreamEvent(
+            type=StreamEventType.DONE,
+            data={"result": formatted_result},
+            run_id=ctx.run_id,
+        )
+
+    def _extract_tool_events(self, result: Any) -> list[dict[str, Any]]:
+        """Extract tool call/result events from DSPy ReAct trace."""
+        tool_events: list[dict[str, Any]] = []
+
+        # Check for ReAct-style action history
+        if hasattr(result, "actions") or hasattr(result, "action_history"):
+            actions = getattr(result, "actions", None) or getattr(result, "action_history", [])
+            for action in actions:
+                if hasattr(action, "tool"):
+                    tool_events.append(
+                        {
+                            "type": "tool_call",
+                            "name": action.tool,
+                            "input": getattr(action, "tool_input", {}),
+                        }
+                    )
+                    if hasattr(action, "observation"):
+                        tool_events.append(
+                            {
+                                "type": "tool_result",
+                                "name": action.tool,
+                                "output": action.observation,
+                            }
+                        )
+
+        # Check for tool calls in completions trace
+        if hasattr(result, "completions"):
+            for completion in result.completions:
+                if hasattr(completion, "tool_calls"):
+                    for tc in completion.tool_calls:
+                        tool_events.append(
+                            {
+                                "type": "tool_call",
+                                "name": tc.get("name", "unknown"),
+                                "input": tc.get("arguments", {}),
+                            }
+                        )
+
+        return tool_events
 
     def _build_kwargs(self, input: Any) -> dict[str, Any]:
         """Build kwargs for module invocation."""
@@ -285,6 +572,7 @@ class DSPyAdapter(BaseAdapter):
             self.module,
             lm=lm,
             trace=self.trace,
+            stream_fields=self.stream_fields,
         )
 
     def with_trace(self, trace: bool = True) -> DSPyAdapter:
@@ -300,6 +588,23 @@ class DSPyAdapter(BaseAdapter):
             self.module,
             lm=self.lm,
             trace=trace,
+            stream_fields=self.stream_fields,
+        )
+
+    def with_stream_fields(self, fields: list[str]) -> DSPyAdapter:
+        """Create a new adapter with specific fields to stream.
+
+        Args:
+            fields: List of output field names to stream
+
+        Returns:
+            A new DSPyAdapter with the specified stream fields
+        """
+        return DSPyAdapter(
+            self.module,
+            lm=self.lm,
+            trace=self.trace,
+            stream_fields=fields,
         )
 
 

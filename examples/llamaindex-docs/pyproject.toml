@@ -1,0 +1,23 @@
+[project]
+name = "llamaindex-docs"
+version = "1.0.0"
+description = "A document Q&A agent using LlamaIndex and FastAgentic"
+requires-python = ">=3.10"
+dependencies = [
+    "fastagentic[llamaindex]",
+    "llama-index>=0.10.0",
+    "llama-index-llms-openai>=0.1.0",
+    "llama-index-embeddings-openai>=0.1.0",
+]
+
+[tool.uv.sources]
+fastagentic = { path = "../..", editable = true }
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

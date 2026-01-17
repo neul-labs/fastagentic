@@ -251,46 +251,85 @@ def create_deps(request: Request) -> MyDeps:
 ```python
 PydanticAIAdapter(
     agent: Agent,
-    deps_factory: Callable[[Request], DepsT] | None = None,
-    stream_tokens: bool = True,
-    include_tool_calls: bool = True,
-    retry_on_validation: bool = True,
-    max_retries: int = 3,
+    deps: Any = None,
+    model: str | None = None,
+    checkpoint_on_tool: bool = True,
 )
 ```
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `agent` | `Agent` | required | PydanticAI agent instance |
-| `deps_factory` | `Callable` | `None` | Factory to create agent dependencies |
-| `stream_tokens` | `bool` | `True` | Emit token events during streaming |
-| `include_tool_calls` | `bool` | `True` | Include tool_call/tool_result events |
-| `retry_on_validation` | `bool` | `True` | Retry on Pydantic validation failure |
-| `max_retries` | `int` | `3` | Max validation retries |
+| `deps` | `Any` | `None` | Dependencies to pass to the agent |
+| `model` | `str` | `None` | Optional model override |
+| `checkpoint_on_tool` | `bool` | `True` | Create checkpoints after tool calls |
+
+### Builder Methods
+
+```python
+# Configure dependencies
+adapter = PydanticAIAdapter(agent).with_deps(my_deps)
+
+# Override model
+adapter = PydanticAIAdapter(agent).with_model("openai:gpt-4o")
+
+# Configure checkpointing
+adapter = PydanticAIAdapter(agent).with_checkpoints(on_tool=True)
+```
 
 ## Event Mapping
 
 | PydanticAI Event | FastAgentic Event | Payload |
 |------------------|-------------------|---------|
-| Token stream | `token` | `{content, delta}` |
-| Tool call start | `tool_call` | `{tool, args}` |
-| Tool result | `tool_result` | `{tool, output}` |
-| Validation error | `validation_error` | `{error, attempt}` |
-| Run complete | `run_complete` | `{result}` |
+| Token stream | `token` | `{content}` |
+| Tool call start | `tool_call` | `{name, input}` |
+| Tool result | `tool_result` | `{name, output}` |
+| Checkpoint saved | `checkpoint` | `{step}` |
+| Run complete | `done` | `{result}` |
 
 ## Checkpoint State
 
-The adapter persists:
-- Agent conversation history
-- Tool call results
-- Structured output partial state
-- Token and cost counters
-- Run metadata (user, tenant, timestamp)
+The adapter automatically creates checkpoints containing:
+
+```python
+{
+    "state": {"completed": bool},
+    "messages": [  # Full conversation history
+        {"role": "user", "content": "..."},
+        {"role": "assistant", "content": "..."},
+    ],
+    "tool_calls": [  # All tool invocations
+        {"name": "search", "input": {...}, "output": "..."},
+    ],
+    "context": {"result": {...}},
+}
+```
+
+**Checkpoint Triggers:**
+- After each tool call (if `checkpoint_on_tool=True`)
+- On run completion
+
+**Resume Behavior:**
+When resuming, the adapter:
+1. Restores `message_history` from checkpoint
+2. Sets `_is_resumed = True` on the run context
+3. Emits a `NODE_START` event with `name: "__resume__"`
 
 Resume from any checkpoint:
 
 ```bash
 curl -X POST https://api.example.com/chat/run-123/resume
+```
+
+### Streaming with Tools
+
+Use `stream_with_tools()` for detailed tool event streaming:
+
+```python
+adapter = PydanticAIAdapter(agent, checkpoint_on_tool=True)
+
+# Events emitted:
+# token → token → tool_call → tool_result → checkpoint → token → done
 ```
 
 ## Migration Guide

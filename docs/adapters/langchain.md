@@ -130,28 +130,66 @@ LangChainAdapter(
 ```python
 LangChainAdapter(
     runnable: Runnable,
-    include_callbacks: bool = True,
-    checkpoint_on_tool_call: bool = True,
+    stream_mode: str = "values",
+    checkpoint_events: list[str] | None = None,
 )
 ```
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `runnable` | `Runnable` | required | LangChain runnable |
-| `include_callbacks` | `bool` | `True` | Forward callback events |
-| `checkpoint_on_tool_call` | `bool` | `True` | Checkpoint before tools |
+| `runnable` | `Runnable` | required | LangChain runnable (chain, agent, LCEL pipeline) |
+| `stream_mode` | `str` | `"values"` | Streaming mode: `"values"` for final outputs, `"events"` for all events |
+| `checkpoint_events` | `list[str]` | `["on_chain_end", "on_tool_end"]` | Events that trigger checkpoints |
+
+### Builder Methods
+
+```python
+# Configure checkpoint triggers
+adapter = LangChainAdapter(chain).with_checkpoints(["on_chain_end", "on_tool_end"])
+
+# Change streaming mode
+adapter = LangChainAdapter(chain).with_stream_mode("events")
+```
 
 ## Event Types
 
 | Event | Description | Payload |
 |-------|-------------|---------|
 | `token` | LLM output token | `{content}` |
-| `chain_start` | Chain begins | `{name, inputs}` |
-| `chain_end` | Chain completes | `{name, outputs}` |
-| `tool_call` | Tool invoked | `{tool, args}` |
-| `tool_result` | Tool returns | `{tool, output}` |
-| `retriever_start` | Retrieval begins | `{query}` |
-| `retriever_end` | Retrieval complete | `{documents}` |
+| `node_start` | Chain begins | `{name}` |
+| `node_end` | Chain completes | `{name, output}` |
+| `tool_call` | Tool invoked | `{name, input}` |
+| `tool_result` | Tool returns | `{name, output}` |
+| `checkpoint` | State saved | `{event, name}` |
+| `done` | Run complete | `{}` |
+
+## Checkpoint State
+
+The adapter automatically creates checkpoints containing:
+
+```python
+{
+    "state": {...},  # Accumulated chain state
+    "tool_calls": [
+        {"name": "search", "output": "..."},
+    ],
+    "context": {
+        "last_event": "on_chain_end",
+        "event_name": "LLMChain",
+    },
+}
+```
+
+**Checkpoint Triggers (configurable):**
+- `on_chain_end` - After each chain step completes
+- `on_tool_end` - After each tool call
+- Custom events via `checkpoint_events` parameter
+
+**Resume Behavior:**
+When resuming, the adapter:
+1. Merges checkpoint state with new input
+2. Sets `_is_resumed = True` on the run context
+3. Emits a `NODE_START` event with `name: "__resume__"`
 
 ## Migration from LangServe
 

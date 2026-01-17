@@ -1,0 +1,44 @@
+Retrieval-Augmented Generation (RAG) Overview
+
+RAG is a technique that combines information retrieval with text generation to
+produce more accurate, grounded, and up-to-date responses from language models.
+
+How RAG Works:
+
+1. Indexing Phase
+   - Documents are split into chunks
+   - Each chunk is converted to embeddings (vectors)
+   - Embeddings are stored in a vector database
+
+2. Retrieval Phase
+   - User query is converted to an embedding
+   - Similar documents are retrieved via vector similarity
+   - Top-k most relevant chunks are selected
+
+3. Generation Phase
+   - Retrieved context is combined with the query
+   - LLM generates a response using the context
+   - Response includes information from source documents
+
+Benefits of RAG:
+- Reduces hallucinations by grounding responses in facts
+- Enables access to private/proprietary data
+- Keeps information current without retraining
+- Provides source attribution for answers
+
+RAG vs Fine-tuning:
+- RAG: Better for factual Q&A, frequently changing data
+- Fine-tuning: Better for style/format, specialized domains
+- Hybrid: Combine both for best results
+
+Advanced RAG Techniques:
+- Hybrid search: Combine semantic and keyword search
+- Re-ranking: Use cross-encoders to refine results
+- Query expansion: Generate multiple query variations
+- Hierarchical indexing: Multi-level document organization
+
+Common Challenges:
+- Chunk size selection affects retrieval quality
+- Embedding model choice impacts semantic understanding
+- Context window limits constrain retrieved information
+- Latency increases with larger knowledge bases

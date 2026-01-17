@@ -1,0 +1,37 @@
+FastAgentic - The Deployment Layer for AI Agents
+
+FastAgentic is a production deployment framework for AI agents. It provides a simple
+way to deploy agents built with any framework (PydanticAI, LangChain, LangGraph,
+CrewAI, DSPy, LlamaIndex, and more) and exposes them through REST APIs, MCP servers,
+and A2A interfaces.
+
+Key Features:
+- Universal adapter system for any agent framework
+- Automatic REST API generation with OpenAPI docs
+- MCP (Model Context Protocol) server support
+- A2A (Agent-to-Agent) communication
+- Built-in authentication with OIDC
+- Durable execution with checkpointing
+- Real-time streaming via SSE
+- Rate limiting and policy enforcement
+- Observability with OpenTelemetry
+
+Getting Started:
+1. Install FastAgentic: pip install fastagentic
+2. Create an App with your agent
+3. Use @agent_endpoint to expose your agent
+4. Run with: fastagentic run
+
+Example:
+```python
+from fastagentic import App, agent_endpoint
+from fastagentic.adapters.llamaindex import LlamaIndexAdapter
+
+app = App(title="My Agent")
+
+@agent_endpoint(path="/query", runnable=LlamaIndexAdapter(query_engine))
+async def query(question: str) -> str:
+    pass
+```
+
+For more information, visit the documentation at https://github.com/neul-labs/fastagentic

@@ -132,6 +132,63 @@ adapter = LangChainAdapter(chain)
 
 [Full LangChain Adapter Guide](langchain.md)
 
+### DSPy Adapter
+
+Best for: Prompt optimization, few-shot learning, module composition
+
+```python
+from fastagentic.adapters.dspy import DSPyAdapter
+import dspy
+
+module = dspy.ChainOfThought(MySignature)
+adapter = DSPyAdapter(module)
+```
+
+[Full DSPy Adapter Guide](dspy.md)
+
+### LlamaIndex Adapter
+
+Best for: RAG applications, document retrieval, query engines
+
+```python
+from fastagentic.adapters.llamaindex import LlamaIndexAdapter
+from llama_index.core import VectorStoreIndex
+
+index = VectorStoreIndex.from_documents(documents)
+adapter = LlamaIndexAdapter(query_engine=index.as_query_engine())
+```
+
+[Full LlamaIndex Adapter Guide](llamaindex.md)
+
+### Semantic Kernel Adapter
+
+Best for: Microsoft ecosystem, Azure OpenAI, enterprise AI orchestration
+
+```python
+from fastagentic.adapters.semantic_kernel import SemanticKernelAdapter
+import semantic_kernel as sk
+
+kernel = sk.Kernel()
+adapter = SemanticKernelAdapter(kernel)
+```
+
+[Full Semantic Kernel Adapter Guide](semantic_kernel.md)
+
+### AutoGen Adapter
+
+Best for: Multi-agent conversations, code execution, group chats
+
+```python
+from fastagentic.adapters.autogen import AutoGenAdapter
+from autogen import AssistantAgent, UserProxyAgent
+
+assistant = AssistantAgent("assistant", llm_config=config)
+user_proxy = UserProxyAgent("user")
+adapter = AutoGenAdapter(initiator=user_proxy, recipient=assistant)
+```
+
+[Full AutoGen Adapter Guide](autogen.md)
+
 ### Custom Adapter
 
 Best for: Proprietary frameworks, unique requirements
@@ -158,6 +215,10 @@ class MyAdapter(BaseAdapter):
 | LangGraph `StateGraph` | `LangGraphAdapter` |
 | CrewAI `Crew` | `CrewAIAdapter` |
 | LangChain `Runnable` or chain | `LangChainAdapter` |
+| DSPy `Module` | `DSPyAdapter` |
+| LlamaIndex `QueryEngine` or `ChatEngine` | `LlamaIndexAdapter` |
+| Semantic Kernel `Kernel` | `SemanticKernelAdapter` |
+| AutoGen agents | `AutoGenAdapter` |
 | Something else | `BaseAdapter` subclass |
 
 ## Using Multiple Adapters
@@ -219,7 +280,13 @@ All adapters emit standardized events:
 
 ## Next Steps
 
-- [PydanticAI Adapter](pydanticai.md) - Full guide with examples
+- [PydanticAI Adapter](pydanticai.md) - Type-safe agents with structured outputs
 - [LangGraph Adapter](langgraph.md) - Stateful workflow deployment
+- [CrewAI Adapter](crewai.md) - Multi-agent collaboration
+- [LangChain Adapter](langchain.md) - Chain and pipeline deployment
+- [DSPy Adapter](dspy.md) - Prompt optimization and compilation
+- [LlamaIndex Adapter](llamaindex.md) - RAG and retrieval applications
+- [Semantic Kernel Adapter](semantic_kernel.md) - Microsoft ecosystem integration
+- [AutoGen Adapter](autogen.md) - Multi-agent conversations
 - [Adapter Comparison](comparison.md) - Side-by-side feature matrix
 - [Custom Adapters](custom.md) - Build your own adapter

@@ -550,7 +550,7 @@ async def run_opaque(
         await manager.mark_completed(run_id)
 
         if on_progress:
-            on_progress(f"Complete! Cached for resume. Duration: {duration_ms/1000:.1f}s")
+            on_progress(f"Complete! Cached for resume. Duration: {duration_ms / 1000:.1f}s")
 
         return result
 

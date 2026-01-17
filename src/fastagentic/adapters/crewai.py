@@ -44,6 +44,7 @@ class CrewAIAdapter(BaseAdapter):
         *,
         stream_agent_output: bool = True,
         stream_task_output: bool = True,
+        checkpoint_tasks: bool = True,
     ) -> None:
         """Initialize the CrewAI adapter.
 
@@ -51,10 +52,12 @@ class CrewAIAdapter(BaseAdapter):
             crew: A CrewAI Crew instance
             stream_agent_output: Whether to stream per-agent output
             stream_task_output: Whether to stream per-task output
+            checkpoint_tasks: Whether to create checkpoints after each task
         """
         self.crew = crew
         self.stream_agent_output = stream_agent_output
         self.stream_task_output = stream_task_output
+        self.checkpoint_tasks = checkpoint_tasks
 
     async def invoke(self, input: Any, ctx: AdapterContext | Any) -> Any:
         """Run the CrewAI crew and return the result.
@@ -66,7 +69,16 @@ class CrewAIAdapter(BaseAdapter):
         Returns:
             The crew's output
         """
-        adapter_ctx = self._ensure_adapter_context(ctx)  # noqa: F841
+        adapter_ctx = self._ensure_adapter_context(ctx)
+
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        completed_tasks: int = 0
+        task_outputs: list[Any] = []
+        if checkpoint:
+            completed_tasks = checkpoint.get("state", {}).get("completed_tasks", 0)
+            task_outputs = checkpoint.get("task_outputs", [])
+            adapter_ctx.agent_ctx.run._is_resumed = True
 
         # Convert Pydantic models to dict
         if hasattr(input, "model_dump"):
@@ -78,6 +90,20 @@ class CrewAIAdapter(BaseAdapter):
             None,
             lambda: self.crew.kickoff(inputs=input),
         )
+
+        # Create checkpoint with final state
+        if self.checkpoint_tasks:
+            await self.on_checkpoint(
+                {
+                    "state": {
+                        "completed": True,
+                        "completed_tasks": len(self.crew.tasks),
+                    },
+                    "task_outputs": task_outputs,
+                    "context": {"result": str(result) if result else None},
+                },
+                adapter_ctx,
+            )
 
         return result
 
@@ -95,11 +121,42 @@ class CrewAIAdapter(BaseAdapter):
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
 
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        completed_tasks: int = 0
+        task_outputs: list[Any] = []
+        if checkpoint:
+            completed_tasks = checkpoint.get("state", {}).get("completed_tasks", 0)
+            task_outputs = checkpoint.get("task_outputs", [])
+            adapter_ctx.agent_ctx.run._is_resumed = True
+            yield StreamEvent(
+                type=StreamEventType.NODE_START,
+                data={"name": "__resume__", "checkpoint": checkpoint},
+                run_id=adapter_ctx.run_id,
+            )
+
         # Convert Pydantic models to dict
         if hasattr(input, "model_dump"):
             input = input.model_dump()
 
         try:
+            # Try native event bus streaming first (CrewAI 0.30+)
+            has_event_bus = False
+            try:
+                from crewai.utilities.events import crewai_event_bus
+
+                has_event_bus = True
+            except ImportError:
+                pass
+
+            if has_event_bus:
+                async for event in self._stream_with_event_bus(
+                    input, adapter_ctx, completed_tasks, task_outputs
+                ):
+                    yield event
+                return
+
+            # Fallback to polling-based streaming
             # Yield crew start event
             yield StreamEvent(
                 type=StreamEventType.NODE_START,
@@ -110,18 +167,6 @@ class CrewAIAdapter(BaseAdapter):
                 },
                 run_id=adapter_ctx.run_id,
             )
-
-            # CrewAI doesn't have native async streaming, so we track progress
-            # by monitoring task callbacks
-            current_task: int = 0
-
-            # Set up task callback to capture progress
-            task_outputs: list[Any] = []
-
-            def on_task_complete(task_output: Any) -> None:
-                nonlocal current_task
-                task_outputs.append(task_output)
-                current_task += 1
 
             # Run the crew in a thread with callbacks
             loop = asyncio.get_event_loop()
@@ -160,10 +205,20 @@ class CrewAIAdapter(BaseAdapter):
                 lambda: self.crew.kickoff(inputs=input),
             )
 
-            # Emit completion events for each task/agent
+            # Emit completion events for each task/agent with checkpoints
             for i, task in enumerate(self.crew.tasks):
                 agent = task.agent
                 agent_role = agent.role if agent else f"Agent {i}"
+
+                # Extract tool calls from agent if available
+                if agent and hasattr(agent, "tools") and agent.tools:
+                    for tool in agent.tools:
+                        tool_name = getattr(tool, "name", str(tool))
+                        yield StreamEvent(
+                            type=StreamEventType.TOOL_CALL,
+                            data={"name": tool_name, "agent": agent_role, "task_index": i},
+                            run_id=adapter_ctx.run_id,
+                        )
 
                 yield StreamEvent(
                     type=StreamEventType.NODE_END,
@@ -174,12 +229,50 @@ class CrewAIAdapter(BaseAdapter):
                     run_id=adapter_ctx.run_id,
                 )
 
+                # Checkpoint after each task
+                if self.checkpoint_tasks:
+                    task_outputs.append({"task_index": i, "agent": agent_role})
+                    await self.on_checkpoint(
+                        {
+                            "state": {
+                                "completed_tasks": i + 1,
+                                "current_agent": agent_role,
+                            },
+                            "task_outputs": task_outputs.copy(),
+                        },
+                        adapter_ctx,
+                    )
+                    yield StreamEvent(
+                        type=StreamEventType.CHECKPOINT,
+                        data={"task_index": i, "agent": agent_role},
+                        run_id=adapter_ctx.run_id,
+                    )
+
             # Crew complete
             yield StreamEvent(
                 type=StreamEventType.NODE_END,
                 data={"name": "crew"},
                 run_id=adapter_ctx.run_id,
             )
+
+            # Final checkpoint
+            if self.checkpoint_tasks:
+                await self.on_checkpoint(
+                    {
+                        "state": {
+                            "completed": True,
+                            "completed_tasks": len(self.crew.tasks),
+                        },
+                        "task_outputs": task_outputs,
+                        "context": {"result": str(result) if result else None},
+                    },
+                    adapter_ctx,
+                )
+                yield StreamEvent(
+                    type=StreamEventType.CHECKPOINT,
+                    data={"step": "completed"},
+                    run_id=adapter_ctx.run_id,
+                )
 
             # Final result
             yield StreamEvent(
@@ -196,6 +289,208 @@ class CrewAIAdapter(BaseAdapter):
                 type=StreamEventType.ERROR,
                 data={"error": str(e)},
                 run_id=adapter_ctx.run_id,
+            )
+
+    async def _stream_with_event_bus(
+        self,
+        input: Any,
+        ctx: AdapterContext,
+        completed_tasks: int,
+        task_outputs: list[Any],
+    ) -> AsyncIterator[StreamEvent]:
+        """Stream using CrewAI's native event bus for real-time token streaming."""
+        from queue import Empty, Queue
+
+        from crewai.utilities.events import crewai_event_bus
+
+        # Queue for events from the event bus
+        event_queue: Queue[dict[str, Any]] = Queue()
+        done_event = asyncio.Event()
+
+        # Event handlers
+        def on_llm_stream_chunk(event: Any) -> None:
+            """Handle LLM stream chunk events."""
+            chunk = getattr(event, "chunk", "")
+            if chunk:
+                event_queue.put({"type": "token", "content": chunk})
+
+        def on_tool_use(event: Any) -> None:
+            """Handle tool use events."""
+            tool_name = getattr(event, "tool_name", "unknown")
+            tool_input = getattr(event, "tool_input", {})
+            event_queue.put({"type": "tool_call", "name": tool_name, "input": tool_input})
+
+        def on_tool_result(event: Any) -> None:
+            """Handle tool result events."""
+            tool_name = getattr(event, "tool_name", "unknown")
+            tool_output = getattr(event, "result", None)
+            event_queue.put({"type": "tool_result", "name": tool_name, "output": tool_output})
+
+        def on_task_complete(event: Any) -> None:
+            """Handle task completion events."""
+            task_index = getattr(event, "task_index", len(task_outputs))
+            agent = getattr(event, "agent", "unknown")
+            event_queue.put({"type": "task_complete", "task_index": task_index, "agent": agent})
+
+        try:
+            # Register event handlers using scoped handlers
+            with crewai_event_bus.scoped_handlers() as bus:
+                # Try to register for available event types
+                try:
+                    from crewai.utilities.events.llm_events import LLMStreamChunkEvent
+
+                    bus.on(LLMStreamChunkEvent)(on_llm_stream_chunk)
+                except (ImportError, AttributeError):
+                    pass
+
+                try:
+                    from crewai.utilities.events.tool_events import ToolUseEvent
+
+                    bus.on(ToolUseEvent)(on_tool_use)
+                except (ImportError, AttributeError):
+                    pass
+
+                try:
+                    from crewai.utilities.events.tool_events import ToolResultEvent
+
+                    bus.on(ToolResultEvent)(on_tool_result)
+                except (ImportError, AttributeError):
+                    pass
+
+                # Yield crew start event
+                yield StreamEvent(
+                    type=StreamEventType.NODE_START,
+                    data={
+                        "name": "crew",
+                        "agents": [a.role for a in self.crew.agents],
+                        "tasks": len(self.crew.tasks),
+                    },
+                    run_id=ctx.run_id,
+                )
+
+                # Run crew in executor
+                loop = asyncio.get_event_loop()
+
+                async def run_crew() -> Any:
+                    try:
+                        return await loop.run_in_executor(
+                            None,
+                            lambda: self.crew.kickoff(inputs=input),
+                        )
+                    finally:
+                        done_event.set()
+
+                crew_task = asyncio.create_task(run_crew())
+
+                # Process events from queue while crew runs
+                current_task_index = completed_tasks
+                while not done_event.is_set() or not event_queue.empty():
+                    try:
+                        event = event_queue.get_nowait()
+
+                        if event["type"] == "token":
+                            yield StreamEvent(
+                                type=StreamEventType.TOKEN,
+                                data={"content": event["content"]},
+                                run_id=ctx.run_id,
+                            )
+                        elif event["type"] == "tool_call":
+                            yield StreamEvent(
+                                type=StreamEventType.TOOL_CALL,
+                                data={"name": event["name"], "input": event["input"]},
+                                run_id=ctx.run_id,
+                            )
+                        elif event["type"] == "tool_result":
+                            yield StreamEvent(
+                                type=StreamEventType.TOOL_RESULT,
+                                data={"name": event["name"], "output": event["output"]},
+                                run_id=ctx.run_id,
+                            )
+                        elif event["type"] == "task_complete":
+                            current_task_index = event["task_index"] + 1
+                            task_outputs.append(
+                                {
+                                    "task_index": event["task_index"],
+                                    "agent": event["agent"],
+                                }
+                            )
+
+                            yield StreamEvent(
+                                type=StreamEventType.NODE_END,
+                                data={
+                                    "name": f"agent:{event['agent']}",
+                                    "task_index": event["task_index"],
+                                },
+                                run_id=ctx.run_id,
+                            )
+
+                            # Checkpoint after task
+                            if self.checkpoint_tasks:
+                                await self.on_checkpoint(
+                                    {
+                                        "state": {
+                                            "completed_tasks": current_task_index,
+                                            "current_agent": event["agent"],
+                                        },
+                                        "task_outputs": task_outputs.copy(),
+                                    },
+                                    ctx,
+                                )
+                                yield StreamEvent(
+                                    type=StreamEventType.CHECKPOINT,
+                                    data={
+                                        "task_index": event["task_index"],
+                                        "agent": event["agent"],
+                                    },
+                                    run_id=ctx.run_id,
+                                )
+                    except Empty:
+                        await asyncio.sleep(0.05)
+
+                # Get final result
+                result = await crew_task
+
+                # Crew complete
+                yield StreamEvent(
+                    type=StreamEventType.NODE_END,
+                    data={"name": "crew"},
+                    run_id=ctx.run_id,
+                )
+
+                # Final checkpoint
+                if self.checkpoint_tasks:
+                    await self.on_checkpoint(
+                        {
+                            "state": {
+                                "completed": True,
+                                "completed_tasks": len(self.crew.tasks),
+                            },
+                            "task_outputs": task_outputs,
+                            "context": {"result": str(result) if result else None},
+                        },
+                        ctx,
+                    )
+                    yield StreamEvent(
+                        type=StreamEventType.CHECKPOINT,
+                        data={"step": "completed"},
+                        run_id=ctx.run_id,
+                    )
+
+                # Final result
+                yield StreamEvent(
+                    type=StreamEventType.DONE,
+                    data={
+                        "result": str(result) if result else None,
+                        "raw": result.raw if hasattr(result, "raw") else None,
+                    },
+                    run_id=ctx.run_id,
+                )
+
+        except Exception as e:
+            yield StreamEvent(
+                type=StreamEventType.ERROR,
+                data={"error": str(e)},
+                run_id=ctx.run_id,
             )
 
     async def stream_verbose(
@@ -305,4 +600,38 @@ class CrewAIAdapter(BaseAdapter):
             new_crew,
             stream_agent_output=self.stream_agent_output,
             stream_task_output=self.stream_task_output,
+            checkpoint_tasks=self.checkpoint_tasks,
+        )
+
+    def with_checkpoints(self, enabled: bool = True) -> CrewAIAdapter:
+        """Create a new adapter with checkpoint configuration.
+
+        Args:
+            enabled: Whether to checkpoint after each task
+
+        Returns:
+            A new CrewAIAdapter with the specified checkpoint settings
+        """
+        return CrewAIAdapter(
+            self.crew,
+            stream_agent_output=self.stream_agent_output,
+            stream_task_output=self.stream_task_output,
+            checkpoint_tasks=enabled,
+        )
+
+    def with_streaming(self, agent_output: bool = True, task_output: bool = True) -> CrewAIAdapter:
+        """Create a new adapter with different streaming settings.
+
+        Args:
+            agent_output: Whether to stream per-agent output
+            task_output: Whether to stream per-task output
+
+        Returns:
+            A new CrewAIAdapter with the specified streaming settings
+        """
+        return CrewAIAdapter(
+            self.crew,
+            stream_agent_output=agent_output,
+            stream_task_output=task_output,
+            checkpoint_tasks=self.checkpoint_tasks,
         )

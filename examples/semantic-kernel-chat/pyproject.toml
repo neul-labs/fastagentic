@@ -1,0 +1,21 @@
+[project]
+name = "semantic-kernel-chat"
+version = "1.0.0"
+description = "A chat agent using Semantic Kernel and FastAgentic"
+requires-python = ">=3.10"
+dependencies = [
+    "fastagentic[semantic-kernel]",
+    "semantic-kernel>=1.0.0",
+]
+
+[tool.uv.sources]
+fastagentic = { path = "../..", editable = true }
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
