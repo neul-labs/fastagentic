@@ -97,7 +97,7 @@ Documentation is a first-class deliverable in every release. Each feature ships 
 
 ## v0.2 — Workflow Durability & Adapter Ecosystem
 
-**Status: In Progress**
+**Status: Shipped**
 
 **Adapters:**
 - PydanticAI adapter with full streaming support
@@ -158,7 +158,7 @@ Documentation is a first-class deliverable in every release. Each feature ships 
 
 ## v0.3 — Hooks, Integrations & Governance
 
-**Status: Planned**
+**Status: Shipped**
 
 **Hooks Architecture:**
 - Fine-grained hook system with lifecycle points:
@@ -247,7 +247,7 @@ Documentation is a first-class deliverable in every release. Each feature ships 
 
 ## v0.4 — Human-in-the-Loop & Evaluation
 
-**Status: Planned**
+**Status: Shipped**
 
 **HITL Workflows:**
 - `interrupt()` checkpoint for human approval
@@ -319,7 +319,7 @@ Documentation is a first-class deliverable in every release. Each feature ships 
 
 ## v0.5 — Scale and Orchestration
 
-**Status: Planned**
+**Status: Shipped**
 
 **Scale:**
 - Distributed checkpointing across clusters
@@ -356,69 +356,121 @@ Documentation is a first-class deliverable in every release. Each feature ships 
 
 ## v1.0 — Production Suite
 
-**Status: Planned**
+**Status: Shipped**
 
-**Protocol Compliance:**
-- Full compliance with MCP 2025-11-25 specification
-- Full compliance with A2A v0.3 specification
-- MCP Registry integration
-- A2A interoperability certification (Google, Microsoft, Salesforce)
+**Python SDK:**
+- `FastAgenticClient` and `AsyncFastAgenticClient` for API interaction
+- Streaming support with `StreamEvent` and `StreamEventType`
+- Automatic retry with exponential backoff
+- Comprehensive error handling (`AuthenticationError`, `RateLimitError`, etc.)
+- `RunRequest`, `RunResponse`, `ToolCall`, `ToolResult` models
 
-**Compliance:**
-- SOC2 and GDPR compliance documentation
-- Audit evidence automation
-- PII detection and masking hooks
+**Compliance & PII:**
+- `PIIDetector` with built-in patterns for email, phone, SSN, credit cards, IP addresses
+- `PIIMasker` for masking and redaction
+- `PIIConfig` with allowlists, blocklists, and custom patterns
+- `PIIDetectionHook` and `PIIMaskingHook` for request/response filtering
+- Configurable confidence thresholds and type filtering
 
-**Platform:**
-- Hosted dashboard with run introspection, analytics, and alerting
-- SDKs for TypeScript and Python clients
-- Runtime bundle for managed hosting providers
-- A2A marketplace for agent discovery
+**Dashboard & Metrics:**
+- `StatsCollector` for run tracking and statistics
+- `RunStats`, `EndpointStats`, `SystemStats` data models
+- `MetricsRegistry` with `Counter`, `Gauge`, `Histogram` metrics
+- `PrometheusExporter` for Prometheus-compatible output
+- `DashboardAPI` with health, metrics, and stats endpoints
+- Configurable dashboard with authentication support
 
-**Operations:**
-- Terraform modules for AWS/GCP/Azure
-- Production readiness checklist
-- SLA documentation and support tiers
-
-**Quality:**
-- Stability hardening and performance profiling
-- Long-term support policy
-- Chaos engineering test suite
+**Production Readiness:**
+- `ReadinessChecker` with comprehensive production checks
+- Security checks: auth, HTTPS, secrets management
+- Reliability checks: timeouts, retries, rate limiting
+- Observability checks: logging, metrics, health endpoints
+- Compliance checks: PII detection, audit logging
+- Custom check support with `ReadinessCheck`
+- `ReadinessReport` with scoring and recommendations
 
 **Documentation:**
-- **Complete Documentation Suite:**
-  - All guides consolidated and polished
-  - Video tutorials and walkthroughs
-  - Interactive examples and playgrounds
-- **Compliance Documentation:**
-  - SOC2 compliance guide
-  - GDPR compliance checklist
-  - Audit evidence templates
-- **Enterprise Guides:**
-  - Production readiness assessment
-  - SLA documentation
-  - Support tier guides
-- **Migration Guides:**
-  - Migrating from raw frameworks
-  - Migrating from competing tools
-  - Version upgrade guides
+- [SDK Guide](sdk.md) — Python client usage
+- [Compliance Guide](compliance.md) — PII detection and masking
+- [Dashboard Guide](dashboard.md) — Metrics and monitoring
+- [Ops Guide](ops.md) — Production readiness checks
 
 ---
 
-## Beyond v1.0
+## v1.1 — Adapter & Template Ecosystem
 
-**Adapter Ecosystem:**
-- Semantic Kernel adapter
-- AutoGen adapter
-- LlamaIndex adapter
-- DSPy adapter
-- Community adapter SDK
+**Status: Shipped**
+
+**New Adapters:**
+- `SemanticKernelAdapter` - Microsoft Semantic Kernel functions and agents
+- `AutoGenAdapter` - Microsoft AutoGen multi-agent conversations
+- `LlamaIndexAdapter` - LlamaIndex query engines, agents, and chat engines
+- `DSPyAdapter` and `DSPyProgramAdapter` - DSPy modules and compiled programs
+
+**Community Adapter SDK:**
+- `CommunityAdapter` base class for custom adapters
+- `SimpleAdapter` for wrapping simple functions
+- `AdapterMetadata` for adapter registration
+- `AdapterRegistry` for discovery and management
+- `@register_adapter` decorator
 
 **Template Ecosystem:**
-- Community template marketplace with ratings and reviews
-- Template versioning and update notifications
-- Enterprise template registry (private templates)
-- Template composition (combine multiple templates)
+- `Template`, `TemplateMetadata`, `TemplateVariable`, `TemplateFile`
+- `TemplateVersion` with compatibility checking
+- `LocalRegistry` for file-based templates
+- `RemoteRegistry` for remote template sources
+- `EnterpriseRegistry` with access control and auditing
+
+**Template Marketplace:**
+- `Marketplace` for community template discovery
+- `TemplateRating` and `TemplateReview` for feedback
+- Browse by category, framework, tags
+- Search, ratings, and reviews
+
+**Template Composition:**
+- `TemplateComposer` for combining templates
+- `CompositionConfig` for merge strategies
+- File conflict detection and resolution
+- Python, JSON, YAML merge support
+
+**Documentation:**
+- [New Adapters Guide](adapters-new.md) — SK, AutoGen, LlamaIndex, DSPy
+- [Template Ecosystem Guide](templates-ecosystem.md) — Templates, marketplace, composition
+
+---
+
+## v1.2 — Interactive Agent CLI
+
+**Status: Shipped**
+
+**Agent CLI:**
+- Interactive REPL for agent testing (Claude Code / Gemini CLI-like experience)
+- `fastagentic agent chat` - Full interactive chat session
+- `fastagentic agent query` - Single queries for scripting and piping
+- `fastagentic agent config` - Configuration management
+- `fastagentic agent history` - Conversation history management
+
+**REPL Features:**
+- Streaming responses with real-time updates
+- Tool call visualization with formatted output
+- Conversation history with save/load to JSON
+- Configurable output formats (markdown, plain, json)
+- Slash commands for configuration and navigation
+- Server health checking
+- File input support
+
+**Scripting Support:**
+- Stdin/stdout piping for automation
+- Output file support
+- Environment variable configuration
+- Config file at `~/.fastagentic/config.json`
+
+**Documentation:**
+- [Agent CLI Guide](cli-agent.md) — Commands, configuration, examples
+
+---
+
+## Beyond v1.2
 
 **Integration Ecosystem:**
 - Community hook marketplace

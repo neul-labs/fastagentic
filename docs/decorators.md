@@ -72,7 +72,8 @@ from fastagentic import resource
 
 @resource(
     name="run-status",
-    uri="/runs/{run_id}",
+    uri="runs/{run_id}",
+    description="Fetch the status of a durable run",
     scopes=["runs:read"],
     cache_ttl=60,
 )
@@ -80,14 +81,15 @@ async def fetch_run(run_id: str) -> dict:
     ...
 ```
 
-| Parameter   | Purpose                                                       |
-| ----------- | ------------------------------------------------------------- |
-| `name`      | Resource namespace used in MCP (`resources.run-status`)       |
-| `uri`       | REST path pattern with path parameters                        |
-| `scopes`    | Access control definitions                                    |
-| `cache_ttl` | Optional cache hint (seconds) for clients and intermediate caches |
+| Parameter     | Purpose                                                       |
+| ------------- | ------------------------------------------------------------- |
+| `name`        | Resource namespace used in MCP (`resources.run-status`)       |
+| `uri`         | URI template with path parameters (no leading slash)          |
+| `description` | Human-readable description for MCP discovery                  |
+| `scopes`      | Access control definitions                                    |
+| `cache_ttl`   | Optional cache hint (seconds) for clients and intermediate caches |
 
-Resources typically return JSON-serializable dictionaries or Pydantic models. All path parameters are exposed as MCP resource identifiers, e.g., `resources.run-status:/runs/{run_id}`.
+Resources typically return JSON-serializable dictionaries or Pydantic models. All path parameters are exposed as MCP resource identifiers, e.g., `resources.run-status:runs/{run_id}`.
 
 ## `@prompt`
 

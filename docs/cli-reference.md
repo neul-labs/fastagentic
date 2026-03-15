@@ -243,6 +243,112 @@ Check connectivity to external agent.
 fastagentic a2a ping https://external-agent.example.com
 ```
 
+## `fastagentic agent`
+
+Interactive agent testing and development CLI. Provides a Claude Code / Gemini CLI-like experience for working with agents.
+
+### `agent chat`
+
+Start an interactive chat session.
+
+```bash
+fastagentic agent chat
+fastagentic agent chat --url http://localhost:8000 --endpoint /chat
+fastagentic agent chat --verbose
+```
+
+| Option | Description |
+|--------|-------------|
+| `--url, -u` | Agent server URL (default: `http://localhost:8000`) |
+| `--endpoint, -e` | Agent endpoint path (default: `/chat`) |
+| `--api-key, -k` | API key for authentication |
+| `--stream/--no-stream` | Enable/disable streaming (default: enabled) |
+| `--verbose, -v` | Show tool calls and metadata |
+
+**REPL Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `/help` | Show all commands |
+| `/quit`, `/exit`, `/q` | Exit the CLI |
+| `/clear` | Clear conversation history |
+| `/save [name]` | Save conversation to file |
+| `/load [name]` | Load conversation from file |
+| `/history` | Show conversation history |
+| `/endpoints` | List available endpoints |
+| `/use <endpoint>` | Switch endpoint |
+| `/config` | Show configuration |
+| `/set <key> <value>` | Set configuration |
+| `/stream on\|off` | Toggle streaming |
+| `/tools on\|off` | Toggle tool display |
+| `/format md\|plain\|json` | Set output format |
+| `/file <path>` | Send file contents |
+| `/export [path]` | Export to markdown |
+| `/status` | Check server health |
+| `/compact` | Hide metadata |
+| `/verbose` | Show all metadata |
+
+### `agent query`
+
+Send a single message to an agent.
+
+```bash
+fastagentic agent query "Hello, how are you?"
+echo "Summarize this" | fastagentic agent query -
+fastagentic agent query "Generate code" -o output.txt
+```
+
+| Option | Description |
+|--------|-------------|
+| `MESSAGE` | Message to send (use `-` for stdin) |
+| `--url, -u` | Agent server URL |
+| `--endpoint, -e` | Agent endpoint path |
+| `--api-key, -k` | API key |
+| `--stream/--no-stream` | Enable/disable streaming |
+| `--output, -o` | Output file path |
+| `--format, -f` | Output format (`plain`, `markdown`, `json`) |
+
+### `agent config`
+
+View or modify CLI configuration.
+
+```bash
+fastagentic agent config --show
+fastagentic agent config --url http://production:8000
+fastagentic agent config --api-key sk-xxx
+```
+
+| Option | Description |
+|--------|-------------|
+| `--show, -s` | Show current configuration |
+| `--url, -u` | Set default server URL |
+| `--endpoint, -e` | Set default endpoint |
+| `--api-key, -k` | Set API key |
+
+Configuration is stored in `~/.fastagentic/config.json`.
+
+### `agent history`
+
+Manage conversation history.
+
+```bash
+fastagentic agent history --list
+fastagentic agent history --load conv-123
+fastagentic agent history --delete conv-123
+fastagentic agent history --clear
+```
+
+| Option | Description |
+|--------|-------------|
+| `--list, -l` | List saved conversations |
+| `--load NAME` | Load and display a conversation |
+| `--delete, -d NAME` | Delete a conversation |
+| `--clear` | Clear all conversation history |
+
+Conversations are stored in `~/.fastagentic/history/`.
+
+See the [Agent CLI Guide](cli-agent.md) for detailed documentation.
+
 ## `fastagentic config`
 
 Configuration management.
