@@ -58,9 +58,75 @@ def run(
     port: Annotated[int, typer.Option(help="Port to bind to")] = 8000,
     reload: Annotated[bool, typer.Option(help="Enable auto-reload")] = False,
     workers: Annotated[int, typer.Option(help="Number of workers")] = 1,
+    server: Annotated[
+        str,
+        typer.Option(
+            "--server",
+            "-s",
+            help="Server type: uvicorn (default) or gunicorn (production)",
+        ),
+    ] = "uvicorn",
+    max_concurrent: Annotated[
+        Optional[int],
+        typer.Option(
+            "--max-concurrent",
+            help="Maximum concurrent requests (enables backpressure)",
+        ),
+    ] = None,
+    instance_id: Annotated[
+        Optional[str],
+        typer.Option(
+            "--instance-id",
+            help="Instance ID for cluster-aware metrics",
+        ),
+    ] = None,
+    redis_pool_size: Annotated[
+        int,
+        typer.Option(
+            "--redis-pool-size",
+            help="Redis connection pool size",
+        ),
+    ] = 10,
+    db_pool_size: Annotated[
+        int,
+        typer.Option(
+            "--db-pool-size",
+            help="Database connection pool size",
+        ),
+    ] = 5,
+    db_max_overflow: Annotated[
+        int,
+        typer.Option(
+            "--db-max-overflow",
+            help="Database pool max overflow connections",
+        ),
+    ] = 10,
+    timeout_graceful: Annotated[
+        int,
+        typer.Option(
+            "--timeout-graceful",
+            help="Graceful shutdown timeout in seconds",
+        ),
+    ] = 30,
 ) -> None:
-    """Run the FastAgentic application server."""
-    import uvicorn
+    """Run the FastAgentic application server.
+
+    Supports both development (uvicorn) and production (gunicorn) modes.
+
+    Examples:
+        # Development with auto-reload
+        fastagentic run --reload
+
+        # Production with Gunicorn (4 workers)
+        fastagentic run --server gunicorn --workers 4
+
+        # Production with concurrency limits
+        fastagentic run --server gunicorn --workers 4 --max-concurrent 100
+
+        # Cluster deployment with instance ID
+        fastagentic run --server gunicorn --instance-id worker-1
+    """
+    from fastagentic.server.config import ServerConfig, PoolConfig
 
     # Parse module:attribute format
     if ":" in app_path:
@@ -73,18 +139,54 @@ def run(
     if module_path.endswith(".py"):
         module_path = module_path[:-3].replace("/", ".").replace("\\", ".")
 
-    console.print(f"[bold green]Starting FastAgentic server...[/bold green]")
-    console.print(f"  App: {module_path}:{attr_name}")
-    console.print(f"  URL: http://{host}:{port}")
+    # Build server configuration
+    pool_config = PoolConfig(
+        redis_pool_size=redis_pool_size,
+        db_pool_size=db_pool_size,
+        db_max_overflow=db_max_overflow,
+    )
 
-    # Run with uvicorn
-    uvicorn.run(
-        f"{module_path}:{attr_name}.fastapi",
+    config = ServerConfig(
+        server=server,  # type: ignore
         host=host,
         port=port,
+        workers=workers,
         reload=reload,
-        workers=workers if not reload else 1,
+        max_concurrent=max_concurrent,
+        instance_id=instance_id,
+        timeout_graceful_shutdown=timeout_graceful,
+        pool=pool_config,
     )
+
+    # Display startup info
+    console.print(f"[bold green]Starting FastAgentic server...[/bold green]")
+    console.print(f"  App: {module_path}:{attr_name}")
+    console.print(f"  Server: {server}")
+    console.print(f"  URL: http://{host}:{port}")
+    console.print(f"  Workers: {config.effective_workers()}")
+    if max_concurrent:
+        console.print(f"  Max Concurrent: {max_concurrent}")
+    if instance_id:
+        console.print(f"  Instance ID: {instance_id}")
+
+    # Set environment variables for the app to pick up
+    import os
+    os.environ["FASTAGENTIC_INSTANCE_ID"] = config.get_instance_id()
+    os.environ["FASTAGENTIC_REDIS_POOL_SIZE"] = str(redis_pool_size)
+    os.environ["FASTAGENTIC_DB_POOL_SIZE"] = str(db_pool_size)
+    os.environ["FASTAGENTIC_DB_MAX_OVERFLOW"] = str(db_max_overflow)
+    if max_concurrent:
+        os.environ["FASTAGENTIC_MAX_CONCURRENT"] = str(max_concurrent)
+
+    # Run the server
+    app_import_path = f"{module_path}:{attr_name}.fastapi"
+
+    if server == "gunicorn":
+        from fastagentic.server.runners import run_gunicorn
+        run_gunicorn(app_import_path, config)
+    else:
+        from fastagentic.server.runners import run_uvicorn
+        run_uvicorn(app_import_path, config)
 
 
 @app.command()
