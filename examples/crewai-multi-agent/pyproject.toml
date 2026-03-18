@@ -1,0 +1,11 @@
+[project]
+name = "crewai-multi-agent"
+version = "1.0.0"
+description = "Multi-agent collaboration using CrewAI and FastAgentic"
+requires-python = ">=3.10"
+dependencies = [
+    "fastagentic[crewai]",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

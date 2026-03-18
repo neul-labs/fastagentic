@@ -1,0 +1,11 @@
+[project]
+name = "full-production"
+version = "1.0.0"
+description = "Complete production FastAgentic deployment"
+requires-python = ">=3.10"
+dependencies = [
+    "fastagentic[pydanticai,otel,redis]",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "pytest-asyncio>=0.24.0"]

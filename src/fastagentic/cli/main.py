@@ -134,7 +134,47 @@ def new(
 
 def _create_project_files(project_dir: Path, name: str, template: str) -> None:
     """Create project files from template."""
+    # Get template-specific content
+    template_content = _get_template_content(name, template)
+
     # pyproject.toml
+    (project_dir / "pyproject.toml").write_text(template_content["pyproject"])
+
+    # Main app file
+    (project_dir / "app.py").write_text(template_content["app"])
+
+    # Agent/workflow file (if applicable)
+    if "agent" in template_content:
+        (project_dir / "agent.py").write_text(template_content["agent"])
+
+    # Models
+    (project_dir / "models.py").write_text(template_content["models"])
+
+    # CLAUDE.md
+    (project_dir / "CLAUDE.md").write_text(template_content["claude_md"])
+
+    # README
+    (project_dir / "README.md").write_text(template_content["readme"])
+
+    # .env.example
+    (project_dir / ".env.example").write_text(template_content["env_example"])
+
+    # .gitignore
+    gitignore = '''__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+venv/
+.uv/
+'''
+    (project_dir / ".gitignore").write_text(gitignore)
+
+
+def _get_template_content(name: str, template: str) -> dict[str, str]:
+    """Get template-specific content based on framework."""
+
+    # Common pyproject.toml
     pyproject = f'''[project]
 name = "{name}"
 version = "0.1.0"
@@ -148,80 +188,546 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
 '''
-    (project_dir / "pyproject.toml").write_text(pyproject)
 
-    # Main app file
-    app_code = f'''"""FastAgentic application."""
+    # Common .env.example
+    env_example = f'''# {name} - Environment Variables
 
-from fastagentic import App, agent_endpoint, tool, resource, prompt
+# LLM Provider (choose one)
+OPENAI_API_KEY=sk-your-openai-key
+# ANTHROPIC_API_KEY=sk-ant-your-anthropic-key
+
+# FastAgentic
+FASTAGENTIC_ENV=dev
+FASTAGENTIC_LOG_LEVEL=INFO
+
+# Optional: Durable store
+# REDIS_URL=redis://localhost:6379
+'''
+
+    if template == "pydanticai":
+        return _get_pydanticai_template(name, pyproject, env_example)
+    elif template == "langgraph":
+        return _get_langgraph_template(name, pyproject, env_example)
+    elif template == "crewai":
+        return _get_crewai_template(name, pyproject, env_example)
+    elif template == "langchain":
+        return _get_langchain_template(name, pyproject, env_example)
+    else:
+        return _get_pydanticai_template(name, pyproject, env_example)
+
+
+def _get_pydanticai_template(name: str, pyproject: str, env_example: str) -> dict[str, str]:
+    """Generate PydanticAI template."""
+    return {
+        "pyproject": pyproject,
+        "env_example": env_example,
+        "app": f'''"""FastAgentic application with PydanticAI."""
+
+from fastagentic import App, agent_endpoint, tool, resource
+from fastagentic.adapters.pydanticai import PydanticAIAdapter
+from pydantic import BaseModel
+
+from agent import chat_agent
+from models import ChatRequest, ChatResponse
 
 app = App(
     title="{name}",
     version="0.1.0",
-    durable_store="redis://localhost:6379",
 )
 
 
-@tool(name="hello", description="Say hello to someone")
-async def hello(name: str) -> str:
-    """Say hello."""
-    return f"Hello, {{name}}!"
+@tool(name="get_time", description="Get current time")
+async def get_time() -> str:
+    """Return current timestamp."""
+    from datetime import datetime
+    return datetime.now().isoformat()
 
 
-@resource(name="status", uri="status")
-async def get_status() -> dict:
-    """Get application status."""
-    return {{"status": "ok"}}
+@resource(name="info", uri="info")
+async def get_info() -> dict:
+    """Return service info."""
+    return {{"name": "{name}", "version": "0.1.0"}}
 
 
-@prompt(name="system", description="System prompt")
-def system_prompt() -> str:
-    """Return the system prompt."""
-    return "You are a helpful assistant."
+@agent_endpoint(
+    path="/chat",
+    runnable=PydanticAIAdapter(chat_agent),
+    input_model=ChatRequest,
+    output_model=ChatResponse,
+    stream=True,
+    mcp_tool="chat",
+)
+async def chat(request: ChatRequest) -> ChatResponse:
+    pass
 
 
-# Add your agent endpoint here
-# @agent_endpoint(
-#     path="/chat",
-#     runnable=...,
-#     stream=True,
-# )
-# async def chat(message: str) -> str:
-#     pass
-'''
-    (project_dir / "app.py").write_text(app_code)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app.fastapi", host="0.0.0.0", port=8000, reload=True)
+''',
+        "agent": '''"""PydanticAI agent definition."""
 
-    # README
-    readme = f'''# {name}
+from datetime import datetime
+from pydantic_ai import Agent
 
-A FastAgentic application.
+SYSTEM_PROMPT = """You are a helpful AI assistant.
+Be concise and helpful in your responses."""
 
-## Development
+chat_agent = Agent(
+    model="openai:gpt-4o-mini",
+    system_prompt=SYSTEM_PROMPT,
+)
+
+
+@chat_agent.tool
+async def get_current_time() -> str:
+    """Get the current date and time."""
+    return datetime.now().isoformat()
+''',
+        "models": '''"""API models."""
+
+from pydantic import BaseModel, Field
+
+
+class ChatRequest(BaseModel):
+    """Chat request model."""
+    message: str = Field(..., min_length=1)
+    stream: bool = True
+
+
+class ChatResponse(BaseModel):
+    """Chat response model."""
+    response: str
+''',
+        "claude_md": f'''# {name} - Claude Code Guide
+
+PydanticAI agent deployed with FastAgentic.
+
+## Commands
+
+```bash
+uv sync                           # Install dependencies
+uv run fastagentic run            # Start server
+uv run fastagentic agent chat     # Test interactively
+```
+
+## Structure
+
+- `app.py` - FastAgentic application
+- `agent.py` - PydanticAI agent definition
+- `models.py` - Request/response models
+
+## Modifying
+
+- **Add tools**: Edit `agent.py`, use `@chat_agent.tool`
+- **Change model**: Edit `Agent(model="...")` in `agent.py`
+- **Add endpoints**: Use `@agent_endpoint` in `app.py`
+''',
+        "readme": f'''# {name}
+
+A PydanticAI agent deployed with FastAgentic.
+
+## Quick Start
 
 ```bash
 uv sync
-fastagentic run --reload
+export OPENAI_API_KEY="sk-..."
+uv run fastagentic run
 ```
 
-## Endpoints
+## Test
 
-- `GET /health` - Health check
-- `GET /mcp/schema` - MCP schema
-- `GET /.well-known/agent.json` - A2A Agent Card
-'''
-    (project_dir / "README.md").write_text(readme)
+```bash
+uv run fastagentic agent chat
+```
 
-    # .gitignore
-    gitignore = '''__pycache__/
-*.py[cod]
-*$py.class
-.env
-.venv
-venv/
-.uv/
-'''
-    (project_dir / ".gitignore").write_text(gitignore)
+See `CLAUDE.md` for detailed instructions.
+''',
+    }
+
+
+def _get_langgraph_template(name: str, pyproject: str, env_example: str) -> dict[str, str]:
+    """Generate LangGraph template."""
+    pyproject = pyproject.replace(
+        "fastagentic[langgraph]",
+        "fastagentic[langgraph]\",\n    \"langchain-openai>=0.2.0"
+    )
+    return {
+        "pyproject": pyproject,
+        "env_example": env_example,
+        "app": f'''"""FastAgentic application with LangGraph."""
+
+from fastagentic import App, agent_endpoint, resource
+from fastagentic.adapters.langgraph import LangGraphAdapter
+from pydantic import BaseModel
+
+from agent import workflow
+from models import WorkflowRequest, WorkflowResponse
+
+app = App(
+    title="{name}",
+    version="0.1.0",
+)
+
+
+@resource(name="info", uri="info")
+async def get_info() -> dict:
+    return {{"name": "{name}", "type": "langgraph-workflow"}}
+
+
+@agent_endpoint(
+    path="/run",
+    runnable=LangGraphAdapter(workflow),
+    input_model=WorkflowRequest,
+    output_model=WorkflowResponse,
+    stream=True,
+    mcp_tool="run_workflow",
+)
+async def run_workflow(request: WorkflowRequest) -> WorkflowResponse:
+    pass
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app.fastapi", host="0.0.0.0", port=8000, reload=True)
+''',
+        "agent": '''"""LangGraph workflow definition."""
+
+from langgraph.graph import StateGraph, END
+from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
+
+
+class State(BaseModel):
+    """Workflow state."""
+    input: str = ""
+    output: str = ""
+
+
+llm = ChatOpenAI(model="gpt-4o-mini")
+
+
+async def process_node(state: State) -> dict:
+    """Process the input."""
+    response = await llm.ainvoke(state.input)
+    return {"output": response.content}
+
+
+# Build graph
+graph = StateGraph(State)
+graph.add_node("process", process_node)
+graph.set_entry_point("process")
+graph.add_edge("process", END)
+
+workflow = graph.compile()
+''',
+        "models": '''"""API models."""
+
+from pydantic import BaseModel, Field
+
+
+class WorkflowRequest(BaseModel):
+    """Workflow request."""
+    input: str = Field(..., min_length=1)
+
+
+class WorkflowResponse(BaseModel):
+    """Workflow response."""
+    output: str
+''',
+        "claude_md": f'''# {name} - Claude Code Guide
+
+LangGraph workflow deployed with FastAgentic.
+
+## Commands
+
+```bash
+uv sync
+uv run fastagentic run
+uv run fastagentic agent chat --endpoint /run
+```
+
+## Structure
+
+- `app.py` - FastAgentic application
+- `agent.py` - LangGraph workflow definition
+- `models.py` - Request/response models
+
+## Modifying
+
+- **Add nodes**: Create function, add with `graph.add_node()`
+- **Add edges**: Use `graph.add_edge()` or `add_conditional_edges()`
+- **Change state**: Update `State` class
+''',
+        "readme": f'''# {name}
+
+A LangGraph workflow deployed with FastAgentic.
+
+## Quick Start
+
+```bash
+uv sync
+export OPENAI_API_KEY="sk-..."
+uv run fastagentic run
+```
+
+See `CLAUDE.md` for details.
+''',
+    }
+
+
+def _get_crewai_template(name: str, pyproject: str, env_example: str) -> dict[str, str]:
+    """Generate CrewAI template."""
+    return {
+        "pyproject": pyproject,
+        "env_example": env_example,
+        "app": f'''"""FastAgentic application with CrewAI."""
+
+from fastagentic import App, agent_endpoint, resource
+from fastagentic.adapters.crewai import CrewAIAdapter
+from pydantic import BaseModel
+
+from agent import crew
+from models import CrewRequest, CrewResponse
+
+app = App(
+    title="{name}",
+    version="0.1.0",
+)
+
+
+@resource(name="info", uri="info")
+async def get_info() -> dict:
+    return {{"name": "{name}", "type": "crewai-multi-agent"}}
+
+
+@agent_endpoint(
+    path="/run",
+    runnable=CrewAIAdapter(crew),
+    input_model=CrewRequest,
+    output_model=CrewResponse,
+    stream=True,
+    mcp_tool="run_crew",
+)
+async def run_crew(request: CrewRequest) -> CrewResponse:
+    pass
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app.fastapi", host="0.0.0.0", port=8000, reload=True)
+''',
+        "agent": '''"""CrewAI crew definition."""
+
+from crewai import Agent, Task, Crew, Process
+
+# Define agents
+researcher = Agent(
+    role="Researcher",
+    goal="Research the given topic thoroughly",
+    backstory="You are an expert researcher.",
+    verbose=True,
+)
+
+writer = Agent(
+    role="Writer",
+    goal="Write clear, engaging content",
+    backstory="You are a skilled writer.",
+    verbose=True,
+)
+
+# Define tasks
+research_task = Task(
+    description="Research: {topic}",
+    expected_output="Research findings",
+    agent=researcher,
+)
+
+write_task = Task(
+    description="Write summary based on research",
+    expected_output="Written summary",
+    agent=writer,
+)
+
+# Create crew
+crew = Crew(
+    agents=[researcher, writer],
+    tasks=[research_task, write_task],
+    process=Process.sequential,
+)
+''',
+        "models": '''"""API models."""
+
+from pydantic import BaseModel, Field
+
+
+class CrewRequest(BaseModel):
+    """Crew request."""
+    topic: str = Field(..., min_length=1)
+
+
+class CrewResponse(BaseModel):
+    """Crew response."""
+    result: str
+''',
+        "claude_md": f'''# {name} - Claude Code Guide
+
+CrewAI multi-agent system deployed with FastAgentic.
+
+## Commands
+
+```bash
+uv sync
+uv run fastagentic run
+uv run fastagentic agent chat --endpoint /run
+```
+
+## Structure
+
+- `app.py` - FastAgentic application
+- `agent.py` - CrewAI agents, tasks, and crew
+- `models.py` - Request/response models
+
+## Modifying
+
+- **Add agents**: Create `Agent()` in `agent.py`
+- **Add tasks**: Create `Task()` and assign to agent
+- **Change process**: Use `Process.sequential` or `Process.hierarchical`
+''',
+        "readme": f'''# {name}
+
+A CrewAI multi-agent system deployed with FastAgentic.
+
+## Quick Start
+
+```bash
+uv sync
+export OPENAI_API_KEY="sk-..."
+uv run fastagentic run
+```
+
+See `CLAUDE.md` for details.
+''',
+    }
+
+
+def _get_langchain_template(name: str, pyproject: str, env_example: str) -> dict[str, str]:
+    """Generate LangChain template."""
+    pyproject = pyproject.replace(
+        "fastagentic[langchain]",
+        "fastagentic[langchain]\",\n    \"langchain-openai>=0.2.0"
+    )
+    return {
+        "pyproject": pyproject,
+        "env_example": env_example,
+        "app": f'''"""FastAgentic application with LangChain."""
+
+from fastagentic import App, agent_endpoint, resource
+from fastagentic.adapters.langchain import LangChainAdapter
+from pydantic import BaseModel
+
+from agent import chain
+from models import ChainRequest, ChainResponse
+
+app = App(
+    title="{name}",
+    version="0.1.0",
+)
+
+
+@resource(name="info", uri="info")
+async def get_info() -> dict:
+    return {{"name": "{name}", "type": "langchain"}}
+
+
+@agent_endpoint(
+    path="/run",
+    runnable=LangChainAdapter(chain),
+    input_model=ChainRequest,
+    output_model=ChainResponse,
+    stream=True,
+    mcp_tool="run_chain",
+)
+async def run_chain(request: ChainRequest) -> ChainResponse:
+    pass
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app.fastapi", host="0.0.0.0", port=8000, reload=True)
+''',
+        "agent": '''"""LangChain chain definition."""
+
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+llm = ChatOpenAI(model="gpt-4o-mini")
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful assistant."),
+    ("human", "{input}"),
+])
+
+chain = prompt | llm | StrOutputParser()
+''',
+        "models": '''"""API models."""
+
+from pydantic import BaseModel, Field
+
+
+class ChainRequest(BaseModel):
+    """Chain request."""
+    input: str = Field(..., min_length=1)
+
+
+class ChainResponse(BaseModel):
+    """Chain response."""
+    output: str
+''',
+        "claude_md": f'''# {name} - Claude Code Guide
+
+LangChain application deployed with FastAgentic.
+
+## Commands
+
+```bash
+uv sync
+uv run fastagentic run
+uv run fastagentic agent chat --endpoint /run
+```
+
+## Structure
+
+- `app.py` - FastAgentic application
+- `agent.py` - LangChain chain definition
+- `models.py` - Request/response models
+
+## Modifying
+
+- **Change chain**: Edit LCEL in `agent.py`
+- **Add tools**: Use `create_tool_calling_agent()`
+- **Change prompt**: Edit `ChatPromptTemplate`
+''',
+        "readme": f'''# {name}
+
+A LangChain application deployed with FastAgentic.
+
+## Quick Start
+
+```bash
+uv sync
+export OPENAI_API_KEY="sk-..."
+uv run fastagentic run
+```
+
+See `CLAUDE.md` for details.
+''',
+    }
 
 
 @app.command()
