@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/protocols/mcp.py
+# hypothesis_version: 6.148.7
+
+[404, 500, '/mcp', '2025-11-25', '__await__', '__wrapped__', 'arguments', 'capabilities', 'content', 'contents', 'description', 'error', 'inputSchema', 'messages', 'mimeType', 'name', 'prompts', 'protocolVersion', 'resources', 'role', 'sampling', 'serverInfo', 'text', 'tools', 'type', 'uri', 'user', 'version']

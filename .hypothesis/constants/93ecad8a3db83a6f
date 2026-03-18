@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/dashboard/api.py
+# hypothesis_version: 6.148.7
+
+[0.0, 100, 1000, 3600, '/dashboard', 'GET', 'Get health status', 'Get recent runs', 'Get specific run', 'Get time series data', 'POST', 'active_requests', 'admin', 'completed', 'description', 'error', 'error_rate', 'get_endpoint_stats', 'get_health', 'get_metrics', 'get_recent_runs', 'get_run', 'get_summary', 'get_system_stats', 'get_time_series', 'handler', 'healthy', 'input', 'method', 'output', 'path', 'status', 'timeout', 'unknown', 'uptime_seconds']

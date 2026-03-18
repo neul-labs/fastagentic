@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/adapters/autogen.py
+# hypothesis_version: 6.148.7
+
+[0.1, 'agent', 'arguments', 'assistant', 'chat_history', 'content', 'cost', 'error', 'function_call', 'history', 'input', 'message', 'model_dump', 'name', 'prompt', 'query', 'recipient', 'register_reply', 'response', 'result', 'role', 'sender', 'summary', 'text', 'unknown']

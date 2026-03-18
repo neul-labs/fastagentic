@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/policy/base.py
+# hypothesis_version: 6.148.7
+
+[0.0, 'allow', 'deny', 'limit', 'warn']

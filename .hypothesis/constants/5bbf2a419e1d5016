@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/reliability/fallback.py
+# hypothesis_version: 6.148.7
+
+[1.0, '429', '500', '502', '503', '504', 'No models available', 'T', 'error', 'func', 'model', 'on', 'rate', 'rate_limit', 'server_error', 'timeout', 'weight']

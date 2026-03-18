@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/sdk/client.py
+# hypothesis_version: 6.148.7
+
+[1.0, 300.0, 400, '/health', '/info', '/tools', 'Accept', 'Authorization', 'Content-Type', 'GET', 'POST', 'Request failed', '[DONE]', 'application/json', 'arguments', 'data: ', 'error', 'text/event-stream', 'tools']

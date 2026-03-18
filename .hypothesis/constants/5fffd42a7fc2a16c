@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/dashboard/metrics.py
+# hypothesis_version: 6.148.7
+
+[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, '+Inf', ',', 'Total HTTP requests', 'Total cost in USD', 'Total errors', 'Total tokens used', 'Total tool calls', 'active_requests', 'cost_total', 'counter', 'endpoint', 'error_type', 'errors_total', 'fastagentic', 'gauge', 'histogram', 'le', 'method', 'model', 'requests_total', 'status', 'tokens_total', 'tool', 'tool_calls_total', 'type', '{', '}']

@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/audit/logger.py
+# hypothesis_version: 6.148.7
+
+[1000, 10000, 'access.denied', 'access.granted', 'agent.complete', 'agent.error', 'agent.invoke', 'auth.failure', 'auth.logout', 'auth.success', 'auth.token_refresh', 'critical', 'debug', 'error', 'event_type', 'fastagentic.audit', 'info', 'json', 'policy', 'policy.evaluated', 'policy.rate_limited', 'policy.warn', 'request.end', 'request.error', 'request.start', 'resource.delete', 'resource.read', 'resource.write', 'security.alert', 'severity', 'success', 'system.config_change', 'system.start', 'system.stop', 'tool.blocked', 'tool.complete', 'tool.error', 'tool.invoke', 'warning']

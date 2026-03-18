@@ -1,0 +1,4 @@
+# file: /home/dipankar/Github/fastagentic/src/fastagentic/server/middleware.py
+# hypothesis_version: 6.148.7
+
+[100, 500, 503, '/health', '/metrics', '/ready', 'Retry-After', 'error', 'error_count', 'instance_id', 'message', 'request_count', 'retry_after', 'unknown']
