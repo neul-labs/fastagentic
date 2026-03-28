@@ -5,10 +5,11 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, TypeVar, ParamSpec
+from typing import Any, ParamSpec, TypeVar
 
 
 class ConfirmationType(str, Enum):
@@ -245,7 +246,7 @@ class InteractiveConfirmationHandler:
         self._input = input_func or input
         self._output = output_func or print
 
-    def handle(self, request: ConfirmationRequest) -> "asyncio.Future[ConfirmationResponse]":
+    def handle(self, request: ConfirmationRequest) -> asyncio.Future[ConfirmationResponse]:
         """Handle a confirmation request interactively."""
         future: asyncio.Future[ConfirmationResponse] = (
             asyncio.get_event_loop().create_future()
@@ -303,7 +304,7 @@ class QueuedConfirmationHandler:
     def __init__(self) -> None:
         self._pending: dict[str, tuple[ConfirmationRequest, asyncio.Future]] = {}
 
-    def handle(self, request: ConfirmationRequest) -> "asyncio.Future[ConfirmationResponse]":
+    def handle(self, request: ConfirmationRequest) -> asyncio.Future[ConfirmationResponse]:
         """Handle a confirmation request by queueing it."""
         future: asyncio.Future[ConfirmationResponse] = (
             asyncio.get_event_loop().create_future()

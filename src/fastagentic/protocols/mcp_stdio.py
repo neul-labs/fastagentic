@@ -10,7 +10,7 @@ import asyncio
 import json
 import sys
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from fastagentic.app import App

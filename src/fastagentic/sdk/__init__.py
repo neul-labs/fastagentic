@@ -4,9 +4,17 @@ Provides a client for interacting with FastAgentic services.
 """
 
 from fastagentic.sdk.client import (
-    FastAgenticClient,
     AsyncFastAgenticClient,
     ClientConfig,
+    FastAgenticClient,
+)
+from fastagentic.sdk.exceptions import (
+    AuthenticationError,
+    FastAgenticError,
+    RateLimitError,
+    ServerError,
+    TimeoutError,
+    ValidationError,
 )
 from fastagentic.sdk.models import (
     RunRequest,
@@ -16,14 +24,6 @@ from fastagentic.sdk.models import (
     StreamEventType,
     ToolCall,
     ToolResult,
-)
-from fastagentic.sdk.exceptions import (
-    FastAgenticError,
-    AuthenticationError,
-    RateLimitError,
-    ValidationError,
-    TimeoutError,
-    ServerError,
 )
 
 __all__ = [

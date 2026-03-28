@@ -4,24 +4,22 @@ from __future__ import annotations
 
 import asyncio
 import time
-from dataclasses import dataclass, field
-from typing import Any, Callable, Awaitable
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
+from typing import Any
 
+from fastagentic.cluster.task import (
+    Task,
+    TaskPriority,
+    TaskQueue,
+    TaskResult,
+)
 from fastagentic.cluster.worker import (
-    Worker,
+    InMemoryWorkerRegistry,
     WorkerConfig,
     WorkerInfo,
     WorkerPool,
     WorkerRegistry,
-    WorkerStatus,
-    InMemoryWorkerRegistry,
-)
-from fastagentic.cluster.task import (
-    Task,
-    TaskQueue,
-    TaskResult,
-    TaskStatus,
-    TaskPriority,
 )
 
 

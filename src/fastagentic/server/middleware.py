@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import Callable
+from collections.abc import Callable
 
+import structlog
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response, JSONResponse
-import structlog
+from starlette.responses import JSONResponse, Response
 
 logger = structlog.get_logger()
 

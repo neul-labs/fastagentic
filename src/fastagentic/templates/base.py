@@ -5,13 +5,13 @@ Defines the core template data structures and interfaces.
 
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
-import json
-import re
 
 
 class TemplateCategory(str, Enum):

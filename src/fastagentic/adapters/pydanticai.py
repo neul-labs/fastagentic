@@ -6,7 +6,8 @@ with full streaming support and Logfire integration.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from fastagentic.adapters.base import AdapterContext, BaseAdapter
 from fastagentic.types import StreamEvent, StreamEventType

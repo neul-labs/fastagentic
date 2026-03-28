@@ -6,11 +6,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from fastagentic.compliance.pii import (
+    PIIConfig,
     PIIDetector,
     PIIMasker,
-    PIIType,
-    PIIConfig,
     PIIMatch,
+    PIIType,
 )
 
 

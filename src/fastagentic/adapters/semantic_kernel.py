@@ -6,7 +6,8 @@ and functions via FastAgentic endpoints with streaming support.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING, Any
 
 from fastagentic.adapters.base import AdapterContext, BaseAdapter
 from fastagentic.types import StreamEvent, StreamEventType
@@ -93,6 +94,7 @@ class SemanticKernelAdapter(BaseAdapter):
         self, arguments: dict[str, Any], ctx: AdapterContext
     ) -> Any:
         """Invoke SK agent."""
+        assert self.agent is not None
         # Get message from arguments
         message = arguments.get("message", arguments.get("input", ""))
 
@@ -185,6 +187,7 @@ class SemanticKernelAdapter(BaseAdapter):
         self, arguments: dict[str, Any], ctx: AdapterContext
     ) -> AsyncIterator[StreamEvent]:
         """Stream from SK agent."""
+        assert self.agent is not None
         message = arguments.get("message", arguments.get("input", ""))
         chat_history = ctx.state.get("chat_history", [])
 
@@ -281,7 +284,8 @@ class SemanticKernelAdapter(BaseAdapter):
             return input
 
         if hasattr(input, "model_dump"):
-            return input.model_dump()
+            result: dict[str, Any] = input.model_dump()
+            return result
 
         if isinstance(input, str):
             return {"message": input}

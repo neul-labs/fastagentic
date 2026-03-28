@@ -5,26 +5,25 @@ Provides a Claude Code / Gemini CLI-like experience for building and testing age
 
 from __future__ import annotations
 
-import asyncio
 import json
 import os
-import sys
 import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from rich.console import Console
 from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.prompt import Prompt
 from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 from rich.theme import Theme
-from rich.prompt import Prompt
 
 # Custom theme for agent CLI
 AGENT_THEME = Theme({
@@ -217,7 +216,8 @@ class AgentClient:
             headers=self._get_headers(),
         )
         response.raise_for_status()
-        return response.json()
+        result: dict[str, Any] = response.json()
+        return result
 
     async def stream(
         self,
@@ -225,7 +225,6 @@ class AgentClient:
         history: list[dict[str, str]] | None = None,
     ) -> AsyncIterator[dict[str, Any]]:
         """Stream response from agent."""
-        import httpx
 
         url = f"{self.config.base_url}{self.config.endpoint}"
 
@@ -283,7 +282,7 @@ class AgentClient:
         url = f"{self.config.base_url}/health"
         try:
             response = await self._client.get(url)
-            return response.status_code == 200
+            return bool(response.status_code == 200)
         except Exception:
             return False
 
@@ -381,7 +380,7 @@ class AgentREPL:
         if not self.config.show_tools:
             return
 
-        console.print(f"[tool_result]↳ Result:[/tool_result]")
+        console.print("[tool_result]↳ Result:[/tool_result]")
         if isinstance(result, (dict, list)):
             console.print(Syntax(
                 json.dumps(result, indent=2),
@@ -470,6 +469,7 @@ class AgentREPL:
 
         elif cmd == "/endpoints":
             console.print("[info]Fetching endpoints...[/info]")
+            assert self.client is not None
             endpoints = await self.client.list_endpoints()
             if endpoints:
                 table = Table(title="Available Endpoints")
@@ -505,16 +505,19 @@ class AgentREPL:
         elif cmd == "/set":
             parts = arg.split(maxsplit=1)
             if len(parts) == 2:
-                key, value = parts
+                key, value_str = parts
                 if hasattr(self.config, key):
                     # Convert value to appropriate type
                     current = getattr(self.config, key)
+                    new_value: Any
                     if isinstance(current, bool):
-                        value = value.lower() in ("true", "1", "yes", "on")
+                        new_value = value_str.lower() in ("true", "1", "yes", "on")
                     elif isinstance(current, (int, float)):
-                        value = type(current)(value)
-                    setattr(self.config, key, value)
-                    console.print(f"[success]Set {key} = {value}[/success]")
+                        new_value = type(current)(value_str)
+                    else:
+                        new_value = value_str
+                    setattr(self.config, key, new_value)
+                    console.print(f"[success]Set {key} = {new_value}[/success]")
                 else:
                     console.print(f"[error]Unknown setting: {key}[/error]")
             else:
@@ -571,6 +574,7 @@ class AgentREPL:
 
         elif cmd == "/status":
             console.print("[info]Checking server status...[/info]")
+            assert self.client is not None
             healthy = await self.client.health_check()
             if healthy:
                 console.print("[success]✓ Server is healthy[/success]")
@@ -625,6 +629,7 @@ class AgentREPL:
         full_response = ""
         usage = {}
 
+        assert self.client is not None
         with Live(console=console, refresh_per_second=10) as live:
             buffer = ""
 
@@ -666,7 +671,7 @@ class AgentREPL:
                         full_response = str(data["result"])
 
         # Add assistant message
-        if full_response:
+        if full_response and self.conversation:
             self.conversation.add_message("assistant", full_response)
 
         # Show usage
@@ -681,6 +686,7 @@ class AgentREPL:
         history: list[dict[str, str]],
     ) -> None:
         """Get non-streaming response from agent."""
+        assert self.client is not None
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -696,7 +702,8 @@ class AgentREPL:
         self._format_response(content)
 
         # Add to conversation
-        self.conversation.add_message("assistant", content)
+        if self.conversation:
+            self.conversation.add_message("assistant", content)
 
         # Show usage
         if "usage" in response:

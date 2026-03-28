@@ -26,11 +26,11 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from fastagentic.hooks.base import Hook, HookContext, HookResult
 from fastagentic.integrations.base import Integration, IntegrationConfig
-from fastagentic.memory.base import MemoryProvider, SessionMemory
+from fastagentic.memory.base import MemoryProvider
 
 if TYPE_CHECKING:
     from fastagentic.app import App

@@ -5,18 +5,17 @@ Provides local, remote, and enterprise template registries.
 
 from __future__ import annotations
 
+import json
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-import json
-
 
 from fastagentic.templates.base import (
     Template,
-    TemplateMetadata,
     TemplateCategory,
+    TemplateMetadata,
 )
 
 
@@ -290,9 +289,9 @@ class RemoteRegistry(TemplateRegistry):
         data: dict[str, Any] | None = None,
     ) -> Any | None:
         """Make an HTTP request to the registry."""
-        import urllib.request
-        import urllib.parse
         import urllib.error
+        import urllib.parse
+        import urllib.request
 
         url = f"{self.config.url}{path}"
         if params:
