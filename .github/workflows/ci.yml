@@ -95,6 +95,8 @@ jobs:
       contents: write  # Needed for pushing tags
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
