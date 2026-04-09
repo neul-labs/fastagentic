@@ -149,7 +149,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/fastagentic"]
-exclude = [
+include = [
     "/LICENSE*",
     "/LICENSE",
 ]
