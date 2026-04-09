@@ -880,7 +880,7 @@ def test_contract(
         if spec and spec.loader:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            app_instance = getattr(module, attr_name)
+            getattr(module, attr_name)
 
             # Get registered items
             from fastagentic.decorators import (
@@ -1003,20 +1003,68 @@ def mcp_serve(
 
 @mcp_app.command("validate")
 def mcp_validate(
-    app_path: Annotated[
+    _app_path: Annotated[
         str,
         typer.Argument(help="Path to the app module"),
     ] = "app:app",
 ) -> None:
     """Validate MCP schema compliance."""
+    from fastagentic.decorators import get_prompts, get_resources, get_tools
+
     console.print("[bold blue]Validating MCP schema...[/bold blue]")
-    # TODO: Implement full validation
-    console.print("[green]MCP schema validation passed[/green]")
+
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # Validate tools
+    tools = get_tools()
+    for name, (tool_defn, _) in tools.items():
+        if not tool_defn.name:
+            errors.append(f"Tool '{name}' is missing name")
+        if not tool_defn.description:
+            warnings.append(f"Tool '{name}' is missing description")
+        if not tool_defn.inputSchema:
+            errors.append(f"Tool '{name}' is missing inputSchema")
+
+    # Validate resources
+    resources = get_resources()
+    for name, (resource_defn, _) in resources.items():
+        if not resource_defn.uri:
+            errors.append(f"Resource '{name}' is missing URI")
+        if not resource_defn.name:
+            errors.append(f"Resource '{name}' is missing name")
+
+    # Validate prompts
+    prompts = get_prompts()
+    for name, (prompt_defn, _) in prompts.items():
+        if not prompt_defn.name:
+            errors.append(f"Prompt '{name}' is missing name")
+        if not prompt_defn.description:
+            warnings.append(f"Prompt '{name}' is missing description")
+
+    # Report results
+    if errors:
+        console.print("[red]Validation failed:[/red]")
+        for error in errors:
+            console.print(f"  [red]ERROR: {error}[/red]")
+        raise typer.Exit(1)
+
+    if warnings:
+        console.print("[yellow]Validation passed with warnings:[/yellow]")
+        for warning in warnings:
+            console.print(f"  [yellow]WARNING: {warning}[/yellow]")
+    else:
+        console.print("[green]MCP schema validation passed[/green]")
+
+    console.print("\nSummary:")
+    console.print(f"  Tools: {len(tools)}")
+    console.print(f"  Resources: {len(resources)}")
+    console.print(f"  Prompts: {len(prompts)}")
 
 
 @mcp_app.command("schema")
 def mcp_schema(
-    app_path: Annotated[
+    _app_path: Annotated[
         str,
         typer.Argument(help="Path to the app module"),
     ] = "app:app",
@@ -1231,7 +1279,7 @@ def agent_config(
 
 @agent_app.command("history")
 def agent_history(
-    list_all: Annotated[
+    _list_all: Annotated[
         bool,
         typer.Option("--list", "-l", help="List saved conversations"),
     ] = False,
@@ -1320,7 +1368,7 @@ def agent_history(
             msg_count = len(data.get("messages", []))
             created = data.get("created_at", "Unknown")[:19]
             table.add_row(f.stem, str(msg_count), created)
-        except Exception:
+        except (json.JSONDecodeError, OSError):
             table.add_row(f.stem, "?", "?")
 
     console.print(table)
@@ -1333,20 +1381,60 @@ app.add_typer(a2a_app, name="a2a")
 
 @a2a_app.command("validate")
 def a2a_validate(
-    app_path: Annotated[
+    _app_path: Annotated[
         str,
         typer.Argument(help="Path to the app module"),
     ] = "app:app",
 ) -> None:
     """Validate A2A Agent Card compliance."""
+    from fastagentic.decorators import get_endpoints
+
     console.print("[bold blue]Validating A2A Agent Card...[/bold blue]")
-    # TODO: Implement full validation
-    console.print("[green]A2A validation passed[/green]")
+
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    endpoints = get_endpoints()
+
+    # Check endpoints with A2A skills
+    skills_seen: set[str] = set()
+    for path, (defn, _) in endpoints.items():
+        if defn.a2a_skill:
+            skill = defn.a2a_skill
+            if skill in skills_seen:
+                errors.append(f"Duplicate skill name: '{skill}'")
+            skills_seen.add(skill)
+
+            if not defn.description:
+                warnings.append(f"Endpoint '{path}' with skill '{skill}' is missing description")
+
+    # Check for required A2A endpoint fields
+    for path, (defn, _) in endpoints.items():
+        if defn.a2a_skill and not defn.http_method:
+            errors.append(f"Endpoint '{path}' is missing HTTP method")
+
+    # Report results
+    if errors:
+        console.print("[red]Validation failed:[/red]")
+        for error in errors:
+            console.print(f"  [red]ERROR: {error}[/red]")
+        raise typer.Exit(1)
+
+    if warnings:
+        console.print("[yellow]Validation passed with warnings:[/yellow]")
+        for warning in warnings:
+            console.print(f"  [yellow]WARNING: {warning}[/yellow]")
+    else:
+        console.print("[green]A2A validation passed[/green]")
+
+    console.print("\nSummary:")
+    console.print(f"  Endpoints with A2A skills: {len(skills_seen)}")
+    console.print(f"  Skills: {', '.join(sorted(skills_seen))}")
 
 
 @a2a_app.command("card")
 def a2a_card(
-    app_path: Annotated[
+    _app_path: Annotated[
         str,
         typer.Argument(help="Path to the app module"),
     ] = "app:app",

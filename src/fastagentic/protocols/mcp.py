@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from fastapi import Request
+from fastapi import Path, Request
 from fastapi.responses import JSONResponse
 
 from fastagentic.decorators import get_prompts, get_resources, get_tools
@@ -25,7 +25,7 @@ def configure_mcp(
     *,
     enabled: bool = True,
     path_prefix: str = "/mcp",
-    require_auth: bool = False,
+    _require_auth: bool = False,
     capabilities: dict[str, bool] | None = None,
 ) -> None:
     """Configure MCP protocol routes on an App.
@@ -90,9 +90,10 @@ def configure_mcp(
         }
 
     # Tool invocation
-    @fastapi.post(f"{path_prefix}/tools/{{tool_name}}")
+    @fastapi.post(f"{path_prefix}/tools/{{tool_name}}", response_model=None)
     async def mcp_call_tool(
-        tool_name: str, request: Request
+        tool_name: str = Path(..., pattern=r"^[a-zA-Z0-9_-]+$", min_length=1, max_length=100),
+        request: Request = None,  # type: ignore[assignment]
     ) -> JSONResponse:
         """Invoke an MCP tool."""
         tools = get_tools()
@@ -150,9 +151,10 @@ def configure_mcp(
         }
 
     # Resource reading
-    @fastapi.get(f"{path_prefix}/resources/{{resource_name}}")
+    @fastapi.get(f"{path_prefix}/resources/{{resource_name}}", response_model=None)
     async def mcp_read_resource(
-        resource_name: str, request: Request
+        resource_name: str = Path(..., pattern=r"^[a-zA-Z0-9_-]+$", min_length=1, max_length=100),
+        request: Request = None,  # type: ignore[assignment]
     ) -> JSONResponse:
         """Read an MCP resource."""
         resources = get_resources()
@@ -209,9 +211,10 @@ def configure_mcp(
         }
 
     # Prompt rendering
-    @fastapi.post(f"{path_prefix}/prompts/{{prompt_name}}")
+    @fastapi.post(f"{path_prefix}/prompts/{{prompt_name}}", response_model=None)
     async def mcp_get_prompt(
-        prompt_name: str, request: Request
+        prompt_name: str = Path(..., pattern=r"^[a-zA-Z0-9_-]+$", min_length=1, max_length=100),
+        request: Request = None,  # type: ignore[assignment]
     ) -> JSONResponse:
         """Get a rendered MCP prompt."""
         prompts = get_prompts()

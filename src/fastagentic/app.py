@@ -201,7 +201,7 @@ class App:
         return self._session_memory
 
     @asynccontextmanager
-    async def _lifespan(self, app: FastAPI) -> AsyncIterator[None]:
+    async def _lifespan(self, _app: FastAPI) -> AsyncIterator[None]:
         """Manage application lifespan events."""
         logger.info("Starting FastAgentic application", title=self.config.title)
 
@@ -511,8 +511,8 @@ class App:
         request: Request,
     ) -> AgentContext:
         """Create an AgentContext for a request."""
-        # TODO: Extract user from auth headers
-        user = None
+        # Extract user from Authorization header
+        user = self._extract_user_from_request(request)
 
         run_ctx = RunContext(
             run_id=run_id,
@@ -525,6 +525,35 @@ class App:
             app=self,
             request=request,
         )
+
+    def _extract_user_from_request(self, request: Request) -> UserInfo | None:
+        """Extract user information from Authorization header.
+
+        Supports Bearer token authentication. Override this method
+        to implement custom auth logic.
+
+        Args:
+            request: The incoming request
+
+        Returns:
+            UserInfo if authenticated, None otherwise
+        """
+        from fastagentic.context import UserInfo
+
+        auth_header = request.headers.get("Authorization")
+        if not auth_header:
+            return None
+
+        # Support Bearer token format
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]  # Remove "Bearer " prefix
+            if token:
+                return UserInfo(
+                    id=token,  # Use token as user ID (can be replaced with decoded JWT)
+                    token=token,
+                )
+
+        return None
 
     def add_hook(self, hook: Hook) -> None:
         """Add a hook to the application."""

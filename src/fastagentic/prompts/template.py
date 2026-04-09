@@ -240,7 +240,7 @@ def _process_conditionals(template: str, context: dict[str, Any]) -> str:
     """Process {{#if condition}}...{{/if}} blocks."""
     pattern = r"\{\{#if\s+(\w+)\}\}(.*?)\{\{/if\}\}"
 
-    def replacer(match: re.Match) -> str:
+    def replacer(match: re.Match[str]) -> str:
         condition_var = match.group(1)
         content = match.group(2)
 
@@ -257,7 +257,7 @@ def _process_each(template: str, context: dict[str, Any]) -> str:
     """Process {{#each items}}...{{/each}} blocks."""
     pattern = r"\{\{#each\s+(\w+)\}\}(.*?)\{\{/each\}\}"
 
-    def replacer(match: re.Match) -> str:
+    def replacer(match: re.Match[str]) -> str:
         list_var = match.group(1)
         item_template = match.group(2)
 
@@ -290,7 +290,7 @@ def _process_variables(template: str, context: dict[str, Any]) -> str:
     """Process {{variable}} and {{variable | filter}} substitutions."""
     pattern = r"\{\{\s*(\w+)(?:\s*\|\s*(\w+))?\s*\}\}"
 
-    def replacer(match: re.Match) -> str:
+    def replacer(match: re.Match[str]) -> str:
         var_name = match.group(1)
         filter_name = match.group(2)
 

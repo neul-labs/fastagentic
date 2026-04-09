@@ -96,7 +96,7 @@ class CommunityAdapter(BaseAdapter):
             )
         return cls.metadata
 
-    def validate_config(self, config: dict[str, Any]) -> list[str]:
+    def validate_config(self, _config: dict[str, Any]) -> list[str]:
         """Validate adapter configuration.
 
         Override this to add custom configuration validation.
@@ -184,7 +184,7 @@ class SimpleAdapter(CommunityAdapter):
 
     async def invoke(self, input: Any, ctx: AdapterContext | Any) -> Any:
         """Invoke the wrapped function."""
-        adapter_ctx = self._ensure_adapter_context(ctx)
+        self._ensure_adapter_context(ctx)
         extracted_input = self._extract_input(input)
 
         import asyncio
@@ -372,3 +372,13 @@ def register_adapter(adapter_cls: type[CommunityAdapter]) -> type[CommunityAdapt
 def get_registry() -> AdapterRegistry:
     """Get the global adapter registry."""
     return _global_registry
+
+
+def reset_registry() -> None:
+    """Reset the global adapter registry.
+
+    This is primarily useful for testing to ensure a clean state
+    between test cases.
+    """
+    global _global_registry
+    _global_registry = AdapterRegistry()

@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
 from typing import Any
+
+import aiofiles
 
 from fastagentic.checkpoint.base import (
     Checkpoint,
@@ -145,7 +146,8 @@ class FileCheckpointStore:
             if run_dir.is_dir():
                 path = run_dir / f"{checkpoint_id}.json"
                 if path.exists():
-                    return Checkpoint.from_json(path.read_text())
+                    async with aiofiles.open(path) as f:
+                        return Checkpoint.from_json(await f.read())
         return None
 
     async def load_latest(self, run_id: str) -> Checkpoint | None:
@@ -159,11 +161,12 @@ class FileCheckpointStore:
 
         for path in run_dir.glob("*.json"):
             try:
-                ckpt = Checkpoint.from_json(path.read_text())
+                async with aiofiles.open(path) as f:
+                    ckpt = Checkpoint.from_json(await f.read())
                 if ckpt.metadata.sequence > max_seq:
                     max_seq = ckpt.metadata.sequence
                     latest = ckpt
-            except Exception:
+            except (json.JSONDecodeError, ValueError, OSError):
                 continue
 
         return latest
@@ -181,9 +184,10 @@ class FileCheckpointStore:
         results = []
         for path in run_dir.glob("*.json"):
             try:
-                ckpt = Checkpoint.from_json(path.read_text())
+                async with aiofiles.open(path) as f:
+                    ckpt = Checkpoint.from_json(await f.read())
                 results.append(ckpt.metadata)
-            except Exception:
+            except (json.JSONDecodeError, ValueError, OSError):
                 continue
 
         results.sort(key=lambda m: m.sequence, reverse=True)
@@ -225,10 +229,11 @@ class FileCheckpointStore:
             if run_dir.is_dir():
                 for path in run_dir.glob("*.json"):
                     try:
-                        ckpt = Checkpoint.from_json(path.read_text())
+                        async with aiofiles.open(path) as f:
+                            ckpt = Checkpoint.from_json(await f.read())
                         if ckpt.metadata.is_expired:
                             expired.append(path)
-                    except Exception:
+                    except (json.JSONDecodeError, ValueError, OSError):
                         continue
 
         for path in expired:
@@ -430,7 +435,7 @@ class S3CheckpointStore:
             )
             data = await response["Body"].read()
             return json.loads(data)
-        except Exception:
+        except (json.JSONDecodeError, KeyError):
             return {"checkpoints": []}
 
     async def _save_manifest(
@@ -503,7 +508,7 @@ class S3CheckpointStore:
                     )
                     data = await response["Body"].read()
                     return Checkpoint.from_json(data)
-                except Exception:
+                except (json.JSONDecodeError, ValueError, KeyError):
                     continue
         return None
 
@@ -525,7 +530,7 @@ class S3CheckpointStore:
             )
             data = await response["Body"].read()
             return Checkpoint.from_json(data)
-        except Exception:
+        except (json.JSONDecodeError, ValueError, KeyError):
             return None
 
     async def list_checkpoints(
@@ -547,7 +552,7 @@ class S3CheckpointStore:
                 data = await response["Body"].read()
                 ckpt = Checkpoint.from_json(data)
                 results.append(ckpt.metadata)
-            except Exception:
+            except (json.JSONDecodeError, ValueError, KeyError):
                 continue
 
         return results
@@ -579,7 +584,7 @@ class S3CheckpointStore:
                     ]
                     await self._save_manifest(run_id, manifest)
                     return
-                except Exception:
+                except (KeyError, json.JSONDecodeError):
                     continue
 
     async def delete_run(self, run_id: str) -> int:
@@ -606,7 +611,6 @@ class S3CheckpointStore:
 
     async def cleanup_expired(self) -> int:
         """Clean up expired checkpoints."""
-        now = time.time()
         deleted = 0
 
         paginator = self._client.get_paginator("list_objects_v2")
@@ -632,7 +636,7 @@ class S3CheckpointStore:
                         ckpt = Checkpoint.from_json(data)
                         if ckpt.metadata.is_expired:
                             expired_ids.append(entry["checkpoint_id"])
-                    except Exception:
+                    except (json.JSONDecodeError, ValueError, KeyError):
                         continue
 
                 for ckpt_id in expired_ids:

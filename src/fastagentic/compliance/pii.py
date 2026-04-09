@@ -101,9 +101,8 @@ class PIIPattern:
 
             # Apply validator if present
             confidence = self.confidence
-            if self.validator:
-                if not self.validator(value):
-                    confidence *= 0.5
+            if self.validator and not self.validator(value):
+                confidence *= 0.5
 
             # Get context
             start = max(0, match.start() - 20)
@@ -306,9 +305,8 @@ class PIIDetector:
         # Run pattern matching
         for pattern in self._patterns:
             # Skip disabled types
-            if self.config.enabled_types is not None:
-                if pattern.type not in self.config.enabled_types:
-                    continue
+            if self.config.enabled_types is not None and pattern.type not in self.config.enabled_types:
+                continue
 
             for match in pattern.find_matches(text):
                 # Skip allowlisted values

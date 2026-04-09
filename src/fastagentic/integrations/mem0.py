@@ -365,7 +365,7 @@ class Mem0Integration(Integration):
             self._hook = Mem0Hook(self._client, self._config)
         return [self._hook]
 
-    def setup(self, app: App) -> None:
+    def setup(self, _app: App) -> None:
         """Initialize the Mem0 client."""
         if not self.is_available():
             return

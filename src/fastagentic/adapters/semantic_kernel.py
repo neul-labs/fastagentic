@@ -115,7 +115,7 @@ class SemanticKernelAdapter(BaseAdapter):
         return response
 
     async def _invoke_function(
-        self, arguments: dict[str, Any], ctx: AdapterContext
+        self, arguments: dict[str, Any], _ctx: AdapterContext
     ) -> Any:
         """Invoke SK function."""
         # Get function from kernel
@@ -138,7 +138,7 @@ class SemanticKernelAdapter(BaseAdapter):
         return result
 
     async def _invoke_prompt(
-        self, arguments: dict[str, Any], ctx: AdapterContext
+        self, arguments: dict[str, Any], _ctx: AdapterContext
     ) -> Any:
         """Invoke SK with a prompt template."""
         prompt = arguments.get("message", arguments.get("prompt", ""))

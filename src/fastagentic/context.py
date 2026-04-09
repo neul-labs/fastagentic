@@ -20,6 +20,7 @@ class UserInfo:
     roles: list[str] = field(default_factory=list)
     scopes: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
+    token: str | None = None
 
 
 @dataclass

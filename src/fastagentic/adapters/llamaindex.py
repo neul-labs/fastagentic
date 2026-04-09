@@ -133,7 +133,7 @@ class LlamaIndexAdapter(BaseAdapter):
 
         return response
 
-    async def _invoke_query_engine(self, query: str, ctx: AdapterContext) -> Any:
+    async def _invoke_query_engine(self, query: str, _ctx: AdapterContext) -> Any:
         """Invoke LlamaIndex query engine."""
         assert self.query_engine is not None
         if hasattr(self.query_engine, "aquery"):

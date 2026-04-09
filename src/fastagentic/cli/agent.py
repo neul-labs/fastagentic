@@ -273,17 +273,19 @@ class AgentClient:
                                 "description": details.get("description", ""),
                             })
                 return endpoints
-        except Exception:
+        except (json.JSONDecodeError, ValueError):
             pass
         return []
 
     async def health_check(self) -> bool:
         """Check if the agent server is healthy."""
+        import httpx
+
         url = f"{self.config.base_url}/health"
         try:
             response = await self._client.get(url)
             return bool(response.status_code == 200)
-        except Exception:
+        except (httpx.ConnectError, httpx.TimeoutException, Exception):
             return False
 
 
@@ -375,7 +377,7 @@ class AgentREPL:
                 line_numbers=False,
             ))
 
-    def _format_tool_result(self, name: str, result: Any) -> None:
+    def _format_tool_result(self, _name: str, result: Any) -> None:
         """Format and print a tool result."""
         if not self.config.show_tools:
             return

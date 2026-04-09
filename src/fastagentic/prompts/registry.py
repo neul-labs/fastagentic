@@ -363,9 +363,8 @@ class PromptRegistry:
         await self._store.delete(name, version)
 
         # Clear cache
-        if name in self._cache:
-            if version is None or self._cache[name].version == version:
-                del self._cache[name]
+        if name in self._cache and (version is None or self._cache[name].version == version):
+            del self._cache[name]
 
     async def search(
         self,
