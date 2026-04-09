@@ -468,14 +468,8 @@ class StatsCollector:
         """Get a summary of all stats."""
         return {
             "system": self._system.to_dict(),
-            "endpoints": {
-                ep: stats.to_dict()
-                for ep, stats in self._endpoints.items()
-            },
-            "recent_errors": [
-                r.to_dict()
-                for r in self.get_recent_runs(limit=10, status="failed")
-            ],
+            "endpoints": {ep: stats.to_dict() for ep, stats in self._endpoints.items()},
+            "recent_errors": [r.to_dict() for r in self.get_recent_runs(limit=10, status="failed")],
         }
 
     def get_time_series(
@@ -528,10 +522,12 @@ class StatsCollector:
         for i in range(num_buckets):
             ts = start + (i * bucket_seconds)
             value = buckets[i].get(metric, 0)
-            points.append(TimeSeriesPoint(
-                timestamp=ts,
-                value=value,
-                labels={"endpoint": endpoint} if endpoint else {},
-            ))
+            points.append(
+                TimeSeriesPoint(
+                    timestamp=ts,
+                    value=value,
+                    labels={"endpoint": endpoint} if endpoint else {},
+                )
+            )
 
         return points

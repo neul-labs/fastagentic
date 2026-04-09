@@ -8,15 +8,12 @@ These tests use property-based testing to find edge cases in:
 """
 
 import math
-from decimal import Decimal
 
 import pytest
-from hypothesis import given, strategies as st, assume, settings, example
+from hypothesis import example, given
+from hypothesis import strategies as st
 
-from fastagentic.cost.tracker import (
-    CostTracker,
-    ModelPricing,
-)
+from fastagentic.cost.tracker import CostTracker, ModelPricing
 
 
 class TestModelPricingFuzzing:
@@ -161,7 +158,9 @@ class TestModelPricingFuzzing:
 
     @given(
         input_cost=st.floats(min_value=0.0, max_value=100.0, allow_nan=False, allow_infinity=False),
-        output_cost=st.floats(min_value=0.0, max_value=100.0, allow_nan=False, allow_infinity=False),
+        output_cost=st.floats(
+            min_value=0.0, max_value=100.0, allow_nan=False, allow_infinity=False
+        ),
     )
     def test_1k_token_cost_matches_pricing(self, input_cost: float, output_cost: float):
         """1000 tokens should cost exactly the per-1k price."""
@@ -193,7 +192,9 @@ class TestCostTrackerFuzzing:
         input_tokens=st.integers(min_value=0, max_value=100000),
         output_tokens=st.integers(min_value=0, max_value=100000),
     )
-    def test_calculate_cost_for_models(self, tracker, model: str, input_tokens: int, output_tokens: int):
+    def test_calculate_cost_for_models(
+        self, tracker, model: str, input_tokens: int, output_tokens: int
+    ):
         """Cost calculation should work for various models."""
         cost = tracker.calculate_cost(model, input_tokens, output_tokens)
 

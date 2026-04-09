@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import time
 import uuid
@@ -37,9 +38,7 @@ class CheckpointMetadata:
     """
 
     run_id: str
-    checkpoint_id: str = field(
-        default_factory=lambda: f"ckpt-{uuid.uuid4().hex[:12]}"
-    )
+    checkpoint_id: str = field(default_factory=lambda: f"ckpt-{uuid.uuid4().hex[:12]}")
     sequence: int = 0
     created_at: float = field(default_factory=time.time)
     status: CheckpointStatus = CheckpointStatus.ACTIVE
@@ -255,10 +254,8 @@ class CheckpointManager:
         self._running = False
         if self._cleanup_task:
             self._cleanup_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._cleanup_task
-            except asyncio.CancelledError:
-                pass
 
     async def create(
         self,
@@ -437,8 +434,6 @@ class CheckpointManager:
     async def _cleanup_loop(self) -> None:
         """Periodic cleanup of expired checkpoints."""
         while self._running:
-            try:
+            with contextlib.suppress(Exception):
                 await self._store.cleanup_expired()
-            except Exception:
-                pass
             await asyncio.sleep(self.config.cleanup_interval)

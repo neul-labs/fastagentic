@@ -3,24 +3,19 @@
 import pytest
 
 from fastagentic.adapters import (
-    BaseAdapter,
-    AdapterContext,
-    SemanticKernelAdapter,
     AutoGenAdapter,
-    LlamaIndexAdapter,
     DSPyAdapter,
     DSPyProgramAdapter,
+    LlamaIndexAdapter,
+    SemanticKernelAdapter,
 )
 from fastagentic.adapters.sdk import (
     AdapterMetadata,
+    AdapterRegistry,
     CommunityAdapter,
     SimpleAdapter,
-    AdapterRegistry,
-    register_adapter,
-    get_registry,
 )
 from fastagentic.types import StreamEvent, StreamEventType
-
 
 # ============================================================================
 # Semantic Kernel Adapter Tests
@@ -281,8 +276,8 @@ class TestSimpleAdapter:
         adapter = SimpleAdapter(invoke_fn=my_fn)
 
         # Create mock context using AdapterContext
-        from fastagentic.context import RunContext, AgentContext
         from fastagentic.adapters.base import AdapterContext
+        from fastagentic.context import AgentContext, RunContext
 
         run_ctx = RunContext(run_id="test-run", endpoint="/test")
         mock_app = type("App", (), {})()
@@ -301,8 +296,8 @@ class TestSimpleAdapter:
 
         adapter = SimpleAdapter(invoke_fn=my_fn)
 
-        from fastagentic.context import RunContext, AgentContext
         from fastagentic.adapters.base import AdapterContext
+        from fastagentic.context import AgentContext, RunContext
 
         run_ctx = RunContext(run_id="test-run", endpoint="/test")
         mock_app = type("App", (), {})()

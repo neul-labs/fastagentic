@@ -89,9 +89,7 @@ class PydanticAIAdapter(BaseAdapter):
 
         return result.data
 
-    async def stream(
-        self, input: Any, ctx: AdapterContext | Any
-    ) -> AsyncIterator[StreamEvent]:
+    async def stream(self, input: Any, ctx: AdapterContext | Any) -> AsyncIterator[StreamEvent]:
         """Stream events from the PydanticAI agent.
 
         Args:

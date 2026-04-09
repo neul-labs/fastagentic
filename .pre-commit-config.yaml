@@ -17,13 +17,5 @@ repos:
         types: [python]
         stages: [pre-commit]
 
-      - id: isort-check
-        name: Check import sorting
-        entry: uv run isort --check-only src/fastagentic/ tests/
-        language: system
-        pass_filenames: false
-        types: [python]
-        stages: [pre-commit]
-
   # Note: Run `uv run pip-audit` separately to check for vulnerabilities
   # (pip-audit has issues detecting uv venv in pre-commit hooks)

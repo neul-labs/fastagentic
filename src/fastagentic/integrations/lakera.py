@@ -60,9 +60,7 @@ class LakeraConfig(IntegrationConfig):
 
     block_on_detect: bool = True
     confidence_threshold: float = 0.8
-    categories: list[str] = field(
-        default_factory=lambda: ["prompt_injection", "jailbreak", "pii"]
-    )
+    categories: list[str] = field(default_factory=lambda: ["prompt_injection", "jailbreak", "pii"])
     check_input: bool = True
     check_output: bool = True
     log_detections: bool = True
@@ -117,6 +115,7 @@ class LakeraHook(Hook):
             # Log but don't block on API errors
             if self.config.log_detections:
                 import structlog
+
                 logger = structlog.get_logger()
                 logger.warning("lakera_api_error", error=str(e), context=context)
             return {"flagged": False, "categories": {}, "error": str(e)}
@@ -156,6 +155,7 @@ class LakeraHook(Hook):
 
             if self.config.log_detections:
                 import structlog
+
                 logger = structlog.get_logger()
                 logger.warning(
                     "lakera_detection",
@@ -170,9 +170,7 @@ class LakeraHook(Hook):
             ctx.metadata["lakera_input_categories"] = detected
 
             if self.config.block_on_detect:
-                return HookResult.reject(
-                    f"Security check failed: {', '.join(detected)}"
-                )
+                return HookResult.reject(f"Security check failed: {', '.join(detected)}")
 
         return HookResult.proceed()
 
@@ -195,9 +193,7 @@ class LakeraHook(Hook):
             ctx.metadata["lakera_llm_input_categories"] = detected
 
             if self.config.block_on_detect:
-                return HookResult.reject(
-                    f"LLM input security check failed: {', '.join(detected)}"
-                )
+                return HookResult.reject(f"LLM input security check failed: {', '.join(detected)}")
 
         return HookResult.proceed()
 
@@ -218,6 +214,7 @@ class LakeraHook(Hook):
 
             if self.config.log_detections:
                 import structlog
+
                 logger = structlog.get_logger()
                 logger.warning(
                     "lakera_detection",
@@ -231,9 +228,7 @@ class LakeraHook(Hook):
 
             # For output, we might want to redact rather than block
             if self.config.block_on_detect:
-                return HookResult.modify(
-                    "[Content filtered for security reasons]"
-                )
+                return HookResult.modify("[Content filtered for security reasons]")
 
         return HookResult.proceed()
 
@@ -256,9 +251,7 @@ class LakeraHook(Hook):
             ctx.metadata["lakera_tool_categories"] = detected
 
             if self.config.block_on_detect:
-                return HookResult.reject(
-                    f"Tool input security check failed: {', '.join(detected)}"
-                )
+                return HookResult.reject(f"Tool input security check failed: {', '.join(detected)}")
 
         return HookResult.proceed()
 

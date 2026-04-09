@@ -83,9 +83,7 @@ class LangChainAdapter(BaseAdapter):
 
         return result
 
-    async def stream(
-        self, input: Any, ctx: AdapterContext | Any
-    ) -> AsyncIterator[StreamEvent]:
+    async def stream(self, input: Any, ctx: AdapterContext | Any) -> AsyncIterator[StreamEvent]:
         """Stream events from the LangChain runnable.
 
         Args:
@@ -111,9 +109,7 @@ class LangChainAdapter(BaseAdapter):
         try:
             if self.stream_mode == "events":
                 # Use astream_events for detailed streaming
-                async for event in self.runnable.astream_events(
-                    input, config=config, version="v2"
-                ):
+                async for event in self.runnable.astream_events(input, config=config, version="v2"):
                     stream_event = self._convert_langchain_event(event)
                     if stream_event:
                         yield stream_event

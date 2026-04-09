@@ -203,7 +203,10 @@ def require_confirmation(
                 raise ConfirmationCancelledError(f"Action cancelled: {msg}")
 
             # For DESTRUCTIVE, verify the confirmation text
-            if confirmation_type == ConfirmationType.DESTRUCTIVE and response.response != confirmation_text:
+            if (
+                confirmation_type == ConfirmationType.DESTRUCTIVE
+                and response.response != confirmation_text
+            ):
                 raise ConfirmationCancelledError(
                     f"Invalid confirmation text. Expected '{confirmation_text}'"
                 )
@@ -247,9 +250,7 @@ class InteractiveConfirmationHandler:
 
     def handle(self, request: ConfirmationRequest) -> asyncio.Future[ConfirmationResponse]:
         """Handle a confirmation request interactively."""
-        future: asyncio.Future[ConfirmationResponse] = (
-            asyncio.get_event_loop().create_future()
-        )
+        future: asyncio.Future[ConfirmationResponse] = asyncio.get_event_loop().create_future()
 
         async def _prompt() -> None:
             self._output(f"\n{request.message}")
@@ -259,11 +260,13 @@ class InteractiveConfirmationHandler:
                 response_text = self._input("> ")
 
                 confirmed = response_text == request.confirmation_text
-                future.set_result(ConfirmationResponse(
-                    request_id=request.id,
-                    confirmed=confirmed,
-                    response=response_text,
-                ))
+                future.set_result(
+                    ConfirmationResponse(
+                        request_id=request.id,
+                        confirmed=confirmed,
+                        response=response_text,
+                    )
+                )
 
             else:
                 options_str = "/".join(request.options)
@@ -271,11 +274,13 @@ class InteractiveConfirmationHandler:
                 response_text = self._input("> ")
 
                 confirmed = response_text.lower() in ["yes", "y", "true", "1"]
-                future.set_result(ConfirmationResponse(
-                    request_id=request.id,
-                    confirmed=confirmed,
-                    response=response_text,
-                ))
+                future.set_result(
+                    ConfirmationResponse(
+                        request_id=request.id,
+                        confirmed=confirmed,
+                        response=response_text,
+                    )
+                )
 
         asyncio.create_task(_prompt())
         return future
@@ -305,9 +310,7 @@ class QueuedConfirmationHandler:
 
     def handle(self, request: ConfirmationRequest) -> asyncio.Future[ConfirmationResponse]:
         """Handle a confirmation request by queueing it."""
-        future: asyncio.Future[ConfirmationResponse] = (
-            asyncio.get_event_loop().create_future()
-        )
+        future: asyncio.Future[ConfirmationResponse] = asyncio.get_event_loop().create_future()
         self._pending[request.id] = (request, future)
         return future
 

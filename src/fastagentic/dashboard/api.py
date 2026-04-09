@@ -5,11 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from fastagentic.dashboard.metrics import (
-    MetricsRegistry,
-    PrometheusExporter,
-    default_registry,
-)
+from fastagentic.dashboard.metrics import MetricsRegistry, PrometheusExporter, default_registry
 from fastagentic.dashboard.stats import StatsCollector
 
 
@@ -93,6 +89,7 @@ class DashboardAPI:
 
         # Update metrics
         from fastagentic.dashboard.metrics import active_requests
+
         active_requests.inc()
 
     async def record_run_end(
@@ -114,9 +111,7 @@ class DashboardAPI:
             model: Model used
             error: Error message if failed
         """
-        run = await self._stats.complete_run(
-            run_id, status, output_tokens, cost, error
-        )
+        run = await self._stats.complete_run(run_id, status, output_tokens, cost, error)
 
         # Update metrics
         from fastagentic.dashboard.metrics import (
@@ -177,6 +172,7 @@ class DashboardAPI:
         await self._stats.record_tool_call(run_id)
 
         from fastagentic.dashboard.metrics import tool_calls_total
+
         tool_calls_total.inc(tool=tool_name)
 
     def get_summary(self) -> dict[str, Any]:
@@ -208,10 +204,7 @@ class DashboardAPI:
             stats = self._stats.get_endpoint_stats(endpoint)
             return stats.to_dict() if stats else {}
         else:
-            return {
-                ep.endpoint: ep.to_dict()
-                for ep in self._stats.get_all_endpoint_stats()
-            }
+            return {ep.endpoint: ep.to_dict() for ep in self._stats.get_all_endpoint_stats()}
 
     def get_recent_runs(
         self,
@@ -262,9 +255,7 @@ class DashboardAPI:
         Returns:
             List of time series points
         """
-        points = self._stats.get_time_series(
-            metric, endpoint, duration_seconds, bucket_seconds
-        )
+        points = self._stats.get_time_series(metric, endpoint, duration_seconds, bucket_seconds)
         return [p.to_dict() for p in points]
 
     def get_metrics(self) -> str:
@@ -299,62 +290,70 @@ class DashboardAPI:
         prefix = self.config.path_prefix
 
         if self.config.stats_enabled:
-            routes.extend([
-                {
-                    "path": f"{prefix}/summary",
-                    "method": "GET",
-                    "handler": "get_summary",
-                    "description": "Get dashboard summary",
-                },
-                {
-                    "path": f"{prefix}/stats/system",
-                    "method": "GET",
-                    "handler": "get_system_stats",
-                    "description": "Get system statistics",
-                },
-                {
-                    "path": f"{prefix}/stats/endpoints",
-                    "method": "GET",
-                    "handler": "get_endpoint_stats",
-                    "description": "Get endpoint statistics",
-                },
-                {
-                    "path": f"{prefix}/stats/timeseries",
-                    "method": "GET",
-                    "handler": "get_time_series",
-                    "description": "Get time series data",
-                },
-            ])
+            routes.extend(
+                [
+                    {
+                        "path": f"{prefix}/summary",
+                        "method": "GET",
+                        "handler": "get_summary",
+                        "description": "Get dashboard summary",
+                    },
+                    {
+                        "path": f"{prefix}/stats/system",
+                        "method": "GET",
+                        "handler": "get_system_stats",
+                        "description": "Get system statistics",
+                    },
+                    {
+                        "path": f"{prefix}/stats/endpoints",
+                        "method": "GET",
+                        "handler": "get_endpoint_stats",
+                        "description": "Get endpoint statistics",
+                    },
+                    {
+                        "path": f"{prefix}/stats/timeseries",
+                        "method": "GET",
+                        "handler": "get_time_series",
+                        "description": "Get time series data",
+                    },
+                ]
+            )
 
         if self.config.runs_enabled:
-            routes.extend([
-                {
-                    "path": f"{prefix}/runs",
-                    "method": "GET",
-                    "handler": "get_recent_runs",
-                    "description": "Get recent runs",
-                },
-                {
-                    "path": f"{prefix}/runs/{{run_id}}",
-                    "method": "GET",
-                    "handler": "get_run",
-                    "description": "Get specific run",
-                },
-            ])
+            routes.extend(
+                [
+                    {
+                        "path": f"{prefix}/runs",
+                        "method": "GET",
+                        "handler": "get_recent_runs",
+                        "description": "Get recent runs",
+                    },
+                    {
+                        "path": f"{prefix}/runs/{{run_id}}",
+                        "method": "GET",
+                        "handler": "get_run",
+                        "description": "Get specific run",
+                    },
+                ]
+            )
 
         if self.config.metrics_enabled:
-            routes.append({
-                "path": f"{prefix}/metrics",
-                "method": "GET",
-                "handler": "get_metrics",
-                "description": "Get Prometheus metrics",
-            })
+            routes.append(
+                {
+                    "path": f"{prefix}/metrics",
+                    "method": "GET",
+                    "handler": "get_metrics",
+                    "description": "Get Prometheus metrics",
+                }
+            )
 
-        routes.append({
-            "path": f"{prefix}/health",
-            "method": "GET",
-            "handler": "get_health",
-            "description": "Get health status",
-        })
+        routes.append(
+            {
+                "path": f"{prefix}/health",
+                "method": "GET",
+                "handler": "get_health",
+                "description": "Get health status",
+            }
+        )
 
         return routes

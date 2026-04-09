@@ -1,19 +1,20 @@
 """Tests for reliability patterns."""
 
 import asyncio
+
 import pytest
 
 from fastagentic.reliability import (
-    RetryPolicy,
-    RetryError,
-    Timeout,
-    TimeoutError,
     CircuitBreaker,
     CircuitOpenError,
     CircuitState,
     FallbackChain,
     RateLimit,
     RateLimitError,
+    RetryError,
+    RetryPolicy,
+    Timeout,
+    TimeoutError,
 )
 
 
@@ -133,6 +134,7 @@ class TestTimeout:
     @pytest.mark.asyncio
     async def test_successful_execution(self):
         """Test that fast functions complete successfully."""
+
         async def fast():
             return "done"
 
@@ -144,6 +146,7 @@ class TestTimeout:
     @pytest.mark.asyncio
     async def test_timeout_exceeded(self):
         """Test that slow functions raise TimeoutError."""
+
         async def slow():
             await asyncio.sleep(1)
             return "done"
@@ -158,6 +161,7 @@ class TestTimeout:
     @pytest.mark.asyncio
     async def test_llm_call_timeout(self):
         """Test LLM-specific timeout."""
+
         async def llm_call():
             return "response"
 

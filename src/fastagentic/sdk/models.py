@@ -178,9 +178,7 @@ class Message:
         return cls(
             role=data["role"],
             content=data.get("content"),
-            tool_calls=[
-                ToolCall.from_dict(tc) for tc in data.get("tool_calls", [])
-            ],
+            tool_calls=[ToolCall.from_dict(tc) for tc in data.get("tool_calls", [])],
             tool_call_id=data.get("tool_call_id"),
             name=data.get("name"),
         )
@@ -324,9 +322,7 @@ class RunResponse:
             status=RunStatus(data["status"]),
             output=data.get("output"),
             messages=[Message.from_dict(m) for m in data.get("messages", [])],
-            tool_calls=[
-                ToolCall.from_dict(tc) for tc in data.get("tool_calls", [])
-            ],
+            tool_calls=[ToolCall.from_dict(tc) for tc in data.get("tool_calls", [])],
             usage=UsageStats.from_dict(data.get("usage", {})),
             error=data.get("error"),
             started_at=data.get("started_at"),

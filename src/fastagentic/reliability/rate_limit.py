@@ -141,9 +141,7 @@ class RateLimit:
 
             # Clean old entries
             self._token_counts[key] = [
-                (t, c)
-                for t, c in self._token_counts[key]
-                if t > time.time() - self.window_seconds
+                (t, c) for t, c in self._token_counts[key] if t > time.time() - self.window_seconds
             ]
 
             # Sum current tokens
@@ -211,9 +209,7 @@ class RateLimit:
             self.window_seconds,
         )
         tokens = sum(
-            c
-            for t, c in self._token_counts.get(key, [])
-            if t > time.time() - self.window_seconds
+            c for t, c in self._token_counts.get(key, []) if t > time.time() - self.window_seconds
         )
 
         return {

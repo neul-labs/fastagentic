@@ -61,14 +61,8 @@ def config_show(
     table = Table()
     table.add_column("Setting", style="cyan")
     table.add_column("Value", style="green")
-    table.add_row(
-        "Max Concurrent",
-        os.environ.get("FASTAGENTIC_MAX_CONCURRENT", "unlimited")
-    )
-    table.add_row(
-        "Instance ID",
-        os.environ.get("FASTAGENTIC_INSTANCE_ID", "auto-generated")
-    )
+    table.add_row("Max Concurrent", os.environ.get("FASTAGENTIC_MAX_CONCURRENT", "unlimited"))
+    table.add_row("Instance ID", os.environ.get("FASTAGENTIC_INSTANCE_ID", "auto-generated"))
     console.print(table)
 
     # Log level
@@ -76,14 +70,8 @@ def config_show(
     table = Table()
     table.add_column("Setting", style="cyan")
     table.add_column("Value", style="green")
-    table.add_row(
-        "Log Level",
-        os.environ.get("FASTAGENTIC_LOG_LEVEL", "INFO")
-    )
-    table.add_row(
-        "Log Format",
-        os.environ.get("FASTAGENTIC_LOG_FORMAT", "text")
-    )
+    table.add_row("Log Level", os.environ.get("FASTAGENTIC_LOG_LEVEL", "INFO"))
+    table.add_row("Log Format", os.environ.get("FASTAGENTIC_LOG_FORMAT", "text"))
     console.print(table)
 
     # Show secrets if requested
@@ -133,6 +121,7 @@ def config_validate(
     # Basic YAML validation
     try:
         import yaml
+
         config = yaml.safe_load(content)
     except yaml.YAMLError as e:
         errors.append(f"Invalid YAML: {e}")
@@ -182,7 +171,7 @@ def config_init(
     console.print(f"[bold]Generating default configuration: {output}[/bold]\n")
 
     if format == "yaml":
-        config_content = '''# FastAgentic Configuration
+        config_content = """# FastAgentic Configuration
 
 # Application
 title: My FastAgentic App
@@ -215,9 +204,9 @@ log_format: text
 # adapters:
 #   pydanticai:
 #     model: openai:gpt-4o-mini
-'''
+"""
     else:  # env format
-        config_content = '''# FastAgentic Environment Variables
+        config_content = """# FastAgentic Environment Variables
 
 # Application
 FASTAGENTIC_TITLE="My FastAgentic App"
@@ -245,7 +234,7 @@ FASTAGENTIC_LOG_FORMAT="text"
 # LLM Provider
 # OPENAI_API_KEY="sk-..."
 # ANTHROPIC_API_KEY="sk-ant-..."
-'''
+"""
 
     try:
         output.write_text(config_content)

@@ -1,24 +1,23 @@
 """Comprehensive tests for the SDK client."""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastagentic.sdk import (
-    FastAgenticClient,
     AsyncFastAgenticClient,
+    AuthenticationError,
     ClientConfig,
+    FastAgenticClient,
+    FastAgenticError,
+    RateLimitError,
     RunRequest,
     RunResponse,
     RunStatus,
+    ServerError,
     StreamEvent,
     StreamEventType,
-    FastAgenticError,
-    AuthenticationError,
-    RateLimitError,
     ValidationError,
-    TimeoutError as SDKTimeoutError,
-    ServerError,
 )
+from fastagentic.sdk import TimeoutError as SDKTimeoutError
 
 
 class TestClientConfig:

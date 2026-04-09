@@ -1,9 +1,7 @@
 """Tests for FastAgentic decorators."""
 
-import pytest
-
-from fastagentic import tool, resource, prompt
-from fastagentic.decorators import get_tools, get_resources, get_prompts
+from fastagentic import prompt, resource, tool
+from fastagentic.decorators import get_prompts, get_resources, get_tools
 
 
 class TestToolDecorator:

@@ -70,13 +70,9 @@ class TemplateVariable:
                 errors.append(f"{self.name} must be a string")
             else:
                 if self.min_length and len(value) < self.min_length:
-                    errors.append(
-                        f"{self.name} must be at least {self.min_length} characters"
-                    )
+                    errors.append(f"{self.name} must be at least {self.min_length} characters")
                 if self.max_length and len(value) > self.max_length:
-                    errors.append(
-                        f"{self.name} must be at most {self.max_length} characters"
-                    )
+                    errors.append(f"{self.name} must be at most {self.max_length} characters")
                 if self.pattern and not re.match(self.pattern, value):
                     errors.append(f"{self.name} does not match required pattern")
 

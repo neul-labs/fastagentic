@@ -7,21 +7,20 @@ from pathlib import Path
 import pytest
 
 from fastagentic.templates import (
-    Template,
-    TemplateMetadata,
-    TemplateFile,
-    TemplateVariable,
-    TemplateVersion,
+    CompositionConfig,
     LocalRegistry,
     Marketplace,
     MarketplaceConfig,
+    Template,
     TemplateComposer,
-    CompositionConfig,
+    TemplateFile,
+    TemplateMetadata,
     TemplateRating,
     TemplateReview,
+    TemplateVariable,
+    TemplateVersion,
 )
 from fastagentic.templates.base import TemplateCategory
-
 
 # ============================================================================
 # TemplateVariable Tests

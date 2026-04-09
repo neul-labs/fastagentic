@@ -15,11 +15,12 @@ Targeted mutations:
 """
 
 import pytest
-from hypothesis import given, strategies as st, assume
+from hypothesis import given
+from hypothesis import strategies as st
 
 from fastagentic.context import UserInfo
-from fastagentic.policy.budget import BudgetPolicy, Budget
 from fastagentic.policy.base import PolicyAction, PolicyContext
+from fastagentic.policy.budget import Budget, BudgetPolicy
 
 
 class TestBudgetBoundaryConditions:
@@ -175,6 +176,7 @@ class TestBudgetPolicyEvaluation:
                 estimated_tokens=estimated_tokens,
                 estimated_cost=estimated_cost,
             )
+
         return create
 
     @pytest.mark.asyncio
@@ -266,6 +268,7 @@ class TestBudgetTokenLimits:
                 estimated_tokens=estimated_tokens,
                 estimated_cost=estimated_cost,
             )
+
         return create
 
     @pytest.mark.asyncio
@@ -393,6 +396,7 @@ class TestBudgetPolicyUserAndTenant:
                 endpoint=endpoint,
                 estimated_cost=estimated_cost,
             )
+
         return create
 
     @pytest.mark.asyncio

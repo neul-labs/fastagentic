@@ -12,17 +12,16 @@ from fastagentic.sdk import (
     ToolCall,
     ToolResult,
 )
-from fastagentic.sdk.models import UsageStats, Message
 from fastagentic.sdk.exceptions import (
-    FastAgenticError,
     AuthenticationError,
+    FastAgenticError,
     RateLimitError,
-    ValidationError,
-    TimeoutError,
     ServerError,
+    TimeoutError,
+    ValidationError,
     raise_for_status,
 )
-
+from fastagentic.sdk.models import Message, UsageStats
 
 # ============================================================================
 # ClientConfig Tests

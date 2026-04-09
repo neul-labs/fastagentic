@@ -94,9 +94,7 @@ class LangGraphAdapter(BaseAdapter):
 
         return result
 
-    async def stream(
-        self, input: Any, ctx: AdapterContext | Any
-    ) -> AsyncIterator[StreamEvent]:
+    async def stream(self, input: Any, ctx: AdapterContext | Any) -> AsyncIterator[StreamEvent]:
         """Stream events from the LangGraph execution.
 
         Yields node-level events including state updates and checkpoints.
@@ -249,9 +247,7 @@ class LangGraphAdapter(BaseAdapter):
         }
 
         try:
-            async for event in self.graph.astream_events(
-                input, config=config, version="v2"
-            ):
+            async for event in self.graph.astream_events(input, config=config, version="v2"):
                 stream_event = self._convert_event(event, adapter_ctx.run_id)
                 if stream_event:
                     yield stream_event
@@ -269,9 +265,7 @@ class LangGraphAdapter(BaseAdapter):
                 run_id=adapter_ctx.run_id,
             )
 
-    def _convert_event(
-        self, event: dict[str, Any], run_id: str
-    ) -> StreamEvent | None:
+    def _convert_event(self, event: dict[str, Any], run_id: str) -> StreamEvent | None:
         """Convert a LangGraph event to a FastAgentic StreamEvent."""
         event_type = event.get("event", "")
         data = event.get("data", {})

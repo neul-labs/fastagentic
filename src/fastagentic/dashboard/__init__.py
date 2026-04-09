@@ -3,10 +3,7 @@
 Provides operational visibility, metrics, and run introspection.
 """
 
-from fastagentic.dashboard.api import (
-    DashboardAPI,
-    DashboardConfig,
-)
+from fastagentic.dashboard.api import DashboardAPI, DashboardConfig
 from fastagentic.dashboard.metrics import (
     Counter,
     Gauge,

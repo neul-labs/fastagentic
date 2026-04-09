@@ -1,19 +1,12 @@
 """Tests for FastAgentic server module."""
 
 import asyncio
-import os
-from unittest.mock import AsyncMock, patch, MagicMock
 
 import pytest
-from starlette.requests import Request
-from starlette.responses import Response
 from starlette.testclient import TestClient
 
-from fastagentic.server.config import ServerConfig, PoolConfig
-from fastagentic.server.middleware import (
-    ConcurrencyLimitMiddleware,
-    InstanceMetricsMiddleware,
-)
+from fastagentic.server.config import PoolConfig, ServerConfig
+from fastagentic.server.middleware import ConcurrencyLimitMiddleware, InstanceMetricsMiddleware
 
 
 class TestPoolConfig:
@@ -215,17 +208,20 @@ class TestServerRunners:
     def test_run_uvicorn_import(self):
         """Test run_uvicorn can be imported."""
         from fastagentic.server.runners import run_uvicorn
+
         assert callable(run_uvicorn)
 
     def test_run_gunicorn_import(self):
         """Test run_gunicorn can be imported."""
         from fastagentic.server.runners import run_gunicorn
+
         assert callable(run_gunicorn)
 
     def test_get_recommended_workers(self):
         """Test recommended workers calculation."""
-        from fastagentic.server.runners import get_recommended_workers
         import multiprocessing
+
+        from fastagentic.server.runners import get_recommended_workers
 
         expected = (2 * multiprocessing.cpu_count()) + 1
         assert get_recommended_workers() == expected
@@ -269,8 +265,9 @@ class TestAppIntegration:
 
     def test_health_endpoint_includes_instance_id(self):
         """Test health endpoint includes instance ID."""
-        from fastagentic import App
         from starlette.testclient import TestClient
+
+        from fastagentic import App
 
         app = App(title="Test", instance_id="health-test-1")
         client = TestClient(app.fastapi)
@@ -282,8 +279,9 @@ class TestAppIntegration:
 
     def test_ready_endpoint_includes_instance_id(self):
         """Test ready endpoint includes instance ID."""
-        from fastagentic import App
         from starlette.testclient import TestClient
+
+        from fastagentic import App
 
         app = App(title="Test", instance_id="ready-test-1")
         client = TestClient(app.fastapi)
@@ -295,8 +293,9 @@ class TestAppIntegration:
 
     def test_metrics_endpoint(self):
         """Test metrics endpoint returns config."""
-        from fastagentic import App
         from starlette.testclient import TestClient
+
+        from fastagentic import App
 
         app = App(
             title="Test",

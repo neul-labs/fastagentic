@@ -181,9 +181,7 @@ class TemplateComposer:
         merged_files: dict[str, TemplateFile] = {f.path: f for f in base.files}
 
         # Merge variables
-        merged_variables: dict[str, TemplateVariable] = {
-            v.name: v for v in base.variables
-        }
+        merged_variables: dict[str, TemplateVariable] = {v.name: v for v in base.variables}
 
         # Merge dependencies
         merged_deps: set[str] = set(base.dependencies)
@@ -202,17 +200,13 @@ class TemplateComposer:
                     )
 
                     # Resolve based on strategy
-                    resolution = self._resolve_file_conflict(
-                        conflict, config, variables
-                    )
+                    resolution = self._resolve_file_conflict(conflict, config, variables)
                     conflict.resolution = resolution
 
                     if resolution == "include":
                         merged_files[file.path] = file
                     elif resolution == "merge":
-                        merged_files[file.path] = self._merge_files(
-                            merged_files[file.path], file
-                        )
+                        merged_files[file.path] = self._merge_files(merged_files[file.path], file)
                     # else: keep base (skip)
 
                     conflicts.append(conflict)
@@ -314,29 +308,18 @@ class TemplateComposer:
             return True
 
         # Config files - can merge dicts
-        if path.endswith((".json", ".yaml", ".yml", ".toml")):
-            return True
+        return path.endswith((".json", ".yaml", ".yml", ".toml"))
 
-        return False
-
-    def _merge_files(
-        self, base_file: TemplateFile, include_file: TemplateFile
-    ) -> TemplateFile:
+    def _merge_files(self, base_file: TemplateFile, include_file: TemplateFile) -> TemplateFile:
         """Merge two template files."""
         path = base_file.path
 
         if path.endswith(".py"):
-            merged_content = self._merge_python_files(
-                base_file.content, include_file.content
-            )
+            merged_content = self._merge_python_files(base_file.content, include_file.content)
         elif path.endswith(".json"):
-            merged_content = self._merge_json_files(
-                base_file.content, include_file.content
-            )
+            merged_content = self._merge_json_files(base_file.content, include_file.content)
         elif path.endswith((".yaml", ".yml")):
-            merged_content = self._merge_yaml_files(
-                base_file.content, include_file.content
-            )
+            merged_content = self._merge_yaml_files(base_file.content, include_file.content)
         else:
             # Fallback: concatenate
             merged_content = base_file.content + "\n\n" + include_file.content
@@ -442,14 +425,16 @@ class TemplateComposer:
         for name, template in includes:
             for file in template.files:
                 if file.path in base_files:
-                    conflicts.append({
-                        "path": file.path,
-                        "templates": [config.base_template, name],
-                    })
+                    conflicts.append(
+                        {
+                            "path": file.path,
+                            "templates": [config.base_template, name],
+                        }
+                    )
 
         # Collect all variables
         variables = {v.name: v.to_dict() for v in base.variables}
-        for name, template in includes:
+        for _name, template in includes:
             for var in template.variables:
                 if var.name not in variables:
                     variables[var.name] = var.to_dict()
@@ -483,8 +468,6 @@ class TemplateComposer:
         composition_meta = output_path / "composition.json"
         import json
 
-        composition_meta.write_text(
-            json.dumps(composed.to_dict(), indent=2, default=str)
-        )
+        composition_meta.write_text(json.dumps(composed.to_dict(), indent=2, default=str))
 
         return output_path

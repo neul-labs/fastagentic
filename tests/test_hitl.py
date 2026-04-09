@@ -1,25 +1,18 @@
 """Tests for FastAgentic HITL module."""
 
-import asyncio
-
 import pytest
 
 from fastagentic.hitl.approval import (
     ApprovalManager,
     ApprovalPolicy,
     ApprovalRequest,
-    ApprovalResponse,
     ApprovalStatus,
-    InMemoryApprovalStore,
 )
 from fastagentic.hitl.confirmation import (
     ConfirmationRequest,
-    ConfirmationResponse,
     ConfirmationType,
-    ConfirmationCancelledError,
     QueuedConfirmationHandler,
     request_confirmation,
-    require_confirmation,
     set_confirmation_handler,
 )
 from fastagentic.hitl.escalation import (
@@ -103,11 +96,13 @@ class TestApprovalManager:
     @pytest.mark.asyncio
     async def test_request_approval(self):
         manager = ApprovalManager()
-        manager.add_policy(ApprovalPolicy(
-            name="test",
-            actions=["delete"],
-            approvers=["admin@example.com"],
-        ))
+        manager.add_policy(
+            ApprovalPolicy(
+                name="test",
+                actions=["delete"],
+                approvers=["admin@example.com"],
+            )
+        )
 
         request = await manager.request_approval(
             action="delete",
@@ -177,18 +172,18 @@ class TestApprovalManager:
         pending = await manager.list_pending()
         assert len(pending) == 2
 
-        pending_for_admin = await manager.list_pending(
-            approver_id="admin@example.com"
-        )
+        pending_for_admin = await manager.list_pending(approver_id="admin@example.com")
         assert len(pending_for_admin) == 2
 
     @pytest.mark.asyncio
     async def test_requires_approval(self):
         manager = ApprovalManager()
-        manager.add_policy(ApprovalPolicy(
-            name="dangerous",
-            actions=["delete"],
-        ))
+        manager.add_policy(
+            ApprovalPolicy(
+                name="dangerous",
+                actions=["delete"],
+            )
+        )
 
         policy = manager.requires_approval("delete", "anything")
         assert policy is not None
@@ -320,11 +315,13 @@ class TestEscalationManager:
     @pytest.mark.asyncio
     async def test_add_trigger(self):
         manager = EscalationManager()
-        manager.add_trigger(EscalationTrigger(
-            name="errors",
-            trigger_type=EscalationTriggerType.ERROR_COUNT,
-            threshold=3,
-        ))
+        manager.add_trigger(
+            EscalationTrigger(
+                name="errors",
+                trigger_type=EscalationTriggerType.ERROR_COUNT,
+                threshold=3,
+            )
+        )
 
         escalations = await manager.check_escalation(
             run_id="run-123",
@@ -337,11 +334,13 @@ class TestEscalationManager:
     @pytest.mark.asyncio
     async def test_no_escalation(self):
         manager = EscalationManager()
-        manager.add_trigger(EscalationTrigger(
-            name="errors",
-            trigger_type=EscalationTriggerType.ERROR_COUNT,
-            threshold=3,
-        ))
+        manager.add_trigger(
+            EscalationTrigger(
+                name="errors",
+                trigger_type=EscalationTriggerType.ERROR_COUNT,
+                threshold=3,
+            )
+        )
 
         escalations = await manager.check_escalation(
             run_id="run-123",
@@ -411,18 +410,22 @@ class TestEscalationManager:
         async def callback(esc: Escalation) -> None:
             called.append(esc.id)
 
-        manager.add_handler(EscalationHandler(
-            name="test",
-            levels=[EscalationLevel.HIGH],
-            callback=callback,
-        ))
+        manager.add_handler(
+            EscalationHandler(
+                name="test",
+                levels=[EscalationLevel.HIGH],
+                callback=callback,
+            )
+        )
 
-        manager.add_trigger(EscalationTrigger(
-            name="errors",
-            trigger_type=EscalationTriggerType.ERROR_COUNT,
-            threshold=3,
-            level=EscalationLevel.HIGH,
-        ))
+        manager.add_trigger(
+            EscalationTrigger(
+                name="errors",
+                trigger_type=EscalationTriggerType.ERROR_COUNT,
+                threshold=3,
+                level=EscalationLevel.HIGH,
+            )
+        )
 
         await manager.check_escalation(
             run_id="run-123",

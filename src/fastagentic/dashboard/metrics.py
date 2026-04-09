@@ -190,10 +190,12 @@ class Histogram(Metric):
         for key in self._bucket_counts:
             # Bucket samples
             for bucket, count in self._bucket_counts[key].items():
-                bucket_labels = MetricLabels({
-                    **key.labels,
-                    "le": str(bucket),
-                })
+                bucket_labels = MetricLabels(
+                    {
+                        **key.labels,
+                        "le": str(bucket),
+                    }
+                )
                 samples.append((bucket_labels, count))
 
             # +Inf bucket
@@ -317,9 +319,7 @@ class MetricsRegistry:
         """
         full_name = self._full_name(name)
         if full_name not in self._metrics:
-            self._metrics[full_name] = Histogram(
-                full_name, description, labels, buckets
-            )
+            self._metrics[full_name] = Histogram(full_name, description, labels, buckets)
         return self._metrics[full_name]  # type: ignore
 
     def get_all_metrics(self) -> list[Metric]:

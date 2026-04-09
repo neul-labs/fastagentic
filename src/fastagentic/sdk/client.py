@@ -20,12 +20,7 @@ from fastagentic.sdk.exceptions import (
     StreamError,
     raise_for_status,
 )
-from fastagentic.sdk.models import (
-    RunRequest,
-    RunResponse,
-    StreamEvent,
-    ToolResult,
-)
+from fastagentic.sdk.models import RunRequest, RunResponse, StreamEvent, ToolResult
 
 
 @dataclass
@@ -103,8 +98,7 @@ class AsyncFastAgenticClient:
         """
         if httpx is None:
             raise ImportError(
-                "httpx is required for the SDK client. "
-                "Install with: pip install httpx"
+                "httpx is required for the SDK client. Install with: pip install httpx"
             )
 
         if config:
@@ -430,8 +424,7 @@ class FastAgenticClient:
         """
         if httpx is None:
             raise ImportError(
-                "httpx is required for the SDK client. "
-                "Install with: pip install httpx"
+                "httpx is required for the SDK client. Install with: pip install httpx"
             )
 
         if config:

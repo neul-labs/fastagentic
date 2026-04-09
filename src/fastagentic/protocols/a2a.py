@@ -155,7 +155,7 @@ def configure_a2a(
             target_endpoint = None
             target_func = None
 
-            for path, (defn, func) in endpoints.items():
+            for _path, (defn, func) in endpoints.items():
                 if defn.a2a_skill == skill_name:
                     target_endpoint = defn
                     target_func = func
@@ -167,9 +167,7 @@ def configure_a2a(
                     content={
                         "error": f"Skill '{skill_name}' not found",
                         "available_skills": [
-                            defn.a2a_skill
-                            for defn, _ in endpoints.values()
-                            if defn.a2a_skill
+                            defn.a2a_skill for defn, _ in endpoints.values() if defn.a2a_skill
                         ],
                     },
                 )

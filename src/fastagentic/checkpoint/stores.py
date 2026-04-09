@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 from pathlib import Path
 from typing import Any
 
 import aiofiles
 
-from fastagentic.checkpoint.base import (
-    Checkpoint,
-    CheckpointMetadata,
-)
+from fastagentic.checkpoint.base import Checkpoint, CheckpointMetadata
 
 
 class InMemoryCheckpointStore:
@@ -214,10 +212,8 @@ class FileCheckpointStore:
             count += 1
 
         # Remove empty directory
-        try:
+        with contextlib.suppress(OSError):
             run_dir.rmdir()
-        except OSError:
-            pass
 
         return count
 
@@ -578,9 +574,7 @@ class S3CheckpointStore:
                     # Update manifest
                     manifest = await self._load_manifest(run_id)
                     manifest["checkpoints"] = [
-                        c
-                        for c in manifest["checkpoints"]
-                        if c["checkpoint_id"] != checkpoint_id
+                        c for c in manifest["checkpoints"] if c["checkpoint_id"] != checkpoint_id
                     ]
                     await self._save_manifest(run_id, manifest)
                     return
@@ -649,9 +643,7 @@ class S3CheckpointStore:
                 # Update manifest
                 if expired_ids:
                     manifest["checkpoints"] = [
-                        c
-                        for c in manifest["checkpoints"]
-                        if c["checkpoint_id"] not in expired_ids
+                        c for c in manifest["checkpoints"] if c["checkpoint_id"] not in expired_ids
                     ]
                     await self._save_manifest(run_id, manifest)
 

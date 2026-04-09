@@ -43,10 +43,7 @@ class Scope:
                 return True
 
         # Global wildcard
-        if self.name == "*":
-            return True
-
-        return False
+        return self.name == "*"
 
 
 class ScopePolicy(Policy):
@@ -214,9 +211,7 @@ class ScopePolicy(Policy):
                 missing_scopes.append(required)
 
         if missing_scopes:
-            return PolicyResult.deny(
-                f"Missing required scopes: {', '.join(missing_scopes)}"
-            )
+            return PolicyResult.deny(f"Missing required scopes: {', '.join(missing_scopes)}")
 
         return PolicyResult.allow("All required scopes present")
 

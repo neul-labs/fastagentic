@@ -12,11 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastagentic.templates.base import (
-    Template,
-    TemplateCategory,
-    TemplateMetadata,
-)
+from fastagentic.templates.base import Template, TemplateCategory, TemplateMetadata
 
 
 class TemplateRegistry(ABC):
@@ -396,7 +392,11 @@ class EnterpriseRegistry(TemplateRegistry):
     ) -> list[TemplateMetadata]:
         """List available templates."""
         # Check category restrictions
-        if self.config.allowed_categories and category and category not in self.config.allowed_categories:
+        if (
+            self.config.allowed_categories
+            and category
+            and category not in self.config.allowed_categories
+        ):
             return []
 
         templates = self._remote.list_templates(
@@ -407,9 +407,7 @@ class EnterpriseRegistry(TemplateRegistry):
 
         # Filter by allowed categories
         if self.config.allowed_categories:
-            templates = [
-                t for t in templates if t.category in self.config.allowed_categories
-            ]
+            templates = [t for t in templates if t.category in self.config.allowed_categories]
 
         return templates
 
@@ -418,7 +416,11 @@ class EnterpriseRegistry(TemplateRegistry):
         template = self._remote.get_template(name, version)
 
         # Check category restrictions
-        if template and self.config.allowed_categories and template.metadata.category not in self.config.allowed_categories:
+        if (
+            template
+            and self.config.allowed_categories
+            and template.metadata.category not in self.config.allowed_categories
+        ):
             return None
 
         return template
@@ -429,9 +431,7 @@ class EnterpriseRegistry(TemplateRegistry):
 
         # Filter by allowed categories
         if self.config.allowed_categories:
-            results = [
-                t for t in results if t.category in self.config.allowed_categories
-            ]
+            results = [t for t in results if t.category in self.config.allowed_categories]
 
         return results
 
@@ -453,9 +453,7 @@ class EnterpriseRegistry(TemplateRegistry):
             Publication result
         """
         needs_approval = (
-            require_approval
-            if require_approval is not None
-            else self.config.require_approval
+            require_approval if require_approval is not None else self.config.require_approval
         )
 
         data = {

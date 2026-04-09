@@ -3,11 +3,7 @@
 Provides a client for interacting with FastAgentic services.
 """
 
-from fastagentic.sdk.client import (
-    AsyncFastAgenticClient,
-    ClientConfig,
-    FastAgenticClient,
-)
+from fastagentic.sdk.client import AsyncFastAgenticClient, ClientConfig, FastAgenticClient
 from fastagentic.sdk.exceptions import (
     AuthenticationError,
     FastAgenticError,

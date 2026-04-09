@@ -1,22 +1,21 @@
 """Tests for FastAgentic cost tracking module."""
 
-import time
 from datetime import datetime, timedelta
 
 import pytest
 
+from fastagentic.context import UsageInfo, UserInfo
+from fastagentic.cost.hooks import CostTrackingHook
 from fastagentic.cost.tracker import (
+    DEFAULT_PRICING,
     AggregationPeriod,
     CostAggregation,
     CostRecord,
     CostTracker,
-    DEFAULT_PRICING,
     InMemoryCostStore,
     ModelPricing,
 )
-from fastagentic.cost.hooks import CostTrackingHook
 from fastagentic.hooks.base import HookContext, HookResultAction
-from fastagentic.context import UserInfo, UsageInfo
 
 
 class TestModelPricing:
@@ -131,14 +130,26 @@ class TestInMemoryCostStore:
     @pytest.mark.asyncio
     async def test_filter_by_user(self):
         store = InMemoryCostStore()
-        await store.record(CostRecord(
-            run_id="run-1", model="gpt-4o", input_tokens=100,
-            output_tokens=50, cost=0.01, user_id="user-A",
-        ))
-        await store.record(CostRecord(
-            run_id="run-2", model="gpt-4o", input_tokens=100,
-            output_tokens=50, cost=0.01, user_id="user-B",
-        ))
+        await store.record(
+            CostRecord(
+                run_id="run-1",
+                model="gpt-4o",
+                input_tokens=100,
+                output_tokens=50,
+                cost=0.01,
+                user_id="user-A",
+            )
+        )
+        await store.record(
+            CostRecord(
+                run_id="run-2",
+                model="gpt-4o",
+                input_tokens=100,
+                output_tokens=50,
+                cost=0.01,
+                user_id="user-B",
+            )
+        )
 
         records = await store.get_records(user_id="user-A")
         assert len(records) == 1
@@ -149,13 +160,15 @@ class TestInMemoryCostStore:
         store = InMemoryCostStore(max_records=5)
 
         for i in range(10):
-            await store.record(CostRecord(
-                run_id=f"run-{i}",
-                model="gpt-4o",
-                input_tokens=100,
-                output_tokens=50,
-                cost=0.01,
-            ))
+            await store.record(
+                CostRecord(
+                    run_id=f"run-{i}",
+                    model="gpt-4o",
+                    input_tokens=100,
+                    output_tokens=50,
+                    cost=0.01,
+                )
+            )
 
         records = await store.get_records(limit=100)
         assert len(records) == 5

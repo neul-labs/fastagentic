@@ -1,7 +1,7 @@
 """Conftest for fuzzy testing with Hypothesis."""
 
 import pytest
-from hypothesis import settings, Verbosity, HealthCheck
+from hypothesis import HealthCheck, Verbosity, settings
 
 # Configure Hypothesis settings for CI vs local
 settings.register_profile(

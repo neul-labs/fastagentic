@@ -1,22 +1,19 @@
 """Tests for checkpoint module."""
 
-import asyncio
 import tempfile
 import time
-from pathlib import Path
 
 import pytest
 
 from fastagentic.checkpoint import (
     Checkpoint,
-    CheckpointMetadata,
     CheckpointConfig,
     CheckpointManager,
-    InMemoryCheckpointStore,
+    CheckpointMetadata,
     FileCheckpointStore,
+    InMemoryCheckpointStore,
 )
 from fastagentic.checkpoint.base import CheckpointStatus
-
 
 # ============================================================================
 # CheckpointMetadata Tests

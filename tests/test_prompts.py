@@ -2,24 +2,19 @@
 
 import pytest
 
+from fastagentic.prompts.registry import PromptMetadata, PromptRegistry, PromptVersion
 from fastagentic.prompts.template import (
     PromptTemplate,
     PromptVariable,
     VariableType,
     render_template,
 )
-from fastagentic.prompts.registry import (
-    PromptRegistry,
-    PromptVersion,
-    PromptMetadata,
-    InMemoryPromptStore,
-)
 from fastagentic.prompts.testing import (
-    PromptVariant,
     ABTest,
     ABTestResult,
-    VariantSelectionStrategy,
+    PromptVariant,
     VariantMetrics,
+    VariantSelectionStrategy,
 )
 
 
@@ -328,10 +323,12 @@ class TestABTest:
         with pytest.raises(ValueError, match="at least 2 variants"):
             ABTest(
                 name="test",
-                variants=[PromptVariant(
-                    name="only-one",
-                    template=PromptTemplate(name="t", content="t"),
-                )],
+                variants=[
+                    PromptVariant(
+                        name="only-one",
+                        template=PromptTemplate(name="t", content="t"),
+                    )
+                ],
             )
 
     def test_select_variant(self):

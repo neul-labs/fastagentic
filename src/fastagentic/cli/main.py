@@ -54,9 +54,7 @@ def main(
 def run(
     app_path: Annotated[
         str,
-        typer.Argument(
-            help="Path to the app module (e.g., 'app:app' or 'main:application')"
-        ),
+        typer.Argument(help="Path to the app module (e.g., 'app:app' or 'main:application')"),
     ] = "app:app",
     host: Annotated[str, typer.Option(help="Host to bind to")] = "127.0.0.1",
     port: Annotated[int, typer.Option(help="Port to bind to")] = 8000,
@@ -186,9 +184,11 @@ def run(
 
     if server == "gunicorn":
         from fastagentic.server.runners import run_gunicorn
+
         run_gunicorn(app_import_path, config)
     else:
         from fastagentic.server.runners import run_uvicorn
+
         run_uvicorn(app_import_path, config)
 
 
@@ -265,14 +265,14 @@ def _create_project_files(project_dir: Path, name: str, template: str) -> None:
     (project_dir / ".env.example").write_text(template_content["env_example"])
 
     # .gitignore
-    gitignore = '''__pycache__/
+    gitignore = """__pycache__/
 *.py[cod]
 *$py.class
 .env
 .venv
 venv/
 .uv/
-'''
+"""
     (project_dir / ".gitignore").write_text(gitignore)
 
 
@@ -299,7 +299,7 @@ asyncio_mode = "auto"
 '''
 
     # Common .env.example
-    env_example = f'''# {name} - Environment Variables
+    env_example = f"""# {name} - Environment Variables
 
 # LLM Provider (choose one)
 OPENAI_API_KEY=sk-your-openai-key
@@ -311,7 +311,7 @@ FASTAGENTIC_LOG_LEVEL=INFO
 
 # Optional: Durable store
 # REDIS_URL=redis://localhost:6379
-'''
+"""
 
     if template == "pydanticai":
         return _get_pydanticai_template(name, pyproject, env_example)
@@ -408,7 +408,7 @@ class ChatResponse(BaseModel):
     """Chat response model."""
     response: str
 ''',
-        "claude_md": f'''# {name} - Claude Code Guide
+        "claude_md": f"""# {name} - Claude Code Guide
 
 PydanticAI agent deployed with FastAgentic.
 
@@ -431,8 +431,8 @@ uv run fastagentic agent chat     # Test interactively
 - **Add tools**: Edit `agent.py`, use `@chat_agent.tool`
 - **Change model**: Edit `Agent(model="...")` in `agent.py`
 - **Add endpoints**: Use `@agent_endpoint` in `app.py`
-''',
-        "readme": f'''# {name}
+""",
+        "readme": f"""# {name}
 
 A PydanticAI agent deployed with FastAgentic.
 
@@ -451,15 +451,14 @@ uv run fastagentic agent chat
 ```
 
 See `CLAUDE.md` for detailed instructions.
-''',
+""",
     }
 
 
 def _get_langgraph_template(name: str, pyproject: str, env_example: str) -> dict[str, str]:
     """Generate LangGraph template."""
     pyproject = pyproject.replace(
-        "fastagentic[langgraph]",
-        "fastagentic[langgraph]\",\n    \"langchain-openai>=0.2.0"
+        "fastagentic[langgraph]", 'fastagentic[langgraph]",\n    "langchain-openai>=0.2.0'
     )
     return {
         "pyproject": pyproject,
@@ -544,7 +543,7 @@ class WorkflowResponse(BaseModel):
     """Workflow response."""
     output: str
 ''',
-        "claude_md": f'''# {name} - Claude Code Guide
+        "claude_md": f"""# {name} - Claude Code Guide
 
 LangGraph workflow deployed with FastAgentic.
 
@@ -567,8 +566,8 @@ uv run fastagentic agent chat --endpoint /run
 - **Add nodes**: Create function, add with `graph.add_node()`
 - **Add edges**: Use `graph.add_edge()` or `add_conditional_edges()`
 - **Change state**: Update `State` class
-''',
-        "readme": f'''# {name}
+""",
+        "readme": f"""# {name}
 
 A LangGraph workflow deployed with FastAgentic.
 
@@ -581,7 +580,7 @@ uv run fastagentic run
 ```
 
 See `CLAUDE.md` for details.
-''',
+""",
     }
 
 
@@ -679,7 +678,7 @@ class CrewResponse(BaseModel):
     """Crew response."""
     result: str
 ''',
-        "claude_md": f'''# {name} - Claude Code Guide
+        "claude_md": f"""# {name} - Claude Code Guide
 
 CrewAI multi-agent system deployed with FastAgentic.
 
@@ -702,8 +701,8 @@ uv run fastagentic agent chat --endpoint /run
 - **Add agents**: Create `Agent()` in `agent.py`
 - **Add tasks**: Create `Task()` and assign to agent
 - **Change process**: Use `Process.sequential` or `Process.hierarchical`
-''',
-        "readme": f'''# {name}
+""",
+        "readme": f"""# {name}
 
 A CrewAI multi-agent system deployed with FastAgentic.
 
@@ -716,15 +715,14 @@ uv run fastagentic run
 ```
 
 See `CLAUDE.md` for details.
-''',
+""",
     }
 
 
 def _get_langchain_template(name: str, pyproject: str, env_example: str) -> dict[str, str]:
     """Generate LangChain template."""
     pyproject = pyproject.replace(
-        "fastagentic[langchain]",
-        "fastagentic[langchain]\",\n    \"langchain-openai>=0.2.0"
+        "fastagentic[langchain]", 'fastagentic[langchain]",\n    "langchain-openai>=0.2.0'
     )
     return {
         "pyproject": pyproject,
@@ -794,7 +792,7 @@ class ChainResponse(BaseModel):
     """Chain response."""
     output: str
 ''',
-        "claude_md": f'''# {name} - Claude Code Guide
+        "claude_md": f"""# {name} - Claude Code Guide
 
 LangChain application deployed with FastAgentic.
 
@@ -817,8 +815,8 @@ uv run fastagentic agent chat --endpoint /run
 - **Change chain**: Edit LCEL in `agent.py`
 - **Add tools**: Use `create_tool_calling_agent()`
 - **Change prompt**: Edit `ChatPromptTemplate`
-''',
-        "readme": f'''# {name}
+""",
+        "readme": f"""# {name}
 
 A LangChain application deployed with FastAgentic.
 
@@ -831,7 +829,7 @@ uv run fastagentic run
 ```
 
 See `CLAUDE.md` for details.
-''',
+""",
     }
 
 
@@ -858,7 +856,11 @@ def info() -> None:
 def inspect(
     list_type: Annotated[
         str | None,
-        typer.Option("--list", "-l", help="List registered items (tools, resources, prompts, agents, endpoints)"),
+        typer.Option(
+            "--list",
+            "-l",
+            help="List registered items (tools, resources, prompts, agents, endpoints)",
+        ),
     ] = None,
     schema: Annotated[
         str | None,
@@ -882,6 +884,7 @@ def inspect(
     # Show configuration
     if config:
         import os
+
         console.print("[bold]Configuration[/bold]\n")
         env_vars = [
             ("FASTAGENTIC_ENV", "Environment"),
@@ -913,6 +916,7 @@ def inspect(
             if tool_defn.inputSchema:
                 console.print("Input Schema:")
                 import json
+
                 console.print(json.dumps(tool_defn.inputSchema, indent=2))
         elif schema in resources:
             resource_defn, _ = resources[schema]
@@ -936,7 +940,11 @@ def inspect(
             table.add_column("Name", style="cyan")
             table.add_column("Description", style="green")
             for name, (tool_defn, _) in tools.items():
-                desc = tool_defn.description[:50] + "..." if tool_defn.description and len(tool_defn.description) > 50 else tool_defn.description or ""
+                desc = (
+                    tool_defn.description[:50] + "..."
+                    if tool_defn.description and len(tool_defn.description) > 50
+                    else tool_defn.description or ""
+                )
                 table.add_row(name, desc or "-")
             console.print(table)
         elif list_type == "resources":
@@ -955,7 +963,11 @@ def inspect(
             table.add_column("Name", style="cyan")
             table.add_column("Description", style="green")
             for name, (prompt_defn, _) in prompts.items():
-                desc = prompt_defn.description[:50] + "..." if prompt_defn.description and len(prompt_defn.description) > 50 else prompt_defn.description or ""
+                desc = (
+                    prompt_defn.description[:50] + "..."
+                    if prompt_defn.description and len(prompt_defn.description) > 50
+                    else prompt_defn.description or ""
+                )
                 table.add_row(name, desc or "-")
             console.print(table)
         elif list_type == "agents" or list_type == "endpoints":
@@ -1030,12 +1042,7 @@ def test_contract(
             getattr(module, attr_name)
 
             # Get registered items
-            from fastagentic.decorators import (
-                get_endpoints,
-                get_prompts,
-                get_resources,
-                get_tools,
-            )
+            from fastagentic.decorators import get_endpoints, get_prompts, get_resources, get_tools
 
             tools = get_tools()
             resources = get_resources()
@@ -1234,7 +1241,9 @@ def mcp_schema(
 
     console.print(f"\nPrompts: {len(prompts)}")
     for name, (prompt_defn, _) in prompts.items():
-        console.print(f"  - {name}: {prompt_defn.description[:50] if prompt_defn.description else 'No description'}...")
+        console.print(
+            f"  - {name}: {prompt_defn.description[:50] if prompt_defn.description else 'No description'}..."
+        )
 
 
 @mcp_app.command("export")
@@ -1289,7 +1298,9 @@ def mcp_export(
                 "arguments": [
                     {"name": arg.name, "description": arg.description, "required": arg.required}
                     for arg in (prompt_defn.arguments or [])
-                ] if prompt_defn.arguments else []
+                ]
+                if prompt_defn.arguments
+                else [],
             }
             for name, (prompt_defn, _) in prompts.items()
         ],
@@ -1299,6 +1310,7 @@ def mcp_export(
     if format == "yaml":
         try:
             import yaml
+
             output.write_text(yaml.dump(manifest, default_flow_style=False))
         except ImportError:
             console.print("[red]PyYAML not installed. Use --format json or install pyyaml.[/red]")
@@ -1368,8 +1380,9 @@ def mcp_call(
 
     try:
         import asyncio
+
         result = asyncio.run(tool_fn(**input_data))
-        console.print(f"\n[bold]Result:[/bold]")
+        console.print("\n[bold]Result:[/bold]")
         if isinstance(result, str):
             console.print(result)
         else:
@@ -1856,15 +1869,17 @@ def a2a_export(
     skills = []
     for path, (defn, _) in endpoints.items():
         if defn.a2a_skill:
-            skills.append({
-                "id": defn.a2a_skill,
-                "name": defn.a2a_skill,
-                "description": defn.description,
-                "url": f"http://localhost:8000{path}",
-                "capabilities": {
-                    "streaming": defn.stream,
-                },
-            })
+            skills.append(
+                {
+                    "id": defn.a2a_skill,
+                    "name": defn.a2a_skill,
+                    "description": defn.description,
+                    "url": f"http://localhost:8000{path}",
+                    "capabilities": {
+                        "streaming": defn.stream,
+                    },
+                }
+            )
 
     agent_card = {
         "name": "FastAgentic Server",
@@ -1876,6 +1891,7 @@ def a2a_export(
     if format == "yaml":
         try:
             import yaml
+
             output.write_text(yaml.dump(agent_card, default_flow_style=False))
         except ImportError:
             console.print("[red]PyYAML not installed. Use --format json or install pyyaml.[/red]")
@@ -1901,6 +1917,7 @@ def a2a_ping(
 
     try:
         import httpx
+
         # Get agent card
         card_url = f"{url.rstrip('/')}/.well-known/agent.json"
 
@@ -1914,7 +1931,9 @@ def a2a_ping(
                 skills = agent_card.get("skills", [])
                 console.print(f"Skills: {len(skills)}")
                 for skill in skills[:5]:
-                    console.print(f"  - {skill.get('id')}: {skill.get('description', 'No description')[:50]}")
+                    console.print(
+                        f"  - {skill.get('id')}: {skill.get('description', 'No description')[:50]}"
+                    )
                 if len(skills) > 5:
                     console.print(f"  ... and {len(skills) - 5} more")
             else:
@@ -1942,7 +1961,7 @@ def a2a_invoke(
         str | None,
         typer.Option("--input", "-i", help="Input JSON string"),
     ] = None,
-    stream: Annotated[
+    _stream: Annotated[
         bool,
         typer.Option("--stream/--no-stream", help="Enable streaming response"),
     ] = False,
@@ -1987,7 +2006,7 @@ def a2a_invoke(
     # For now, just show how to invoke (actual invocation requires HTTP call)
     console.print("[yellow]Local skill invocation requires HTTP server running[/yellow]")
     console.print(f"\nTo invoke this skill, make a POST request to: http://localhost:8000{path}")
-    console.print(f"Headers: Content-Type: application/json")
+    console.print("Headers: Content-Type: application/json")
     console.print(f"Body: {json.dumps(input_data, indent=2)}")
 
 
