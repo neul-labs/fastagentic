@@ -58,7 +58,7 @@ docker run -d \
 ### Kubernetes
 
 ```bash
-helm repo add fastagentic https://charts.fastagentic.dev
+helm repo add fastagentic https://github.com/neul-labs/fastagentic/tree/main/charts
 helm install my-agents fastagentic/runtime \
   --set auth.oidcIssuer=https://auth.company.com \
   --set durability.backend=postgres \

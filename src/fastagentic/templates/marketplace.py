@@ -114,7 +114,7 @@ class TemplateReview:
 class MarketplaceConfig:
     """Configuration for marketplace."""
 
-    url: str = "https://templates.fastagentic.dev"
+    url: str = "https://github.com/neul-labs/fastagentic/tree/main/templates"
     api_key: str | None = None
     timeout: float = 30.0
     cache_ttl: int = 3600

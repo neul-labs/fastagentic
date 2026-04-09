@@ -6,7 +6,7 @@ Deploy FastAgentic applications on Kubernetes with production-grade configuratio
 
 ```bash
 # Add repository
-helm repo add fastagentic https://charts.fastagentic.dev
+helm repo add fastagentic https://github.com/neul-labs/fastagentic/tree/main/charts
 helm repo update
 
 # Install
