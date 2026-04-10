@@ -92,6 +92,14 @@ from fastagentic.prompts import (
     PromptVersion,
 )
 from fastagentic.reliability import CircuitBreaker, FallbackChain, RateLimit, RetryPolicy, Timeout
+from fastagentic.runner import (
+    ExecutionGraph,
+    StepResult,
+    StepStatus,
+    StepTracker,
+    run,
+    run_opaque,
+)
 from fastagentic.sdk import (
     AsyncFastAgenticClient,
     AuthenticationError,
@@ -130,6 +138,13 @@ __all__ = [
     "CircuitBreaker",
     "FallbackChain",
     "RateLimit",
+    # Runner
+    "run",
+    "run_opaque",
+    "StepTracker",
+    "StepResult",
+    "StepStatus",
+    "ExecutionGraph",
     # Policy
     "Policy",
     "PolicyContext",

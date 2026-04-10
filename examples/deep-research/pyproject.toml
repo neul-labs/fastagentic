@@ -1,0 +1,41 @@
+[project]
+name = "deep-research-demo"
+version = "1.0.0"
+description = "FastAgentic Demo - Wrap any existing agent with zero code changes"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastagentic>=1.2.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+# For real LLM-powered research (optional)
+research = [
+    "local-deep-research>=0.2.0",
+]
+# For step-aware pattern example
+pydanticai = [
+    "pydantic-ai>=0.0.14",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[tool.uv.sources]
+fastagentic = { path = "../..", editable = true }
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
