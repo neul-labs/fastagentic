@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/reliability/circuit_breaker.py
-# hypothesis_version: 6.148.7
-
-[1000.0, 30000, 60000, 'Circuit is open', 'T', 'closed', 'half_open', 'open']

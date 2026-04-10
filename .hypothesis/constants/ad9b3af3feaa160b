@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/hitl/escalation.py
-# hypothesis_version: 6.148.7
-
-[-0.5, 0.0, 0.5, 1.0, 'assigned', 'by_level', 'by_status', 'confidence', 'confidence_low', 'critical', 'custom', 'detected_topics', 'elapsed_seconds', 'error_count', 'high', 'low', 'manual', 'medium', 'pending', 'policy_violated', 'policy_violation', 'resolved', 'sensitive_topics', 'sentiment', 'sentiment_negative', 'timeout', 'topic_sensitive', 'total', 'user_request']

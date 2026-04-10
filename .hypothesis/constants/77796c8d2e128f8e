@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/cluster/worker.py
-# hypothesis_version: 6.148.7
-
-[0.1, 5.0, 30.0, 300.0, 'No available workers', 'busy', 'completed', 'current_tasks', 'draining', 'error', 'id', 'idle', 'status', 'stopped', 'total_completed', 'total_failed', 'worker_count', 'workers']

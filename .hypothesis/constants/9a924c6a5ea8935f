@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/cost/hooks.py
-# hypothesis_version: 6.148.7
-
-['latency_ms', 'model', 'request_id', 'tenant_id', 'tool_cost', 'tool_name', 'total_cost', 'unknown']

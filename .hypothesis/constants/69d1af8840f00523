@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/sdk/exceptions.py
-# hypothesis_version: 6.148.7
-
-[400, 401, 403, 404, 408, 422, 429, 500, 600, 'Access denied', 'Connection failed', 'Not found', 'Rate limit exceeded', 'Request timed out', 'Resource not found', 'Server error', 'Stream error', 'Timeout', 'Validation error', 'details', 'error', 'errors', 'message', 'resource_id', 'resource_type', 'retry_after', 'timeout']

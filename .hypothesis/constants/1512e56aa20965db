@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/sdk/models.py
-# hypothesis_version: 6.148.7
-
-[0.0, 'arguments', 'call_id', 'cancelled', 'completed', 'completed_at', 'content', 'cost', 'data', 'duration_ms', 'end', 'endpoint', 'error', 'failed', 'id', 'input', 'input_tokens', 'message', 'messages', 'metadata', 'model', 'name', 'output', 'output_tokens', 'pending', 'result', 'role', 'run_id', 'running', 'start', 'started_at', 'status', 'stream', 'timeout', 'timestamp', 'token', 'tool_call', 'tool_call_id', 'tool_calls', 'tool_result', 'total_tokens', 'type', 'usage']

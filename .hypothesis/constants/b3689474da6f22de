@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/app.py
-# hypothesis_version: 6.148.7
-
-[5.0, 30.0, 500, 1800, '/health', '/mcp', '/metrics', '/ready', '1.0.0', '10', '2025-11-25', '5', 'Error in endpoint', 'FastAgentic App', '_db_engine', '_middleware', 'a2a/v0.3', 'app', 'arguments', 'capabilities', 'checks', 'config', 'data', 'db_pool_size', 'description', 'done', 'durable_store', 'endpoint', 'error', 'event', 'get_metrics', 'healthy', 'inputSchema', 'instance_id', 'invoke', 'issuer', 'max_concurrent', 'middleware', 'mimeType', 'model_dump', 'model_dump_json', 'name', 'oidc', 'ok', 'on_shutdown', 'on_startup', 'outputSchema', 'postgres://', 'postgresql://', 'prompts', 'protocolVersion', 'protocols', 'ready', 'redis://', 'redis_pool_size', 'resources', 'result', 'security', 'skills', 'status', 'stream', 'title', 'tools', 'type', 'uri', 'version']

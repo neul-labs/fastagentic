@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/cluster/task.py
-# hypothesis_version: 6.148.7
-
-[0.5, 300.0, 100, 10000, 'cancelled', 'completed', 'failed', 'max_size', 'pending', 'pending_count', 'queue_size', 'queued', 'running', 'timeout']

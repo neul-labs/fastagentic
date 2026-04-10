@@ -1,4 +1,0 @@
-# file: /home/dipankar/Github/fastagentic/src/fastagentic/prompts/template.py
-# hypothesis_version: 6.148.7
-
-['any', 'boolean', 'capitalize', 'false', 'first', 'index', 'last', 'list', 'lower', 'number', 'object', 'string', 'strip', 'this', 'title', 'trim', 'true', 'upper']
