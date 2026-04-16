@@ -1,226 +1,134 @@
-# FastAgentic
+<p align="center">
+  <img src="https://docs.neullabs.com/fastagentic/logo.svg" alt="FastAgentic" width="120" />
+</p>
 
-> **Build agents with anything. Ship them with FastAgentic.**
+<h1 align="center">FastAgentic</h1>
 
-[![Tests](https://img.shields.io/badge/tests-899%20passed-brightgreen)]()[![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()[![License](https://img.shields.io/badge/license-MIT-green)]()
+<p align="center">
+  <strong>Build agents with anything. Ship them with FastAgentic.</strong>
+</p>
 
-FastAgentic makes agents **resumable, observable, and production-safe**—without rewriting them.
+<p align="center">
+  <a href="https://pypi.org/project/fastagentic/"><img src="https://img.shields.io/pypi/v/fastagentic?color=blue&label=PyPI" alt="PyPI"></a>
+  <a href="https://pypi.org/project/fastagentic/"><img src="https://img.shields.io/pypi/pyversions/fastagentic" alt="Python"></a>
+  <a href="https://github.com/neullabs/fastagentic/actions"><img src="https://img.shields.io/badge/tests-899%20passed-brightgreen" alt="Tests"></a>
+  <a href="https://docs.neullabs.com/fastagentic"><img src="https://img.shields.io/badge/docs-neullabs.com-blue" alt="Docs"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
+</p>
+
+<p align="center">
+  <a href="https://docs.neullabs.com/fastagentic">Documentation</a> •
+  <a href="https://docs.neullabs.com/fastagentic/quickstart">Quickstart</a> •
+  <a href="https://docs.neullabs.com/fastagentic/examples">Examples</a>
+</p>
+
+---
+
+## The Deployment Layer for AI Agents
+
+Your agent works locally. Now make it **production-ready in minutes, not weeks**.
+
+FastAgentic wraps any agent framework—**PydanticAI, LangGraph, CrewAI, LangChain**—and adds everything you need for production:
+
+| You Get | Without Rewriting Your Agent |
+|---------|------------------------------|
+| **Checkpointing** | Resume 90-minute research agents after crashes |
+| **Observability** | See every step, token, and decision |
+| **Cost Control** | Token budgets, rate limits, circuit breakers |
+| **Security** | OAuth, RBAC, PII detection out of the box |
+| **Protocols** | MCP + A2A support for tool sharing and collaboration |
 
 ```
-Your Agent Code
-    ↓
-FastAgentic Runtime
-    ├── Checkpointing     → Resume after crashes
-    ├── Step Tracking     → See exactly what's happening
-    ├── Cost Control      → Token budgets per phase
-    └── Reliability       → Retry, circuit breaker, rate limits
-    ↓
-Production-Safe Execution
+Your Agent (any framework)  →  FastAgentic  →  Production-Ready API
 ```
 
-## The Problem
-
-Agent builders already know this pain:
-- Research agents run **30–90 minutes**
-- They crash halfway and lose intermediate state
-- Can't be resumed, observed, or reasoned about
-- DevOps can't monitor progress or control costs
-
-## The Solution
-
-FastAgentic wraps execution, not reasoning. **Zero code changes** to your agent:
-
-```python
-from local_deep_research import quick_summary  # Any existing agent
-from fastagentic import run_opaque
-
-# One line wraps ANY agent
-result = await run_opaque(
-    quick_summary,           # Unchanged agent
-    query="quantum computing",
-    run_id="research-001",   # For resume capability
-)
-
-# Resume returns cached result instantly
-result = await run_opaque(
-    quick_summary,
-    query="quantum computing",
-    run_id="research-001",   # Same run_id = cached result
-)
-```
-
-## Adapters
-
-| Framework | Adapter |
-|-----------|---------|
-| PydanticAI | `PydanticAIAdapter` |
-| LangGraph | `LangGraphAdapter` |
-| CrewAI | `CrewAIAdapter` |
-| LangChain | `LangChainAdapter` |
-
-## Installation
+## Install
 
 ```bash
-uv add fastagentic
-
-# With adapter support
-uv add "fastagentic[pydanticai]" "fastagentic[langgraph]" "fastagentic[crewai]"
-
-# With integrations
-uv add "fastagentic[langfuse]" "fastagentic[portkey]"
+pip install fastagentic
 ```
 
-## Quick Start
+## 30-Second Example
+
+Wrap any existing agent with **zero code changes**:
 
 ```python
-from fastagentic import App, agent_endpoint, tool
-from fastagentic.adapters.langgraph import LangGraphAdapter
-from models import TicketIn, TicketOut, triage_graph
+from your_agent import research_agent  # Any agent, any framework
+from fastagentic import run_opaque
 
-app = App(
-    title="Support Triage",
-    oidc_issuer="https://auth.mycompany.com",
+# One line. That's it.
+result = await run_opaque(
+    research_agent,
+    query="AI trends 2025",
+    run_id="research-001",  # Enables resume on crash
 )
+```
 
-@tool(name="summarize", description="Summarize ticket text")
-async def summarize(text: str) -> str:
-    ...
+Re-run with the same `run_id`? **Instant cached result.** No re-execution.
 
-@agent_endpoint(
-    path="/triage",
-    runnable=LangGraphAdapter(triage_graph),
-    input_model=TicketIn,
-    output_model=TicketOut,
-    stream=True,
-)
-async def triage(ticket: TicketIn) -> TicketOut:
+## Full Application
+
+```python
+from fastagentic import App, tool, agent_endpoint
+from fastagentic.adapters import LangGraphAdapter
+
+app = App(title="My Agent API")
+
+@tool
+async def search(query: str) -> list[str]:
+    """Search the knowledge base."""
+    return await kb.search(query)
+
+@agent_endpoint("/chat", runnable=LangGraphAdapter(my_graph))
+async def chat(message: str) -> str:
     ...
 ```
 
-Run:
-
 ```bash
-fastagentic run          # HTTP server
-fastagentic mcp serve    # MCP stdio server
+fastagentic run              # HTTP API server
+fastagentic mcp serve        # MCP stdio server
+fastagentic agent chat       # Interactive testing
 ```
 
-## Demo: Wrap Any Agent
+## Framework Adapters
 
-See FastAgentic wrap an existing agent with **zero code changes**:
+| Framework | Adapter | Install |
+|-----------|---------|---------|
+| PydanticAI | `PydanticAIAdapter` | `pip install fastagentic[pydanticai]` |
+| LangGraph | `LangGraphAdapter` | `pip install fastagentic[langgraph]` |
+| CrewAI | `CrewAIAdapter` | `pip install fastagentic[crewai]` |
+| LangChain | `LangChainAdapter` | `pip install fastagentic[langchain]` |
 
-```bash
-python examples/deep-research/demo.py "quantum computing"
-```
+## Why FastAgentic?
 
-```
-┌────────────────────── FastAgentic Demo: Wrap Any Agent ──────────────────────┐
-│ Agent: local_deep_research.quick_summary                                     │
-│ Query: quantum computing                                                     │
-│ Run ID: research-7f3a2b                                                      │
-│                                                                              │
-│ This is an UNMODIFIED existing agent.                                        │
-│ FastAgentic wraps it with zero code changes.                                 │
-└──────────────────────────────────────────────────────────────────────────────┘
+**The problem:** You've built an agent. It works. But shipping it means adding:
+- Crash recovery for long-running tasks
+- Monitoring and cost tracking
+- Authentication and authorization
+- Rate limiting and retries
+- API endpoints and protocols
 
-● Running quick_summary...
-✓ Complete! Cached for resume. Duration: 45.2s
-```
+**The solution:** FastAgentic handles all of this. You keep your agent code unchanged.
 
-Run again with the same run ID:
+## Documentation
 
-```bash
-python examples/deep-research/demo.py "quantum computing" --run-id research-7f3a2b
-```
+**[docs.neullabs.com/fastagentic](https://docs.neullabs.com/fastagentic)**
 
-```
-✓ Found cached result for research-7f3a2b - skipping execution
-```
-
-**Instant.** No re-execution. The result was cached.
-
-## Two Patterns
-
-| Pattern | Use Case | Resume Behavior |
-|---------|----------|-----------------|
-| **Opaque** (`run_opaque`) | Wrap existing agents, zero changes | Skip if complete |
-| **Step-aware** (`run` + `StepTracker`) | New multi-step workflows | Resume from exact step |
-
-```python
-# Pattern 1: Opaque - zero code changes
-from fastagentic import run_opaque
-result = await run_opaque(existing_agent, query="...")
-
-# Pattern 2: Step-aware - fine-grained checkpointing
-from fastagentic import run, StepTracker
-
-async def my_agent(input: str, tracker: StepTracker):
-    async with tracker.step("search"):
-        results = await search(input)
-    async with tracker.step("analyze"):
-        return await analyze(results)
-
-result = await run(my_agent, "quantum computing")
-```
-
-## Integrations
-
-```python
-from fastagentic import App
-from fastagentic.integrations import LangfuseIntegration, LakeraIntegration
-
-app = App(
-    integrations=[
-        LangfuseIntegration(public_key="pk-...", secret_key="sk-..."),
-        LakeraIntegration(api_key="lak-...", block_on_detect=True),
-    ]
-)
-```
-
-## Reliability
-
-```python
-from fastagentic import App, RetryPolicy, RateLimit
-
-app = App(
-    retry_policy=RetryPolicy(max_attempts=3, backoff="exponential"),
-    rate_limit=RateLimit(rpm=60, tpm=100000),
-)
-```
-
-## CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `fastagentic run` | Start ASGI server |
-| `fastagentic new` | Scaffold new application |
-| `fastagentic agent chat` | Interactive agent testing |
-| `fastagentic mcp serve` | Run as MCP stdio server |
-| `fastagentic runs list` | List recent runs with status |
-| `fastagentic runs show <id>` | Show execution graph for a run |
-| `fastagentic runs delete <id>` | Delete checkpoints for a run |
-
-## Protocol Support
-
-- **MCP** (2025-11-25) with Tasks, Extensions, OAuth
-- **A2A** (v0.3) for agent-to-agent collaboration
-- **OpenAPI 3.1** schemas from Pydantic models
-- **OAuth2/OIDC** with scoped policies
-- **Streaming**: SSE, WebSocket, MCP events
+- [Getting Started](https://docs.neullabs.com/fastagentic/quickstart) — Up and running in 5 minutes
+- [Adapters](https://docs.neullabs.com/fastagentic/adapters) — Connect any framework
+- [Checkpointing](https://docs.neullabs.com/fastagentic/checkpoint) — Resume long-running agents
+- [MCP Protocol](https://docs.neullabs.com/fastagentic/protocols/mcp) — Tool sharing standard
+- [Deployment](https://docs.neullabs.com/fastagentic/deployment) — Docker, Kubernetes, cloud
 
 ## Contributing
 
 ```bash
+git clone https://github.com/neullabs/fastagentic
+cd fastagentic
 uv sync --extra dev
 uv run pytest tests/ -v
-uv run ruff check src/
 ```
 
-## Learn More
+## License
 
-- [Getting Started](docs/getting-started.md)
-- [Deep Research Demo](examples/deep-research/) - Wrap any agent with zero code changes
-- [Adapters](docs/adapters/index.md)
-- [Checkpointing](docs/checkpoint.md)
-- [MCP Protocol](docs/protocols/mcp.md)
-- [A2A Protocol](docs/protocols/a2a.md)
-- [Deployment](docs/operations/deployment/)
+MIT
