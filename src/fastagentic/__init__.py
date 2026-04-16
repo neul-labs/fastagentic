@@ -91,7 +91,16 @@ from fastagentic.prompts import (
     PromptVariant,
     PromptVersion,
 )
-from fastagentic.reliability import CircuitBreaker, FallbackChain, RateLimit, RetryPolicy, Timeout
+from fastagentic.reliability import (
+    CircuitBreaker,
+    FallbackChain,
+    RateLimit,
+    RateLimitExceeded,
+    RetryExhausted,
+    RetryPolicy,
+    Timeout,
+    TimeoutExceeded,
+)
 from fastagentic.runner import (
     ExecutionGraph,
     StepResult,
@@ -104,6 +113,7 @@ from fastagentic.sdk import (
     AsyncFastAgenticClient,
     AuthenticationError,
     ClientConfig,
+    ConnectionFailedError,
     FastAgenticClient,
     FastAgenticError,
     RateLimitError,
@@ -113,11 +123,11 @@ from fastagentic.sdk import (
     ServerError,
     StreamEvent,
     StreamEventType,
+    TimeoutError,
     ToolCall,
     ToolResult,
     ValidationError,
 )
-from fastagentic.sdk import TimeoutError as SDKTimeoutError
 
 __version__ = "1.2.0"
 
@@ -135,9 +145,12 @@ __all__ = [
     # Reliability
     "RetryPolicy",
     "Timeout",
+    "TimeoutExceeded",
     "CircuitBreaker",
     "FallbackChain",
     "RateLimit",
+    "RateLimitExceeded",
+    "RetryExhausted",
     # Runner
     "run",
     "run_opaque",
@@ -218,8 +231,9 @@ __all__ = [
     "AuthenticationError",
     "RateLimitError",
     "ValidationError",
-    "SDKTimeoutError",
+    "TimeoutError",
     "ServerError",
+    "ConnectionFailedError",
     # Compliance
     "PIIDetector",
     "PIIType",

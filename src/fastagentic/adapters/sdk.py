@@ -182,7 +182,7 @@ class SimpleAdapter(CommunityAdapter):
 
     async def invoke(self, input: Any, ctx: AdapterContext | Any) -> Any:
         """Invoke the wrapped function."""
-        self._ensure_adapter_context(ctx)
+        adapter_ctx = self._ensure_adapter_context(ctx)
         extracted_input = self._extract_input(input)
 
         import asyncio
@@ -190,7 +190,7 @@ class SimpleAdapter(CommunityAdapter):
         if asyncio.iscoroutinefunction(self.invoke_fn):
             return await self.invoke_fn(extracted_input)
         else:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             return await loop.run_in_executor(None, self.invoke_fn, extracted_input)
 
     async def stream(self, input: Any, ctx: AdapterContext | Any) -> AsyncIterator[StreamEvent]:

@@ -6,11 +6,14 @@ with full streaming support and Logfire integration.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any
 
 from fastagentic.adapters.base import AdapterContext, BaseAdapter
 from fastagentic.types import StreamEvent, StreamEventType
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from pydantic_ai import Agent
@@ -71,7 +74,7 @@ class PydanticAIAdapter(BaseAdapter):
         checkpoint = await self.on_resume(adapter_ctx)
         if checkpoint:
             adapter_ctx.state["message_history"] = checkpoint.get("messages", [])
-            adapter_ctx.agent_ctx.run._is_resumed = True
+            adapter_ctx.agent_ctx.run.mark_resumed()
 
         # Extract message from input
         message = self._extract_message(input)
@@ -108,7 +111,7 @@ class PydanticAIAdapter(BaseAdapter):
                     for m in result.all_messages()
                 ]
             except Exception:
-                pass
+                logger.warning("Failed to serialize result messages for checkpoint")
 
         await self.on_checkpoint(
             {
@@ -143,7 +146,7 @@ class PydanticAIAdapter(BaseAdapter):
         checkpoint = await self.on_resume(adapter_ctx)
         if checkpoint:
             adapter_ctx.state["message_history"] = checkpoint.get("messages", [])
-            adapter_ctx.agent_ctx.run._is_resumed = True
+            adapter_ctx.agent_ctx.run.mark_resumed()
             yield StreamEvent(
                 type=StreamEventType.NODE_START,
                 data={"name": "__resume__", "checkpoint": checkpoint},
@@ -258,7 +261,7 @@ class PydanticAIAdapter(BaseAdapter):
         checkpoint = await self.on_resume(adapter_ctx)
         if checkpoint:
             adapter_ctx.state["message_history"] = checkpoint.get("messages", [])
-            adapter_ctx.agent_ctx.run._is_resumed = True
+            adapter_ctx.agent_ctx.run.mark_resumed()
             yield StreamEvent(
                 type=StreamEventType.NODE_START,
                 data={"name": "__resume__", "checkpoint": checkpoint},

@@ -123,6 +123,21 @@ class PIIPattern:
         return matches
 
 
+def _luhn_check(number: str) -> bool:
+    """Validate a number using the Luhn algorithm."""
+    digits = [int(d) for d in number if d.isdigit()]
+    if len(digits) < 2:
+        return False
+    total = 0
+    for i, digit in enumerate(reversed(digits)):
+        if i % 2 == 1:
+            digit *= 2
+            if digit > 9:
+                digit -= 9
+        total += digit
+    return total % 10 == 0
+
+
 # Default PII patterns
 DEFAULT_PATTERNS: list[PIIPattern] = [
     # Email
@@ -137,24 +152,26 @@ DEFAULT_PATTERNS: list[PIIPattern] = [
         pattern=r"\b(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}\b",
         confidence=0.85,
     ),
-    # SSN
+    # SSN - require hyphen or space separators to reduce false positives
     PIIPattern(
         type=PIIType.SSN,
-        pattern=r"\b[0-9]{3}[-\s]?[0-9]{2}[-\s]?[0-9]{4}\b",
+        pattern=r"\b[0-9]{3}[-\s][0-9]{2}[-\s][0-9]{4}\b",
         confidence=0.9,
         validator=lambda x: len(re.sub(r"[-\s]", "", x)) == 9,
     ),
-    # Credit Card (Luhn validation would improve this)
+    # Credit Card (with Luhn validation)
     PIIPattern(
         type=PIIType.CREDIT_CARD,
         pattern=r"\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b",
         confidence=0.9,
+        validator=lambda x: _luhn_check(x),
     ),
-    # Credit Card with spaces/dashes
+    # Credit Card with spaces/dashes (with Luhn validation)
     PIIPattern(
         type=PIIType.CREDIT_CARD,
-        pattern=r"\b[0-9]{4}[-\s]?[0-9]{4}[-\s]?[0-9]{4}[-\s]?[0-9]{4}\b",
-        confidence=0.8,
+        pattern=r"\b[0-9]{4}[-\s][0-9]{4}[-\s][0-9]{4}[-\s][0-9]{4}\b",
+        confidence=0.85,
+        validator=lambda x: _luhn_check(re.sub(r"[-\s]", "", x)),
     ),
     # IP Address
     PIIPattern(
@@ -174,11 +191,11 @@ DEFAULT_PATTERNS: list[PIIPattern] = [
         pattern=r"\b(?:0?[1-9]|1[0-2])[/\-](?:0?[1-9]|[12][0-9]|3[01])[/\-](?:19|20)[0-9]{2}\b",
         confidence=0.7,
     ),
-    # ZIP Code (US)
+    # ZIP Code (US) - require word boundaries and context to reduce false positives
     PIIPattern(
         type=PIIType.ZIP_CODE,
-        pattern=r"\b[0-9]{5}(?:-[0-9]{4})?\b",
-        confidence=0.6,  # Lower confidence as many numbers match
+        pattern=r"(?:zip\s*code|postal\s*code|zip)[:\s]*[0-9]{5}(?:-[0-9]{4})?\b",
+        confidence=0.85,
     ),
     # API Key patterns
     PIIPattern(

@@ -47,7 +47,7 @@ class ConcurrencyLimitMiddleware(BaseHTTPMiddleware):
         self.max_concurrent = max_concurrent
         self.retry_after = retry_after
         self._semaphore = asyncio.Semaphore(max_concurrent)
-        self._current_requests = 0
+        self._active_count = 0
 
     async def dispatch(  # type: ignore[override]
         self,
@@ -59,33 +59,13 @@ class ConcurrencyLimitMiddleware(BaseHTTPMiddleware):
         if request.url.path in ("/health", "/ready", "/metrics"):
             return await call_next(request)
 
-        # Try to acquire semaphore with non-blocking attempt
-        acquired = self._semaphore.locked()
-        if not acquired:
-            # Quick check passed, try to acquire (still racy but minimized window)
-            try:
-                await asyncio.wait_for(self._semaphore.acquire(), timeout=0.001)
-            except asyncio.TimeoutError:
-                logger.warning(
-                    "Request rejected due to concurrency limit",
-                    current=self._current_requests,
-                    max=self.max_concurrent,
-                    path=request.url.path,
-                )
-                return JSONResponse(
-                    status_code=503,
-                    content={
-                        "error": "Service temporarily unavailable",
-                        "message": "Too many concurrent requests",
-                        "retry_after": self.retry_after,
-                    },
-                    headers={"Retry-After": str(self.retry_after)},
-                )
-        else:
-            # Semaphore is fully exhausted, reject immediately
+        # Try to acquire semaphore with a small timeout
+        try:
+            await asyncio.wait_for(self._semaphore.acquire(), timeout=0.5)
+        except asyncio.TimeoutError:
             logger.warning(
                 "Request rejected due to concurrency limit",
-                current=self._current_requests,
+                active=self._active_count,
                 max=self.max_concurrent,
                 path=request.url.path,
             )
@@ -99,17 +79,17 @@ class ConcurrencyLimitMiddleware(BaseHTTPMiddleware):
                 headers={"Retry-After": str(self.retry_after)},
             )
 
-        self._current_requests += 1
+        self._active_count += 1
         try:
             return await call_next(request)
         finally:
-            self._current_requests -= 1
+            self._active_count -= 1
             self._semaphore.release()
 
     @property
-    def current_requests(self) -> int:
+    def active_requests(self) -> int:
         """Get current number of in-flight requests."""
-        return self._current_requests
+        return self._active_count
 
 
 class InstanceMetricsMiddleware(BaseHTTPMiddleware):

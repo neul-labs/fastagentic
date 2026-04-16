@@ -250,7 +250,11 @@ class InteractiveConfirmationHandler:
 
     def handle(self, request: ConfirmationRequest) -> asyncio.Future[ConfirmationResponse]:
         """Handle a confirmation request interactively."""
-        future: asyncio.Future[ConfirmationResponse] = asyncio.get_event_loop().create_future()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.get_event_loop()
+        future: asyncio.Future[ConfirmationResponse] = loop.create_future()
 
         async def _prompt() -> None:
             self._output(f"\n{request.message}")
@@ -310,7 +314,11 @@ class QueuedConfirmationHandler:
 
     def handle(self, request: ConfirmationRequest) -> asyncio.Future[ConfirmationResponse]:
         """Handle a confirmation request by queueing it."""
-        future: asyncio.Future[ConfirmationResponse] = asyncio.get_event_loop().create_future()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.get_event_loop()
+        future: asyncio.Future[ConfirmationResponse] = loop.create_future()
         self._pending[request.id] = (request, future)
         return future
 

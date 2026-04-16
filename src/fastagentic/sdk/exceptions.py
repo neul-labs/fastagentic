@@ -174,7 +174,7 @@ class ServerError(FastAgenticError):
         super().__init__(message, status_code=status_code, details=details)
 
 
-class ConnectionError(FastAgenticError):
+class ConnectionFailedError(FastAgenticError):
     """Connection error.
 
     Raised when:

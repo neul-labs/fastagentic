@@ -239,41 +239,28 @@ def new(
 
 def _create_project_files(project_dir: Path, name: str, template: str) -> None:
     """Create project files from template."""
-    # Get template-specific content
     template_content = _get_template_content(name, template)
 
-    # pyproject.toml
-    (project_dir / "pyproject.toml").write_text(template_content["pyproject"])
+    files = {
+        "pyproject.toml": template_content["pyproject"],
+        "app.py": template_content["app"],
+        "models.py": template_content["models"],
+        "CLAUDE.md": template_content["claude_md"],
+        "README.md": template_content["readme"],
+        ".env.example": template_content["env_example"],
+        ".gitignore": ("__pycache__/\n*.py[cod]\n*$py.class\n.env\n.venv\nvenv/\n.uv/\n"),
+    }
 
-    # Main app file
-    (project_dir / "app.py").write_text(template_content["app"])
-
-    # Agent/workflow file (if applicable)
     if "agent" in template_content:
-        (project_dir / "agent.py").write_text(template_content["agent"])
+        files["agent.py"] = template_content["agent"]
 
-    # Models
-    (project_dir / "models.py").write_text(template_content["models"])
-
-    # CLAUDE.md
-    (project_dir / "CLAUDE.md").write_text(template_content["claude_md"])
-
-    # README
-    (project_dir / "README.md").write_text(template_content["readme"])
-
-    # .env.example
-    (project_dir / ".env.example").write_text(template_content["env_example"])
-
-    # .gitignore
-    gitignore = """__pycache__/
-*.py[cod]
-*$py.class
-.env
-.venv
-venv/
-.uv/
-"""
-    (project_dir / ".gitignore").write_text(gitignore)
+    for filename, content in files.items():
+        file_path = project_dir / filename
+        try:
+            file_path.write_text(content)
+        except OSError as exc:
+            console.print(f"[red]Error writing {file_path}: {exc}[/red]")
+            raise typer.Exit(1)
 
 
 def _get_template_content(name: str, template: str) -> dict[str, str]:
@@ -302,8 +289,8 @@ asyncio_mode = "auto"
     env_example = f"""# {name} - Environment Variables
 
 # LLM Provider (choose one)
-OPENAI_API_KEY=sk-your-openai-key
-# ANTHROPIC_API_KEY=sk-ant-your-anthropic-key
+OPENAI_API_KEY=sk-REPLACE-ME
+# ANTHROPIC_API_KEY=sk-ant-REPLACE-ME
 
 # FastAgentic
 FASTAGENTIC_ENV=dev

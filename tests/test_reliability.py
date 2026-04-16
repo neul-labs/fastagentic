@@ -10,11 +10,11 @@ from fastagentic.reliability import (
     CircuitState,
     FallbackChain,
     RateLimit,
-    RateLimitError,
-    RetryError,
+    RateLimitExceeded,
+    RetryExhausted,
     RetryPolicy,
     Timeout,
-    TimeoutError,
+    TimeoutExceeded,
 )
 
 
@@ -57,7 +57,7 @@ class TestRetryPolicy:
 
     @pytest.mark.asyncio
     async def test_max_attempts_exhausted(self):
-        """Test that max attempts results in RetryError."""
+        """Test that max attempts results in RetryExhausted."""
         call_count = 0
 
         async def always_fail():
@@ -67,7 +67,7 @@ class TestRetryPolicy:
 
         policy = RetryPolicy(max_attempts=3, initial_delay_ms=10, jitter=False)
 
-        with pytest.raises(RetryError) as exc_info:
+        with pytest.raises(RetryExhausted) as exc_info:
             await policy.execute(always_fail)
 
         assert exc_info.value.attempts == 3
@@ -145,7 +145,7 @@ class TestTimeout:
 
     @pytest.mark.asyncio
     async def test_timeout_exceeded(self):
-        """Test that slow functions raise TimeoutError."""
+        """Test that slow functions raise TimeoutExceeded."""
 
         async def slow():
             await asyncio.sleep(1)
@@ -153,7 +153,7 @@ class TestTimeout:
 
         timeout = Timeout(total_ms=50)
 
-        with pytest.raises(TimeoutError) as exc_info:
+        with pytest.raises(TimeoutExceeded) as exc_info:
             await timeout.execute(slow)
 
         assert exc_info.value.timeout_ms == 50
@@ -328,7 +328,7 @@ class TestRateLimit:
         await limiter.check_request()
         await limiter.check_request()
 
-        with pytest.raises(RateLimitError) as exc_info:
+        with pytest.raises(RateLimitExceeded) as exc_info:
             await limiter.check_request()
 
         assert exc_info.value.limit == 2
@@ -341,7 +341,7 @@ class TestRateLimit:
         await limiter.check_tokens(50)
         await limiter.check_tokens(30)
 
-        with pytest.raises(RateLimitError):
+        with pytest.raises(RateLimitExceeded):
             await limiter.check_tokens(30)
 
     @pytest.mark.asyncio
@@ -354,7 +354,7 @@ class TestRateLimit:
         await limiter.check_request("user1")
 
         # User 1 is blocked
-        with pytest.raises(RateLimitError):
+        with pytest.raises(RateLimitExceeded):
             await limiter.check_request("user1")
 
         # User 2 can still make requests

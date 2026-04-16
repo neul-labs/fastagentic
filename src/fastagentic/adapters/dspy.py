@@ -77,7 +77,7 @@ class DSPyAdapter(BaseAdapter):
             # DSPy doesn't have native resume; return cached result if completed
             cached_result = checkpoint.get("context", {}).get("result")
             if cached_result and checkpoint.get("state", {}).get("completed"):
-                adapter_ctx.agent_ctx.run._is_resumed = True
+                adapter_ctx.agent_ctx.run.mark_resumed()
                 return cached_result
 
         kwargs = self._build_kwargs(input)
@@ -117,7 +117,7 @@ class DSPyAdapter(BaseAdapter):
 
         # DSPy modules are typically synchronous
         # Run in executor to avoid blocking
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         def run_sync() -> Any:
             return self.module(**kwargs)
@@ -146,7 +146,7 @@ class DSPyAdapter(BaseAdapter):
         if checkpoint:
             cached_result = checkpoint.get("context", {}).get("result")
             if cached_result and checkpoint.get("state", {}).get("completed"):
-                adapter_ctx.agent_ctx.run._is_resumed = True
+                adapter_ctx.agent_ctx.run.mark_resumed()
                 yield StreamEvent(
                     type=StreamEventType.NODE_START,
                     data={"name": "__resume__", "cached": True},
@@ -658,7 +658,7 @@ class DSPyProgramAdapter(DSPyAdapter):
         """Run the compiled DSPy program."""
         import asyncio
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         def run_sync() -> Any:
             # Use forward() for Module subclasses

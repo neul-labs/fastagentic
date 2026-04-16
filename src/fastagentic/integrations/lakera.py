@@ -92,6 +92,8 @@ class LakeraHook(Hook):
 
         api_key = self.config.api_key or os.getenv("LAKERA_API_KEY")
         if not api_key:
+            if self.config.block_on_detect:
+                return {"flagged": True, "categories": {"no_api_key": True}}
             return {"flagged": False, "categories": {}}
 
         client = await self._get_client()
@@ -112,7 +114,16 @@ class LakeraHook(Hook):
             }
 
         except httpx.HTTPError as e:
-            # Log but don't block on API errors
+            # On API errors, respect block_on_detect: if blocking mode is enabled,
+            # fail closed (block content) rather than letting threats through
+            if self.config.block_on_detect:
+                if self.config.log_detections:
+                    import structlog
+
+                    logger = structlog.get_logger()
+                    logger.error("lakera_api_error_blocking", error=str(e), context=context)
+                return {"flagged": True, "categories": {"api_error": True}, "error": str(e)}
+
             if self.config.log_detections:
                 import structlog
 

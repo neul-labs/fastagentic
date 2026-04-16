@@ -20,7 +20,21 @@ class UserInfo:
     roles: list[str] = field(default_factory=list)
     scopes: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
-    token: str | None = None
+    token: str | None = field(default=None, repr=False)
+
+    def __repr__(self) -> str:
+        return f"UserInfo(id={self.id!r}, email={self.email!r}, name={self.name!r}, roles={self.roles!r}, scopes={self.scopes!r})"
+
+    def to_safe_dict(self) -> dict[str, Any]:
+        """Return a dict representation without sensitive fields."""
+        return {
+            "id": self.id,
+            "email": self.email,
+            "name": self.name,
+            "roles": self.roles,
+            "scopes": self.scopes,
+            "metadata": self.metadata,
+        }
 
 
 @dataclass
@@ -72,9 +86,18 @@ class RunContext:
         """Check if this run was resumed from a checkpoint."""
         return self._is_resumed
 
+    def mark_resumed(self) -> None:
+        """Mark this run as resumed from a checkpoint."""
+        self._is_resumed = True
+
     def add_checkpoint(self, state: dict[str, Any]) -> None:
         """Add a checkpoint to the run."""
         self._checkpoints.append(state)
+
+    @property
+    def checkpoints(self) -> list[dict[str, Any]]:
+        """Get all checkpoints for this run."""
+        return list(self._checkpoints)
 
 
 @dataclass

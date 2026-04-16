@@ -15,9 +15,9 @@ from fastagentic.sdk import (
     ServerError,
     StreamEvent,
     StreamEventType,
+    TimeoutError,
     ValidationError,
 )
-from fastagentic.sdk import TimeoutError as SDKTimeoutError
 
 
 class TestClientConfig:
@@ -124,7 +124,7 @@ class TestExceptions:
         assert error.errors == ["field1 required"]
 
     def test_timeout_error(self):
-        error = SDKTimeoutError("Request timed out")
+        error = TimeoutError("Request timed out")
         assert "timed out" in str(error)
 
     def test_server_error(self):

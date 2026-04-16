@@ -102,11 +102,25 @@ class ServerConfig:
     @classmethod
     def from_env(cls) -> ServerConfig:
         """Create ServerConfig from environment variables."""
+        server_val = os.environ.get("FASTAGENTIC_SERVER", "uvicorn")
+        if server_val not in ("uvicorn", "gunicorn"):
+            raise ValueError(
+                f"FASTAGENTIC_SERVER must be 'uvicorn' or 'gunicorn', got {server_val!r}"
+            )
+
+        port_val = int(os.environ.get("FASTAGENTIC_PORT", "8000"))
+        if not (1 <= port_val <= 65535):
+            raise ValueError(f"FASTAGENTIC_PORT must be 1-65535, got {port_val}")
+
+        workers_val = int(os.environ.get("FASTAGENTIC_WORKERS", "1"))
+        if workers_val < 1:
+            raise ValueError(f"FASTAGENTIC_WORKERS must be >= 1, got {workers_val}")
+
         return cls(
-            server=os.environ.get("FASTAGENTIC_SERVER", "uvicorn"),  # type: ignore
+            server=server_val,
             host=os.environ.get("FASTAGENTIC_HOST", "127.0.0.1"),
-            port=int(os.environ.get("FASTAGENTIC_PORT", "8000")),
-            workers=int(os.environ.get("FASTAGENTIC_WORKERS", "1")),
+            port=port_val,
+            workers=workers_val,
             reload=os.environ.get("FASTAGENTIC_RELOAD", "").lower() == "true",
             max_concurrent=int(mc)
             if (mc := os.environ.get("FASTAGENTIC_MAX_CONCURRENT"))

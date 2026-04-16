@@ -86,7 +86,7 @@ class AutoGenAdapter(BaseAdapter):
         checkpoint = await self.on_resume(adapter_ctx)
         if checkpoint:
             self._message_buffer = checkpoint.get("messages", [])
-            adapter_ctx.agent_ctx.run._is_resumed = True
+            adapter_ctx.agent_ctx.run.mark_resumed()
         else:
             # Clear buffer
             self._message_buffer = []
@@ -172,7 +172,7 @@ class AutoGenAdapter(BaseAdapter):
         checkpoint = await self.on_resume(adapter_ctx)
         if checkpoint:
             self._message_buffer = checkpoint.get("messages", [])
-            adapter_ctx.agent_ctx.run._is_resumed = True
+            adapter_ctx.agent_ctx.run.mark_resumed()
             yield StreamEvent(
                 type=StreamEventType.NODE_START,
                 data={"name": "__resume__", "checkpoint": checkpoint},

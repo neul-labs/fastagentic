@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, TypeVar
 
+from fastagentic.sdk.exceptions import FastAgenticError
+
 T = TypeVar("T")
 
 
@@ -20,11 +22,19 @@ class CircuitState(str, Enum):
     HALF_OPEN = "half_open"  # Testing recovery
 
 
-class CircuitOpenError(Exception):
+class CircuitOpenError(FastAgenticError):
     """Raised when circuit is open and request is rejected."""
 
-    def __init__(self, message: str, reset_time: float) -> None:
-        super().__init__(message)
+    def __init__(
+        self,
+        message: str = "Circuit is open",
+        reset_time: float | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        details = details or {}
+        if reset_time is not None:
+            details["reset_time"] = reset_time
+        super().__init__(message, status_code=503, details=details)
         self.reset_time = reset_time
 
 
@@ -78,6 +88,10 @@ class CircuitBreaker:
         """Remove failures outside the window."""
         cutoff = time.time() - (self.failure_window_ms / 1000.0)
         self._failures = [t for t in self._failures if t > cutoff]
+        # Bound the list to prevent unbounded growth even if window is large
+        max_failures = self.failure_threshold * 10
+        if len(self._failures) > max_failures:
+            self._failures = self._failures[-max_failures:]
 
     def _should_open(self) -> bool:
         """Check if circuit should open."""
@@ -127,7 +141,7 @@ class CircuitBreaker:
             if not self._can_attempt():
                 raise CircuitOpenError(
                     "Circuit is open",
-                    reset_time=self._last_failure_time or 0,
+                    reset_time=self._last_failure_time,
                 )
 
             # Transition to half-open if coming from open
@@ -165,15 +179,38 @@ class CircuitBreaker:
 
             raise
 
+    async def async_reset(self) -> None:
+        """Reset the circuit breaker to closed state (async, thread-safe)."""
+        async with self._lock:
+            self._state = CircuitState.CLOSED
+            self._failures.clear()
+            self._last_failure_time = None
+            self._half_open_successes = 0
+
+    async def async_trip(self) -> None:
+        """Manually trip the circuit to open state (async, thread-safe)."""
+        async with self._lock:
+            self._state = CircuitState.OPEN
+            self._last_failure_time = time.time()
+
     def reset(self) -> None:
-        """Reset the circuit breaker to closed state."""
+        """Reset the circuit breaker to closed state.
+
+        Note: This is a synchronous method meant to be called
+        from outside the async context. For thread-safe reset
+        during operation, use the state transition mechanism.
+        """
         self._state = CircuitState.CLOSED
         self._failures.clear()
         self._last_failure_time = None
         self._half_open_successes = 0
 
     def trip(self) -> None:
-        """Manually trip the circuit to open state."""
+        """Manually trip the circuit to open state.
+
+        Note: This is a synchronous method meant to be called
+        from outside the async context.
+        """
         self._state = CircuitState.OPEN
         self._last_failure_time = time.time()
 

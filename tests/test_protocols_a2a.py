@@ -283,7 +283,6 @@ class TestA2AWithEndpoints:
         assert response.status_code == 404
         data = response.json()
         assert "not found" in data["error"].lower()
-        assert "known_skill" in data.get("available_skills", [])
 
 
 class TestA2AProtocolVersion:

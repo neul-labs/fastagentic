@@ -10,18 +10,28 @@ from typing import Any
 
 
 class RunStatus(str, Enum):
-    """Status of a run."""
+    """Status of a run.
+
+    Aligned with fastagentic.types.RunStatus plus SDK-specific TIMEOUT.
+    The core types define PAUSED; the SDK adds TIMEOUT for client use.
+    """
 
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
+    PAUSED = "paused"
     TIMEOUT = "timeout"
 
 
 class StreamEventType(str, Enum):
-    """Types of stream events."""
+    """Types of stream events.
+
+    Aligned with fastagentic.types.StreamEventType.
+    START and END are SDK-specific markers for stream lifecycle.
+    All core types are included for compatibility.
+    """
 
     START = "start"
     TOKEN = "token"
@@ -30,6 +40,12 @@ class StreamEventType(str, Enum):
     MESSAGE = "message"
     ERROR = "error"
     END = "end"
+    NODE_START = "node_start"
+    NODE_END = "node_end"
+    CHECKPOINT = "checkpoint"
+    DONE = "done"
+    SOURCE = "source"
+    TRACE = "trace"
 
 
 @dataclass

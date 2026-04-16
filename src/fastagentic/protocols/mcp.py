@@ -25,7 +25,7 @@ def configure_mcp(
     *,
     enabled: bool = True,
     path_prefix: str = "/mcp",
-    _require_auth: bool = False,
+    require_auth: bool = False,
     capabilities: dict[str, bool] | None = None,
 ) -> None:
     """Configure MCP protocol routes on an App.
@@ -50,7 +50,20 @@ def configure_mcp(
     if not enabled:
         return
 
+    from fastapi import HTTPException
+
     fastapi = app.fastapi
+
+    async def _check_auth(request: Request) -> None:
+        if not require_auth:
+            return
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication required",
+                headers={"WWW-Authenticate": 'Bearer realm="MCP"'},
+            )
 
     default_capabilities = {
         "tools": True,
@@ -96,12 +109,13 @@ def configure_mcp(
         request: Request = None,  # type: ignore[assignment]
     ) -> JSONResponse:
         """Invoke an MCP tool."""
+        await _check_auth(request)
         tools = get_tools()
 
         if tool_name not in tools:
             return JSONResponse(
                 status_code=404,
-                content={"error": f"Tool '{tool_name}' not found"},
+                content={"error": "Tool not found"},
             )
 
         defn, func = tools[tool_name]
@@ -110,27 +124,42 @@ def configure_mcp(
             body = await request.json()
             arguments = body.get("arguments", {})
 
+            if not isinstance(arguments, dict):
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": "Invalid arguments: must be a JSON object"},
+                )
+
+            # Validate arguments against tool schema if available
+            if defn.parameters:
+                allowed_keys = set(defn.parameters.get("properties", {}).keys())
+                unexpected = set(arguments.keys()) - allowed_keys
+                if unexpected and allowed_keys:
+                    return JSONResponse(
+                        status_code=400,
+                        content={"error": f"Unexpected arguments: {', '.join(sorted(unexpected))}"},
+                    )
+
             # Call the tool function
             if hasattr(func, "__wrapped__"):
                 result = await func.__wrapped__(**arguments)
             else:
                 result = await func(**arguments)
 
-            return JSONResponse(
-                content={
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": str(result) if not isinstance(result, dict) else None,
-                            **(result if isinstance(result, dict) else {}),
-                        }
-                    ]
-                }
-            )
+            # Format result as MCP content
+            if isinstance(result, dict):
+                # Merge dict into content, but guard against overriding type
+                content_entry = {"type": "text"}
+                content_entry.update(result)
+                content_entry["type"] = "text"
+            else:
+                content_entry = {"type": "text", "text": str(result)}
+
+            return JSONResponse(content={"content": [content_entry]})
         except Exception as e:
             return JSONResponse(
                 status_code=500,
-                content={"error": str(e)},
+                content={"error": "Internal server error"},
             )
 
     # Resources listing
@@ -157,12 +186,13 @@ def configure_mcp(
         request: Request = None,  # type: ignore[assignment]
     ) -> JSONResponse:
         """Read an MCP resource."""
+        await _check_auth(request)
         resources = get_resources()
 
         if resource_name not in resources:
             return JSONResponse(
                 status_code=404,
-                content={"error": f"Resource '{resource_name}' not found"},
+                content={"error": "Resource not found"},
             )
 
         defn, func = resources[resource_name]
@@ -176,22 +206,17 @@ def configure_mcp(
             else:
                 result = await func(**params)
 
-            return JSONResponse(
-                content={
-                    "contents": [
-                        {
-                            "uri": defn.uri,
-                            "mimeType": defn.mime_type,
-                            "text": str(result) if not isinstance(result, dict) else None,
-                            **(result if isinstance(result, dict) else {}),
-                        }
-                    ]
-                }
-            )
+            if isinstance(result, dict):
+                content = {"uri": defn.uri, "mimeType": defn.mime_type}
+                content.update(result)
+            else:
+                content = {"uri": defn.uri, "mimeType": defn.mime_type, "text": str(result)}
+
+            return JSONResponse(content={"contents": [content]})
         except Exception as e:
             return JSONResponse(
                 status_code=500,
-                content={"error": str(e)},
+                content={"error": "Internal server error"},
             )
 
     # Prompts listing
@@ -217,12 +242,13 @@ def configure_mcp(
         request: Request = None,  # type: ignore[assignment]
     ) -> JSONResponse:
         """Get a rendered MCP prompt."""
+        await _check_auth(request)
         prompts = get_prompts()
 
         if prompt_name not in prompts:
             return JSONResponse(
                 status_code=404,
-                content={"error": f"Prompt '{prompt_name}' not found"},
+                content={"error": "Prompt not found"},
             )
 
         defn, func = prompts[prompt_name]
@@ -256,5 +282,5 @@ def configure_mcp(
         except Exception as e:
             return JSONResponse(
                 status_code=500,
-                content={"error": str(e)},
+                content={"error": "Internal server error"},
             )

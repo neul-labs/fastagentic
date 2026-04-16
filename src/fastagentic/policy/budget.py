@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -106,6 +107,7 @@ class InMemoryUsageStore:
 
     def __init__(self) -> None:
         self._usage: dict[str, UsageRecord] = {}
+        self._locks: dict[str, asyncio.Lock] = {}
 
     async def get_usage(self, key: str) -> UsageRecord | None:
         """Get usage record for a key."""
@@ -113,7 +115,8 @@ class InMemoryUsageStore:
 
     async def set_usage(self, key: str, record: UsageRecord) -> None:
         """Set usage record for a key."""
-        self._usage[key] = record
+        async with self._locks.setdefault(key, asyncio.Lock()):
+            self._usage[key] = record
 
     async def increment_usage(
         self,
@@ -123,14 +126,15 @@ class InMemoryUsageStore:
         requests: int = 0,
     ) -> UsageRecord:
         """Increment usage counters and return updated record."""
-        if key not in self._usage:
-            self._usage[key] = UsageRecord()
+        async with self._locks.setdefault(key, asyncio.Lock()):
+            if key not in self._usage:
+                self._usage[key] = UsageRecord()
 
-        record = self._usage[key]
-        record.cost += cost
-        record.tokens += tokens
-        record.requests += requests
-        return record
+            record = self._usage[key]
+            record.cost += cost
+            record.tokens += tokens
+            record.requests += requests
+            return record
 
 
 class BudgetPolicy(Policy):

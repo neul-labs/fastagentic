@@ -8,19 +8,25 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
 
+from fastagentic.sdk.exceptions import FastAgenticError
+
 T = TypeVar("T")
 
 
-class RetryError(Exception):
+class RetryExhausted(FastAgenticError):
     """Raised when all retry attempts are exhausted."""
 
     def __init__(
         self,
-        message: str,
-        attempts: int,
+        message: str = "All retry attempts exhausted",
+        attempts: int | None = None,
         last_error: Exception | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
-        super().__init__(message)
+        details = details or {}
+        if attempts is not None:
+            details["attempts"] = attempts
+        super().__init__(message, status_code=502, details=details)
         self.attempts = attempts
         self.last_error = last_error
 
@@ -149,11 +155,11 @@ class RetryPolicy:
                 delay = self.get_delay(attempt)
                 await asyncio.sleep(delay)
 
-        raise RetryError(
+        raise RetryExhausted(
             f"All {self.max_attempts} retry attempts exhausted",
             attempts=self.max_attempts,
             last_error=last_error,
-        )
+        ) from last_error
 
 
 def with_retry(

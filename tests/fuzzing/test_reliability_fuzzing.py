@@ -13,7 +13,7 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 
 from fastagentic.reliability.circuit_breaker import CircuitBreaker, CircuitOpenError, CircuitState
-from fastagentic.reliability.rate_limit import RateLimit, RateLimitError
+from fastagentic.reliability.rate_limit import RateLimit, RateLimitExceeded
 
 
 class TestRateLimitConcurrency:
@@ -35,7 +35,7 @@ class TestRateLimitConcurrency:
             try:
                 await rate_limit.check_request("user-1")
                 return True
-            except RateLimitError:
+            except RateLimitExceeded:
                 return False
 
         results = await asyncio.gather(*[make_request() for _ in range(10)])
@@ -44,7 +44,7 @@ class TestRateLimitConcurrency:
         assert all(results), f"Not all requests succeeded: {results}"
 
         # Next request should fail
-        with pytest.raises(RateLimitError):
+        with pytest.raises(RateLimitExceeded):
             await rate_limit.check_request("user-1")
 
     @pytest.mark.asyncio
@@ -55,7 +55,7 @@ class TestRateLimitConcurrency:
             try:
                 await rate_limit.check_request("user-burst")
                 return True
-            except RateLimitError:
+            except RateLimitExceeded:
                 return False
 
         # Try 20 concurrent requests with limit of 10
@@ -83,7 +83,7 @@ class TestRateLimitConcurrency:
             try:
                 await rate_limit.check_request("user-b")
                 return True
-            except RateLimitError:
+            except RateLimitExceeded:
                 return False
 
         results = await asyncio.gather(*[user_b_request() for _ in range(5)])
@@ -101,7 +101,7 @@ class TestRateLimitConcurrency:
             try:
                 await rate_limit.check_request(f"user-{i}")
                 allowed += 1
-            except RateLimitError:
+            except RateLimitExceeded:
                 pass
 
         assert allowed == 10, f"Expected 10 global, got {allowed}"
@@ -123,7 +123,7 @@ class TestRateLimitConcurrency:
             try:
                 await rate_limit.check_request("user-cleanup")
                 return True
-            except RateLimitError:
+            except RateLimitExceeded:
                 return False
 
         results = await asyncio.gather(*[check_request() for _ in range(50)])
@@ -152,7 +152,7 @@ class TestRateLimitBoundaryConditions:
             try:
                 await rate_limit.check_request("test-user")
                 allowed += 1
-            except RateLimitError:
+            except RateLimitExceeded:
                 pass
 
         if request_count <= rpm:
@@ -169,7 +169,7 @@ class TestRateLimitBoundaryConditions:
         for _ in range(5):
             await rate_limit.check_request(None)
 
-        with pytest.raises(RateLimitError):
+        with pytest.raises(RateLimitExceeded):
             await rate_limit.check_request(None)
 
     @pytest.mark.asyncio
@@ -180,7 +180,7 @@ class TestRateLimitBoundaryConditions:
         for _ in range(5):
             await rate_limit.check_request("")
 
-        with pytest.raises(RateLimitError):
+        with pytest.raises(RateLimitExceeded):
             await rate_limit.check_request("")
 
 

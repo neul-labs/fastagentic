@@ -76,7 +76,7 @@ class LangGraphAdapter(BaseAdapter):
         checkpoint = await self.on_resume(adapter_ctx)
         if checkpoint:
             input = {**input, **checkpoint.get("state", {})}
-            adapter_ctx.agent_ctx.run._is_resumed = True
+            adapter_ctx.agent_ctx.run.mark_resumed()
 
         # Build config with run metadata
         config = {
@@ -116,7 +116,7 @@ class LangGraphAdapter(BaseAdapter):
         checkpoint = await self.on_resume(adapter_ctx)
         if checkpoint:
             input = {**input, **checkpoint.get("state", {})}
-            adapter_ctx.agent_ctx.run._is_resumed = True
+            adapter_ctx.agent_ctx.run.mark_resumed()
             yield StreamEvent(
                 type=StreamEventType.NODE_START,
                 data={"name": "__resume__", "checkpoint": checkpoint},
@@ -336,10 +336,14 @@ class LangGraphAdapter(BaseAdapter):
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
 
-        # Load checkpoint from durable store
-        # This is a simplified implementation - real implementation
-        # would load from the configured durable store
-        checkpoint = adapter_ctx.state.get("checkpoints", {}).get(checkpoint_id)
+        # Try to load checkpoint from the run's checkpoints
+        checkpoints = adapter_ctx.agent_ctx.run.checkpoints
+        checkpoint = None
+        for cp in checkpoints:
+            if cp.get("checkpoint_id") == checkpoint_id:
+                checkpoint = cp
+                break
+
         if not checkpoint:
             yield StreamEvent(
                 type=StreamEventType.ERROR,

@@ -11,18 +11,18 @@ from fastagentic.reliability.circuit_breaker import (
     with_circuit_breaker,
 )
 from fastagentic.reliability.fallback import FallbackChain, FallbackConfig, StrategyFallback
-from fastagentic.reliability.rate_limit import RateLimit, RateLimitError
-from fastagentic.reliability.retry import RetryError, RetryPolicy, with_retry
-from fastagentic.reliability.timeout import Timeout, TimeoutError, with_timeout
+from fastagentic.reliability.rate_limit import RateLimit, RateLimitExceeded
+from fastagentic.reliability.retry import RetryExhausted, RetryPolicy, with_retry
+from fastagentic.reliability.timeout import Timeout, TimeoutExceeded, with_timeout
 
 __all__ = [
     # Retry
     "RetryPolicy",
-    "RetryError",
+    "RetryExhausted",
     "with_retry",
     # Timeout
     "Timeout",
-    "TimeoutError",
+    "TimeoutExceeded",
     "with_timeout",
     # Circuit Breaker
     "CircuitBreaker",
@@ -35,5 +35,5 @@ __all__ = [
     "StrategyFallback",
     # Rate Limit
     "RateLimit",
-    "RateLimitError",
+    "RateLimitExceeded",
 ]

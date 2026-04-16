@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Protocol
 
+from fastagentic.reliability.timeout import TimeoutExceeded
+
 
 class TaskStatus(str, Enum):
     """Task execution status."""
@@ -433,7 +435,7 @@ class TaskQueue:
             TaskResult
 
         Raises:
-            TimeoutError: If timeout exceeded
+            TimeoutExceeded: If timeout exceeded
         """
         deadline = time.time() + timeout if timeout else None
 
@@ -453,7 +455,7 @@ class TaskQueue:
                 )
 
             if deadline and time.time() > deadline:
-                raise TimeoutError(f"Timeout waiting for task: {task_id}")
+                raise TimeoutExceeded(f"Timeout waiting for task: {task_id}")
 
             await asyncio.sleep(poll_interval)
 

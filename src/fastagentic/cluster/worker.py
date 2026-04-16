@@ -10,6 +10,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Protocol
 
+from fastagentic.reliability.timeout import TimeoutExceeded
+
 
 class WorkerStatus(str, Enum):
     """Worker status states."""
@@ -241,7 +243,7 @@ class Worker:
 
         Raises:
             ValueError: If no handler for task type
-            asyncio.TimeoutError: If task times out
+            TimeoutExceeded: If task times out
         """
         handler = self._handlers.get(task_type)
         if handler is None:
@@ -528,7 +530,7 @@ class WorkerPool:
             if worker:
                 return worker
             await asyncio.sleep(0.1)
-        raise TimeoutError("No available workers")
+        raise TimeoutExceeded("No available workers")
 
     async def _create_worker(self) -> Worker:
         """Create and start a new worker."""

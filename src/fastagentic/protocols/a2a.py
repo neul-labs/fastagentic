@@ -8,11 +8,11 @@ from __future__ import annotations
 import asyncio
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from fastapi import Request
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from fastagentic.decorators import get_endpoints
@@ -44,20 +44,27 @@ class A2ATask:
     status: TaskStatus = TaskStatus.PENDING
     result: Any = None
     error: str | None = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     cancelled: bool = False
 
 
 class InMemoryTaskStore:
-    """In-memory task store for A2A tasks."""
+    """In-memory task store for A2A tasks.
 
-    def __init__(self) -> None:
+    Args:
+        max_tasks: Maximum number of tasks to retain. Oldest completed/failed/cancelled
+            tasks are evicted when the limit is reached. Set to 0 for unlimited.
+    """
+
+    def __init__(self, max_tasks: int = 10000) -> None:
         self._tasks: dict[str, A2ATask] = {}
         self._locks: dict[str, asyncio.Lock] = {}
+        self._max_tasks = max_tasks
 
     async def create(self, task: A2ATask) -> None:
         """Create a new task."""
+        self._evict_if_needed()
         self._tasks[task.task_id] = task
         self._locks[task.task_id] = asyncio.Lock()
 
@@ -72,12 +79,15 @@ class InMemoryTaskStore:
 
     async def cancel(self, task_id: str) -> bool:
         """Cancel a task."""
-        async with self._locks.get(task_id, asyncio.Lock()):
+        lock = self._locks.get(task_id)
+        if lock is None:
+            return False
+        async with lock:
             task = self._tasks.get(task_id)
             if task and task.status in (TaskStatus.PENDING, TaskStatus.RUNNING):
                 task.status = TaskStatus.CANCELLED
                 task.cancelled = True
-                task.updated_at = datetime.utcnow()
+                task.updated_at = datetime.now(timezone.utc)
                 return True
             return False
 
@@ -94,9 +104,24 @@ class InMemoryTaskStore:
             return True
         return False
 
+    def _evict_if_needed(self) -> None:
+        """Evict completed/failed/cancelled tasks if over the limit."""
+        if not self._max_tasks:
+            return
+        if len(self._tasks) < self._max_tasks:
+            return
+        terminal_states = {TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED}
+        candidates = [tid for tid, task in self._tasks.items() if task.status in terminal_states]
+        for tid in candidates[: len(candidates) // 2 + 1]:
+            self._tasks.pop(tid, None)
+            self._locks.pop(tid, None)
+
 
 # Global task store
 _task_store = InMemoryTaskStore()
+
+# Track background tasks for cleanup on shutdown
+_background_tasks: set[asyncio.Task[Any]] = set()
 
 
 def get_task_store() -> InMemoryTaskStore:
@@ -108,7 +133,7 @@ def configure_a2a(
     app: App,
     *,
     enabled: bool = True,
-    _require_auth: bool = False,
+    require_auth: bool = False,
     protocols: list[str] | None = None,
 ) -> None:
     """Configure A2A protocol routes on an App.
@@ -135,10 +160,22 @@ def configure_a2a(
     fastapi = app.fastapi
     supported_protocols = protocols or [f"a2a/v{A2A_VERSION}"]
 
+    async def _check_auth(request: Request) -> None:
+        if not require_auth:
+            return
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication required",
+                headers={"WWW-Authenticate": 'Bearer realm="A2A"'},
+            )
+
     # Task creation endpoint
     @fastapi.post("/a2a/tasks")
     async def a2a_create_task(request: Request) -> JSONResponse:
         """Create a new A2A task."""
+        await _check_auth(request)
         try:
             body = await request.json()
             skill_name = body.get("skill")
@@ -148,6 +185,18 @@ def configure_a2a(
                 return JSONResponse(
                     status_code=400,
                     content={"error": "Missing required field: skill"},
+                )
+
+            if not isinstance(skill_name, str) or len(skill_name) > 256:
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": "Invalid skill name"},
+                )
+
+            if not isinstance(task_input, dict):
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": "Invalid input: must be a JSON object"},
                 )
 
             # Find the endpoint for this skill
@@ -166,9 +215,6 @@ def configure_a2a(
                     status_code=404,
                     content={
                         "error": f"Skill '{skill_name}' not found",
-                        "available_skills": [
-                            defn.a2a_skill for defn, _ in endpoints.values() if defn.a2a_skill
-                        ],
                     },
                 )
 
@@ -182,8 +228,10 @@ def configure_a2a(
 
             await _task_store.create(task)
 
-            # Start task execution in background
-            asyncio.create_task(_execute_task(task_id, target_func, task_input))
+            # Start task execution in background (tracked for cleanup)
+            bg_task = asyncio.create_task(_execute_task(task_id, target_func, task_input))
+            _background_tasks.add(bg_task)
+            bg_task.add_done_callback(_background_tasks.discard)
 
             return JSONResponse(
                 content={
@@ -196,7 +244,7 @@ def configure_a2a(
         except Exception as e:
             return JSONResponse(
                 status_code=500,
-                content={"error": str(e)},
+                content={"error": "Internal server error"},
             )
 
     # Task status endpoint
@@ -208,7 +256,7 @@ def configure_a2a(
         if not task:
             return JSONResponse(
                 status_code=404,
-                content={"error": f"Task '{task_id}' not found"},
+                content={"error": "Task not found"},
             )
 
         response = {
@@ -235,7 +283,7 @@ def configure_a2a(
         if not task:
             return JSONResponse(
                 status_code=404,
-                content={"error": f"Task '{task_id}' not found"},
+                content={"error": "Task not found"},
             )
 
         cancelled = await _task_store.cancel(task_id)
@@ -298,10 +346,18 @@ async def _execute_task(
         else:
             result = func(**input)
 
+        # Sanitize result to avoid leaking internal details
+        if isinstance(result, dict):
+            result = {k: v for k, v in result.items() if not k.startswith("_")}
         task.result = result
         task.status = TaskStatus.COMPLETED
+    except asyncio.CancelledError:
+        task.status = TaskStatus.CANCELLED
+        task.cancelled = True
+        task.updated_at = datetime.now(timezone.utc)
+        return
     except Exception as e:
-        task.error = str(e)
+        task.error = "Internal error"
         task.status = TaskStatus.FAILED
     finally:
         await _task_store.update(task)

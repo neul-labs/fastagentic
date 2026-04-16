@@ -78,14 +78,14 @@ class CrewAIAdapter(BaseAdapter):
         if checkpoint:
             completed_tasks = checkpoint.get("state", {}).get("completed_tasks", 0)
             task_outputs = checkpoint.get("task_outputs", [])
-            adapter_ctx.agent_ctx.run._is_resumed = True
+            adapter_ctx.agent_ctx.run.mark_resumed()
 
         # Convert Pydantic models to dict
         if hasattr(input, "model_dump"):
             input = input.model_dump()
 
         # CrewAI's kickoff is synchronous, so we run it in a thread
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
             None,
             lambda: self.crew.kickoff(inputs=input),
@@ -128,7 +128,7 @@ class CrewAIAdapter(BaseAdapter):
         if checkpoint:
             completed_tasks = checkpoint.get("state", {}).get("completed_tasks", 0)
             task_outputs = checkpoint.get("task_outputs", [])
-            adapter_ctx.agent_ctx.run._is_resumed = True
+            adapter_ctx.agent_ctx.run.mark_resumed()
             yield StreamEvent(
                 type=StreamEventType.NODE_START,
                 data={"name": "__resume__", "checkpoint": checkpoint},
@@ -165,7 +165,7 @@ class CrewAIAdapter(BaseAdapter):
             )
 
             # Run the crew in a thread with callbacks
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
 
             # Emit agent/task events based on crew structure
             for i, task in enumerate(self.crew.tasks):
@@ -365,7 +365,7 @@ class CrewAIAdapter(BaseAdapter):
                 )
 
                 # Run crew in executor
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
 
                 async def run_crew() -> Any:
                     try:
@@ -516,7 +516,7 @@ class CrewAIAdapter(BaseAdapter):
         try:
 
             async def capture_output() -> Any:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 return await loop.run_in_executor(
                     None,
                     lambda: self.crew.kickoff(inputs=input),

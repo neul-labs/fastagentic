@@ -60,6 +60,9 @@ class Metric(ABC):
 class Counter(Metric):
     """A counter metric that only increases.
 
+    Note: This class is not thread-safe. Use within a single async context
+    or protect access with external synchronization.
+
     Example:
         requests = Counter("requests_total", "Total requests", ["endpoint"])
         requests.inc(endpoint="/chat")

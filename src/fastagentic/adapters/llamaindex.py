@@ -87,7 +87,7 @@ class LlamaIndexAdapter(BaseAdapter):
         checkpoint = await self.on_resume(adapter_ctx)
         if checkpoint:
             adapter_ctx.state["chat_history"] = checkpoint.get("messages", [])
-            adapter_ctx.agent_ctx.run._is_resumed = True
+            adapter_ctx.agent_ctx.run.mark_resumed()
 
         query = self._extract_query(input)
 
@@ -183,7 +183,7 @@ class LlamaIndexAdapter(BaseAdapter):
         checkpoint = await self.on_resume(adapter_ctx)
         if checkpoint:
             adapter_ctx.state["chat_history"] = checkpoint.get("messages", [])
-            adapter_ctx.agent_ctx.run._is_resumed = True
+            adapter_ctx.agent_ctx.run.mark_resumed()
             yield StreamEvent(
                 type=StreamEventType.NODE_START,
                 data={"name": "__resume__", "checkpoint": checkpoint},

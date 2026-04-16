@@ -359,7 +359,10 @@ class LangfuseIntegration(Integration):
         """Flush any pending events."""
         await super().on_shutdown()
         if self._client:
-            self._client.flush()
+            if hasattr(self._client, "flush_async"):
+                await self._client.flush_async()
+            else:
+                self._client.flush()
 
     def teardown(self) -> None:
         """Shutdown the Langfuse client."""

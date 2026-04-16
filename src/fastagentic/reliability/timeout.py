@@ -7,14 +7,24 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
+from fastagentic.sdk.exceptions import FastAgenticError
+
 T = TypeVar("T")
 
 
-class TimeoutError(Exception):
+class TimeoutExceeded(FastAgenticError):
     """Raised when an operation times out."""
 
-    def __init__(self, message: str, timeout_ms: int) -> None:
-        super().__init__(message)
+    def __init__(
+        self,
+        message: str = "Operation timed out",
+        timeout_ms: int | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        details = details or {}
+        if timeout_ms is not None:
+            details["timeout_ms"] = timeout_ms
+        super().__init__(message, status_code=408, details=details)
         self.timeout_ms = timeout_ms
 
 
@@ -101,7 +111,7 @@ class Timeout:
                 )
 
         except asyncio.TimeoutError as e:
-            raise TimeoutError(
+            raise TimeoutExceeded(
                 f"Operation timed out after {timeout}ms",
                 timeout_ms=timeout,
             ) from e

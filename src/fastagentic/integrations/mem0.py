@@ -377,7 +377,13 @@ class Mem0Integration(Integration):
         api_key = self._config.api_key or os.getenv("MEM0_API_KEY")
 
         if api_key:
-            self._client = MemoryClient(api_key=api_key)
+            org_id = self._config.org_id or os.getenv("MEM0_ORG_ID")
+            project_id = self._config.project_id or os.getenv("MEM0_PROJECT_ID")
+            self._client = MemoryClient(
+                api_key=api_key,
+                org_id=org_id,
+                project_id=project_id,
+            )
 
             # Update hook with client
             if self._hook:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import uuid
 from collections.abc import AsyncIterator, Callable, Sequence
@@ -14,11 +15,10 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from fastagentic.context import AgentContext, RunContext
+from fastagentic.context import AgentContext, RunContext, UserInfo
 from fastagentic.decorators import get_endpoints, get_prompts, get_resources, get_tools
 
 if TYPE_CHECKING:
-    from fastagentic.context import UserInfo
     from fastagentic.hooks.base import Hook
     from fastagentic.memory import MemoryProvider
 
@@ -136,6 +136,7 @@ class App:
         self._session_memory = session_memory
         self._durable_store: Any = None  # Will be initialized on startup
         self._instance_id = _instance_id or self._generate_instance_id()
+        self._shutdown_event = asyncio.Event()
 
         # Create the FastAPI app with lifespan
         self._fastapi = FastAPI(
@@ -225,6 +226,7 @@ class App:
 
         # Cleanup
         logger.info("Shutting down FastAgentic application")
+        self._shutdown_event.set()
         for hook in self._hooks:
             if hasattr(hook, "on_shutdown"):
                 await hook.on_shutdown(self)
@@ -473,7 +475,7 @@ class App:
                             }
                     except Exception as e:
                         logger.exception("Error in stream endpoint", error=str(e))
-                        yield {"event": "error", "data": str(e)}
+                        yield {"event": "error", "data": "Internal server error"}
 
                 return EventSourceResponse(event_generator())
         else:
@@ -502,7 +504,7 @@ class App:
                     logger.exception("Error in endpoint", error=str(e))
                     return JSONResponse(
                         status_code=500,
-                        content={"error": str(e)},
+                        content={"error": "Internal server error"},
                     )
 
     def _create_context(
@@ -514,6 +516,16 @@ class App:
         """Create an AgentContext for a request."""
         # Extract user from Authorization header
         user = self._extract_user_from_request(request)
+
+        # Enforce authentication if OIDC is configured
+        if self.config.oidc_issuer and user is None:
+            from fastapi import HTTPException
+
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication required",
+                headers={"WWW-Authenticate": f'Bearer realm="{self.config.title}"'},
+            )
 
         run_ctx = RunContext(
             run_id=run_id,
@@ -531,7 +543,7 @@ class App:
         """Extract user information from Authorization header.
 
         Supports Bearer token authentication. Override this method
-        to implement custom auth logic.
+        to implement custom auth logic (e.g., JWT validation).
 
         Args:
             request: The incoming request
@@ -539,8 +551,6 @@ class App:
         Returns:
             UserInfo if authenticated, None otherwise
         """
-        from fastagentic.context import UserInfo
-
         auth_header = request.headers.get("Authorization")
         if not auth_header:
             return None
@@ -549,8 +559,12 @@ class App:
         if auth_header.startswith("Bearer "):
             token = auth_header[7:]  # Remove "Bearer " prefix
             if token:
+                # Store a truncated hash for identification, not the raw token
+                import hashlib
+
+                token_hash = hashlib.sha256(token.encode()).hexdigest()[:16]
                 return UserInfo(
-                    id=token,  # Use token as user ID (can be replaced with decoded JWT)
+                    id=token_hash,
                     token=token,
                 )
 

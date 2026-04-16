@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
@@ -119,8 +120,6 @@ class FallbackChain:
         for model in models:
             try:
                 kwargs[model_kwarg] = model
-                import asyncio
-
                 if asyncio.iscoroutinefunction(func):
                     return await func(*args, **kwargs)
                 else:
@@ -184,8 +183,6 @@ class StrategyFallback:
                 continue
 
             try:
-                import asyncio
-
                 if asyncio.iscoroutinefunction(func):
                     return await func(*args, **kwargs)
                 else:

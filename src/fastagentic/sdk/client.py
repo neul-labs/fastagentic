@@ -15,7 +15,7 @@ except ImportError:
     httpx = None  # type: ignore
 
 from fastagentic.sdk.exceptions import (
-    ConnectionError,
+    ConnectionFailedError,
     FastAgenticError,
     StreamError,
     raise_for_status,
@@ -162,7 +162,7 @@ class AsyncFastAgenticClient:
                 return response.json()
 
             except httpx.ConnectError as e:
-                last_error = ConnectionError(f"Failed to connect: {e}")
+                last_error = ConnectionFailedError(f"Failed to connect: {e}")
             except httpx.TimeoutException as e:
                 last_error = FastAgenticError(f"Request timed out: {e}")
             except FastAgenticError:
@@ -270,7 +270,7 @@ class AsyncFastAgenticClient:
                             raise StreamError(f"Invalid stream data: {e}")
 
         except httpx.ConnectError as e:
-            raise ConnectionError(f"Failed to connect: {e}")
+            raise ConnectionFailedError(f"Failed to connect: {e}")
         except httpx.TimeoutException as e:
             raise FastAgenticError(f"Stream timed out: {e}")
 
@@ -320,8 +320,9 @@ class AsyncFastAgenticClient:
         deadline = time.time() + timeout if timeout else None
         current_interval = poll_interval
         attempt = 0
+        max_attempts = 1000  # Safety limit to prevent infinite loops
 
-        while True:
+        while attempt < max_attempts:
             response = await self.get_run(run_id)
             if response.is_complete:
                 return response
@@ -488,7 +489,7 @@ class FastAgenticClient:
                 return response.json()
 
             except httpx.ConnectError as e:
-                last_error = ConnectionError(f"Failed to connect: {e}")
+                last_error = ConnectionFailedError(f"Failed to connect: {e}")
             except httpx.TimeoutException as e:
                 last_error = FastAgenticError(f"Request timed out: {e}")
             except FastAgenticError:
@@ -596,7 +597,7 @@ class FastAgenticClient:
                             raise StreamError(f"Invalid stream data: {e}")
 
         except httpx.ConnectError as e:
-            raise ConnectionError(f"Failed to connect: {e}")
+            raise ConnectionFailedError(f"Failed to connect: {e}")
         except httpx.TimeoutException as e:
             raise FastAgenticError(f"Stream timed out: {e}")
 
@@ -623,8 +624,9 @@ class FastAgenticClient:
         deadline = time.time() + timeout if timeout else None
         current_interval = poll_interval
         attempt = 0
+        max_attempts = 1000  # Safety limit to prevent infinite loops
 
-        while True:
+        while attempt < max_attempts:
             response = self.get_run(run_id)
             if response.is_complete:
                 return response

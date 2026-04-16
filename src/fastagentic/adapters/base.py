@@ -123,5 +123,5 @@ class BaseAdapter(ABC):
         Returns:
             The checkpoint state to resume from, or None if no checkpoint
         """
-        checkpoints = ctx.agent_ctx.run._checkpoints
+        checkpoints = ctx.agent_ctx.run.checkpoints
         return checkpoints[-1] if checkpoints else None

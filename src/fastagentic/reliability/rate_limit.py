@@ -7,18 +7,28 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from fastagentic.sdk.exceptions import FastAgenticError
 
-class RateLimitError(Exception):
+
+class RateLimitExceeded(FastAgenticError):
     """Raised when rate limit is exceeded."""
 
     def __init__(
         self,
-        message: str,
-        limit: int,
-        window_seconds: int,
-        retry_after: float,
+        message: str = "Rate limit exceeded",
+        limit: int | None = None,
+        window_seconds: int | None = None,
+        retry_after: float | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
-        super().__init__(message)
+        details = details or {}
+        if limit is not None:
+            details["limit"] = limit
+        if window_seconds is not None:
+            details["window_seconds"] = window_seconds
+        if retry_after is not None:
+            details["retry_after"] = retry_after
+        super().__init__(message, status_code=429, details=details)
         self.limit = limit
         self.window_seconds = window_seconds
         self.retry_after = retry_after
@@ -102,7 +112,7 @@ class RateLimit:
                 oldest = self._request_counts[key][0]
                 retry_after = oldest + self.window_seconds - time.time()
 
-                raise RateLimitError(
+                raise RateLimitExceeded(
                     f"Rate limit exceeded: {self.rpm} requests per {self.window_seconds}s",
                     limit=self.rpm,
                     window_seconds=self.window_seconds,
@@ -155,7 +165,7 @@ class RateLimit:
                 else:
                     retry_after = self.window_seconds
 
-                raise RateLimitError(
+                raise RateLimitExceeded(
                     f"Token rate limit exceeded: {self.tpm} tokens per {self.window_seconds}s",
                     limit=self.tpm,
                     window_seconds=self.window_seconds,
