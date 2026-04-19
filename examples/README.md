@@ -6,11 +6,16 @@ Working examples demonstrating FastAgentic features.
 
 | Example | Description | Framework |
 |---------|-------------|-----------|
-| [deep-research](deep-research/) | **Crash & resume demo** - production-safe agents | PydanticAI |
-| [pydanticai-chat](pydanticai-chat/) | Simple chat agent | PydanticAI |
+| [pydanticai-chat](pydanticai-chat/) | Simple chat agent with tools | PydanticAI |
 | [langgraph-workflow](langgraph-workflow/) | Stateful research workflow | LangGraph |
 | [crewai-multi-agent](crewai-multi-agent/) | Multi-agent collaboration | CrewAI |
-| [full-production](full-production/) | Complete production setup | PydanticAI |
+| [langchain-rag](langchain-rag/) | RAG with LCEL chains | LangChain |
+| [dspy-reasoning](dspy-reasoning/) | Chain-of-thought reasoning | DSPy |
+| [llamaindex-docs](llamaindex-docs/) | Document Q&A with sources | LlamaIndex |
+| [semantic-kernel-chat](semantic-kernel-chat/) | Chat with plugins | Semantic Kernel |
+| [autogen-coding](autogen-coding/) | Multi-agent coding assistant | AutoGen |
+| [deep-research](deep-research/) | **Crash & resume demo** - production-safe agents | PydanticAI |
+| [full-production](full-production/) | Complete production setup | Multiple |
 
 ## Quick Start
 

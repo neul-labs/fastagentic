@@ -1,0 +1,47 @@
+LlamaIndex - Data Framework for LLM Applications
+
+LlamaIndex is a data framework designed to connect custom data sources to large
+language models (LLMs). It provides tools for data ingestion, indexing, and
+querying to build context-aware AI applications.
+
+Core Components:
+
+1. Data Connectors (Loaders)
+   - SimpleDirectoryReader: Load files from a directory
+   - Web readers: Scrape web pages
+   - Database connectors: Query databases
+   - API connectors: Pull data from APIs
+
+2. Indexes
+   - VectorStoreIndex: Semantic search with embeddings
+   - SummaryIndex: Full document summarization
+   - TreeIndex: Hierarchical document structure
+   - KeywordTableIndex: Keyword-based search
+
+3. Query Engines
+   - Standard query engine for Q&A
+   - Chat engine for conversational interfaces
+   - Sub-question query engine for complex queries
+
+4. Agents
+   - ReActAgent: Reasoning and acting with tools
+   - OpenAI Agent: Native function calling
+
+Best Practices:
+- Use appropriate chunk sizes (typically 512-1024 tokens)
+- Select embedding models that match your use case
+- Configure similarity_top_k based on context window
+- Use metadata filtering for large document collections
+
+Example RAG Pipeline:
+```python
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+
+# Load and index documents
+documents = SimpleDirectoryReader("data").load_data()
+index = VectorStoreIndex.from_documents(documents)
+
+# Query with streaming
+query_engine = index.as_query_engine(streaming=True)
+response = query_engine.query("What is RAG?")
+```

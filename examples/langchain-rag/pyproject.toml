@@ -1,0 +1,21 @@
+[project]
+name = "langchain-rag"
+version = "1.0.0"
+description = "A RAG agent using LangChain and FastAgentic"
+requires-python = ">=3.10"
+dependencies = [
+    "fastagentic[langchain]",
+    "langchain-openai>=0.1.0",
+]
+
+[tool.uv.sources]
+fastagentic = { path = "../..", editable = true }
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

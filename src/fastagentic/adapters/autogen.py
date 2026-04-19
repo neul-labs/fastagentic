@@ -48,6 +48,7 @@ class AutoGenAdapter(BaseAdapter):
         max_turns: int | None = None,
         clear_history: bool = False,
         silent: bool = True,
+        checkpoint_turns: bool = True,
     ) -> None:
         """Initialize the AutoGen adapter.
 
@@ -58,6 +59,7 @@ class AutoGenAdapter(BaseAdapter):
             max_turns: Maximum number of conversation turns
             clear_history: Whether to clear history between runs
             silent: Whether to suppress console output
+            checkpoint_turns: Whether to create checkpoints after each turn
         """
         self.initiator = initiator
         self.recipient = recipient
@@ -65,6 +67,7 @@ class AutoGenAdapter(BaseAdapter):
         self.max_turns = max_turns
         self.clear_history = clear_history
         self.silent = silent
+        self.checkpoint_turns = checkpoint_turns
         self._message_buffer: list[dict[str, Any]] = []
 
     async def invoke(self, input: Any, ctx: AdapterContext | Any) -> Any:
@@ -78,16 +81,34 @@ class AutoGenAdapter(BaseAdapter):
             The final conversation result
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
-        message = self._extract_message(input)
 
-        # Clear buffer
-        self._message_buffer = []
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        if checkpoint:
+            self._message_buffer = checkpoint.get("messages", [])
+            adapter_ctx.agent_ctx.run._is_resumed = True
+        else:
+            # Clear buffer
+            self._message_buffer = []
+
+        message = self._extract_message(input)
 
         try:
             if self.group_chat is not None:
                 result = await self._invoke_group_chat(message, adapter_ctx)
             else:
                 result = await self._invoke_two_agent(message, adapter_ctx)
+
+            # Create checkpoint with final state
+            if self.checkpoint_turns:
+                await self.on_checkpoint(
+                    {
+                        "state": {"completed": True, "turn": len(self._message_buffer)},
+                        "messages": self._message_buffer.copy(),
+                        "context": {"result": result},
+                    },
+                    adapter_ctx,
+                )
 
             return result
 
@@ -146,10 +167,22 @@ class AutoGenAdapter(BaseAdapter):
             StreamEvent objects for messages, tool calls, etc.
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
-        message = self._extract_message(input)
 
-        # Clear buffer
-        self._message_buffer = []
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        if checkpoint:
+            self._message_buffer = checkpoint.get("messages", [])
+            adapter_ctx.agent_ctx.run._is_resumed = True
+            yield StreamEvent(
+                type=StreamEventType.NODE_START,
+                data={"name": "__resume__", "checkpoint": checkpoint},
+                run_id=adapter_ctx.run_id,
+            )
+        else:
+            # Clear buffer
+            self._message_buffer = []
+
+        message = self._extract_message(input)
 
         try:
             # Register streaming callback
@@ -175,6 +208,13 @@ class AutoGenAdapter(BaseAdapter):
         """Stream two-agent conversation."""
         import asyncio
 
+        # Try native streaming first (AutoGen v0.4+)
+        if hasattr(self.recipient, "on_messages_stream"):
+            async for event in self._stream_native(message, ctx):
+                yield event
+            return
+
+        # Fallback to polling-based streaming
         # Start conversation in background
         task = asyncio.create_task(
             self.initiator.a_initiate_chat(
@@ -188,6 +228,7 @@ class AutoGenAdapter(BaseAdapter):
 
         # Yield messages as they come in
         last_index = 0
+        turn_count = 0
         while not task.done():
             await asyncio.sleep(0.1)
 
@@ -196,6 +237,22 @@ class AutoGenAdapter(BaseAdapter):
                 msg = self._message_buffer[last_index]
                 yield self._message_to_event(msg, ctx)
                 last_index += 1
+                turn_count += 1
+
+                # Checkpoint after each turn
+                if self.checkpoint_turns:
+                    await self.on_checkpoint(
+                        {
+                            "state": {"turn": turn_count},
+                            "messages": self._message_buffer[:last_index].copy(),
+                        },
+                        ctx,
+                    )
+                    yield StreamEvent(
+                        type=StreamEventType.CHECKPOINT,
+                        data={"turn": turn_count},
+                        run_id=ctx.run_id,
+                    )
 
         # Get final result
         chat_result = await task
@@ -205,6 +262,24 @@ class AutoGenAdapter(BaseAdapter):
             msg = self._message_buffer[last_index]
             yield self._message_to_event(msg, ctx)
             last_index += 1
+            turn_count += 1
+
+        # Final checkpoint
+        if self.checkpoint_turns:
+            result = self._extract_chat_result(chat_result)
+            await self.on_checkpoint(
+                {
+                    "state": {"completed": True, "turn": turn_count},
+                    "messages": self._message_buffer.copy(),
+                    "context": {"result": result},
+                },
+                ctx,
+            )
+            yield StreamEvent(
+                type=StreamEventType.CHECKPOINT,
+                data={"step": "completed"},
+                run_id=ctx.run_id,
+            )
 
         # Yield done event
         yield StreamEvent(
@@ -212,6 +287,77 @@ class AutoGenAdapter(BaseAdapter):
             data={"result": self._extract_chat_result(chat_result)},
             run_id=ctx.run_id,
         )
+
+    async def _stream_native(self, message: str, ctx: AdapterContext) -> AsyncIterator[StreamEvent]:
+        """Stream using native AutoGen v0.4+ streaming API."""
+        turn_count = 0
+
+        # Build initial message
+        messages = [{"role": "user", "content": message}]
+
+        try:
+            async for response in self.recipient.on_messages_stream(messages):
+                # Check for streaming chunk events
+                if hasattr(response, "content"):
+                    content = response.content
+                    if content:
+                        yield StreamEvent(
+                            type=StreamEventType.TOKEN,
+                            data={"content": content},
+                            run_id=ctx.run_id,
+                        )
+                        self._message_buffer.append(
+                            {
+                                "sender": getattr(self.recipient, "name", "agent"),
+                                "content": content,
+                                "role": "assistant",
+                            }
+                        )
+
+                # Check for complete message
+                if hasattr(response, "chat_message") and response.chat_message:
+                    turn_count += 1
+                    if self.checkpoint_turns:
+                        await self.on_checkpoint(
+                            {
+                                "state": {"turn": turn_count},
+                                "messages": self._message_buffer.copy(),
+                            },
+                            ctx,
+                        )
+                        yield StreamEvent(
+                            type=StreamEventType.CHECKPOINT,
+                            data={"turn": turn_count},
+                            run_id=ctx.run_id,
+                        )
+
+            # Final checkpoint
+            if self.checkpoint_turns:
+                await self.on_checkpoint(
+                    {
+                        "state": {"completed": True, "turn": turn_count},
+                        "messages": self._message_buffer.copy(),
+                    },
+                    ctx,
+                )
+                yield StreamEvent(
+                    type=StreamEventType.CHECKPOINT,
+                    data={"step": "completed"},
+                    run_id=ctx.run_id,
+                )
+
+            yield StreamEvent(
+                type=StreamEventType.DONE,
+                data={"result": {"messages": self._message_buffer}},
+                run_id=ctx.run_id,
+            )
+
+        except Exception as e:
+            yield StreamEvent(
+                type=StreamEventType.ERROR,
+                data={"error": str(e)},
+                run_id=ctx.run_id,
+            )
 
     async def _stream_group_chat(
         self, message: str, ctx: AdapterContext
@@ -226,6 +372,13 @@ class AutoGenAdapter(BaseAdapter):
             llm_config=self.initiator.llm_config,
         )
 
+        # Try native streaming first (AutoGen v0.4+)
+        if hasattr(manager, "run_stream"):
+            async for event in self._stream_group_native(manager, message, ctx):
+                yield event
+            return
+
+        # Fallback to polling-based streaming
         # Start conversation in background
         task = asyncio.create_task(
             self.initiator.a_initiate_chat(
@@ -239,6 +392,7 @@ class AutoGenAdapter(BaseAdapter):
 
         # Yield messages as they come in
         last_index = 0
+        turn_count = 0
         while not task.done():
             await asyncio.sleep(0.1)
 
@@ -246,6 +400,22 @@ class AutoGenAdapter(BaseAdapter):
                 msg = self._message_buffer[last_index]
                 yield self._message_to_event(msg, ctx)
                 last_index += 1
+                turn_count += 1
+
+                # Checkpoint after each turn
+                if self.checkpoint_turns:
+                    await self.on_checkpoint(
+                        {
+                            "state": {"turn": turn_count},
+                            "messages": self._message_buffer[:last_index].copy(),
+                        },
+                        ctx,
+                    )
+                    yield StreamEvent(
+                        type=StreamEventType.CHECKPOINT,
+                        data={"turn": turn_count},
+                        run_id=ctx.run_id,
+                    )
 
         chat_result = await task
 
@@ -253,12 +423,109 @@ class AutoGenAdapter(BaseAdapter):
             msg = self._message_buffer[last_index]
             yield self._message_to_event(msg, ctx)
             last_index += 1
+            turn_count += 1
+
+        # Final checkpoint
+        if self.checkpoint_turns:
+            result = self._extract_chat_result(chat_result)
+            await self.on_checkpoint(
+                {
+                    "state": {"completed": True, "turn": turn_count},
+                    "messages": self._message_buffer.copy(),
+                    "context": {"result": result},
+                },
+                ctx,
+            )
+            yield StreamEvent(
+                type=StreamEventType.CHECKPOINT,
+                data={"step": "completed"},
+                run_id=ctx.run_id,
+            )
 
         yield StreamEvent(
             type=StreamEventType.DONE,
             data={"result": self._extract_chat_result(chat_result)},
             run_id=ctx.run_id,
         )
+
+    async def _stream_group_native(
+        self, manager: Any, message: str, ctx: AdapterContext
+    ) -> AsyncIterator[StreamEvent]:
+        """Stream using native AutoGen v0.4+ group chat streaming API."""
+        turn_count = 0
+
+        try:
+            async for item in manager.run_stream(task=message):
+                # Check for streaming chunk events
+                if hasattr(item, "content"):
+                    content = item.content
+                    if content:
+                        yield StreamEvent(
+                            type=StreamEventType.TOKEN,
+                            data={"content": content},
+                            run_id=ctx.run_id,
+                        )
+                        self._message_buffer.append(
+                            {
+                                "sender": getattr(item, "source", "agent"),
+                                "content": content,
+                                "role": "assistant",
+                            }
+                        )
+
+                # Check for agent messages
+                if hasattr(item, "source") and hasattr(item, "message"):
+                    turn_count += 1
+                    yield StreamEvent(
+                        type=StreamEventType.MESSAGE,
+                        data={
+                            "content": str(item.message),
+                            "agent": item.source,
+                        },
+                        run_id=ctx.run_id,
+                    )
+
+                    if self.checkpoint_turns:
+                        await self.on_checkpoint(
+                            {
+                                "state": {"turn": turn_count, "agent": item.source},
+                                "messages": self._message_buffer.copy(),
+                            },
+                            ctx,
+                        )
+                        yield StreamEvent(
+                            type=StreamEventType.CHECKPOINT,
+                            data={"turn": turn_count, "agent": item.source},
+                            run_id=ctx.run_id,
+                        )
+
+            # Final checkpoint
+            if self.checkpoint_turns:
+                await self.on_checkpoint(
+                    {
+                        "state": {"completed": True, "turn": turn_count},
+                        "messages": self._message_buffer.copy(),
+                    },
+                    ctx,
+                )
+                yield StreamEvent(
+                    type=StreamEventType.CHECKPOINT,
+                    data={"step": "completed"},
+                    run_id=ctx.run_id,
+                )
+
+            yield StreamEvent(
+                type=StreamEventType.DONE,
+                data={"result": {"messages": self._message_buffer}},
+                run_id=ctx.run_id,
+            )
+
+        except Exception as e:
+            yield StreamEvent(
+                type=StreamEventType.ERROR,
+                data={"error": str(e)},
+                run_id=ctx.run_id,
+            )
 
     def _register_message_callback(self) -> None:
         """Register callback to capture messages."""
@@ -368,6 +635,7 @@ class AutoGenAdapter(BaseAdapter):
             max_turns=max_turns,
             clear_history=self.clear_history,
             silent=self.silent,
+            checkpoint_turns=self.checkpoint_turns,
         )
 
     def with_group_chat(self, group_chat: Any) -> AutoGenAdapter:
@@ -386,4 +654,24 @@ class AutoGenAdapter(BaseAdapter):
             max_turns=self.max_turns,
             clear_history=self.clear_history,
             silent=self.silent,
+            checkpoint_turns=self.checkpoint_turns,
+        )
+
+    def with_checkpoints(self, enabled: bool = True) -> AutoGenAdapter:
+        """Create a new adapter with checkpoint configuration.
+
+        Args:
+            enabled: Whether to checkpoint after each turn
+
+        Returns:
+            A new AutoGenAdapter with the specified checkpoint settings
+        """
+        return AutoGenAdapter(
+            self.initiator,
+            self.recipient,
+            group_chat=self.group_chat,
+            max_turns=self.max_turns,
+            clear_history=self.clear_history,
+            silent=self.silent,
+            checkpoint_turns=enabled,
         )

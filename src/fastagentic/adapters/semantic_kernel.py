@@ -43,6 +43,7 @@ class SemanticKernelAdapter(BaseAdapter):
         plugin_name: str | None = None,
         agent: Any | None = None,
         settings: Any | None = None,
+        checkpoint_functions: bool = True,
     ) -> None:
         """Initialize the Semantic Kernel adapter.
 
@@ -52,12 +53,14 @@ class SemanticKernelAdapter(BaseAdapter):
             plugin_name: Name of the plugin containing the function
             agent: Optional SK Agent instance for agent-based workflows
             settings: Optional prompt execution settings
+            checkpoint_functions: Whether to create checkpoints after function calls
         """
         self.kernel = kernel
         self.function_name = function_name
         self.plugin_name = plugin_name
         self.agent = agent
         self.settings = settings
+        self.checkpoint_functions = checkpoint_functions
 
     async def invoke(self, input: Any, ctx: AdapterContext | Any) -> Any:
         """Run Semantic Kernel and return the result.
@@ -71,8 +74,17 @@ class SemanticKernelAdapter(BaseAdapter):
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
 
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        if checkpoint:
+            adapter_ctx.state["chat_history"] = checkpoint.get("messages", [])
+            adapter_ctx.agent_ctx.run._is_resumed = True
+
         # Extract input parameters
         arguments = self._build_arguments(input)
+
+        # Track function calls for tool events
+        function_calls: list[dict[str, Any]] = []
 
         try:
             if self.agent is not None:
@@ -80,12 +92,32 @@ class SemanticKernelAdapter(BaseAdapter):
                 result = await self._invoke_agent(arguments, adapter_ctx)
             elif self.function_name:
                 # Function-based invocation
-                result = await self._invoke_function(arguments, adapter_ctx)
+                result = await self._invoke_function(arguments, adapter_ctx, function_calls)
             else:
                 # Direct prompt invocation
                 result = await self._invoke_prompt(arguments, adapter_ctx)
 
-            return self._extract_result(result)
+            extracted_result = self._extract_result(result)
+
+            # Create checkpoint with final state
+            if self.checkpoint_functions:
+                await self.on_checkpoint(
+                    {
+                        "state": {"completed": True},
+                        "messages": adapter_ctx.state.get("chat_history", []),
+                        "function_calls": function_calls,
+                        "context": {
+                            "result": (
+                                extracted_result
+                                if isinstance(extracted_result, (dict, str, int, float, bool))
+                                else str(extracted_result)
+                            )
+                        },
+                    },
+                    adapter_ctx,
+                )
+
+            return extracted_result
 
         except Exception as e:
             raise RuntimeError(f"Semantic Kernel invocation failed: {e}") from e
@@ -112,7 +144,12 @@ class SemanticKernelAdapter(BaseAdapter):
 
         return response
 
-    async def _invoke_function(self, arguments: dict[str, Any], _ctx: AdapterContext) -> Any:
+    async def _invoke_function(
+        self,
+        arguments: dict[str, Any],
+        _ctx: AdapterContext,
+        function_calls: list[dict[str, Any]] | None = None,
+    ) -> Any:
         """Invoke SK function."""
         # Get function from kernel
         if self.plugin_name:
@@ -128,8 +165,23 @@ class SemanticKernelAdapter(BaseAdapter):
         if self.settings:
             kernel_args.execution_settings = self.settings
 
+        # Track function call if list provided
+        if function_calls is not None:
+            function_calls.append(
+                {
+                    "name": f"{self.plugin_name}.{self.function_name}"
+                    if self.plugin_name
+                    else self.function_name,
+                    "input": arguments,
+                }
+            )
+
         # Invoke function
         result = await self.kernel.invoke(function, kernel_args)
+
+        # Track function result
+        if function_calls is not None:
+            function_calls[-1]["output"] = self._extract_result(result)
 
         return result
 
@@ -155,6 +207,18 @@ class SemanticKernelAdapter(BaseAdapter):
             StreamEvent objects for tokens, function calls, etc.
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
+
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        if checkpoint:
+            adapter_ctx.state["chat_history"] = checkpoint.get("messages", [])
+            adapter_ctx.agent_ctx.run._is_resumed = True
+            yield StreamEvent(
+                type=StreamEventType.NODE_START,
+                data={"name": "__resume__", "checkpoint": checkpoint},
+                run_id=adapter_ctx.run_id,
+            )
+
         arguments = self._build_arguments(input)
 
         try:
@@ -203,6 +267,22 @@ class SemanticKernelAdapter(BaseAdapter):
             {"role": "assistant", "content": full_response},
         ]
 
+        # Create checkpoint with final state
+        if self.checkpoint_functions:
+            await self.on_checkpoint(
+                {
+                    "state": {"completed": True},
+                    "messages": ctx.state["chat_history"],
+                    "context": {"result": full_response},
+                },
+                ctx,
+            )
+            yield StreamEvent(
+                type=StreamEventType.CHECKPOINT,
+                data={"step": "completed"},
+                run_id=ctx.run_id,
+            )
+
         yield StreamEvent(
             type=StreamEventType.DONE,
             data={"result": full_response},
@@ -225,6 +305,16 @@ class SemanticKernelAdapter(BaseAdapter):
         if self.settings:
             kernel_args.execution_settings = self.settings
 
+        # Emit tool call event
+        function_name = (
+            f"{self.plugin_name}.{self.function_name}" if self.plugin_name else self.function_name
+        )
+        yield StreamEvent(
+            type=StreamEventType.TOOL_CALL,
+            data={"name": function_name, "input": arguments},
+            run_id=ctx.run_id,
+        )
+
         full_response = ""
 
         async for chunk in self.kernel.invoke_stream(function, kernel_args):
@@ -234,6 +324,31 @@ class SemanticKernelAdapter(BaseAdapter):
             yield StreamEvent(
                 type=StreamEventType.TOKEN,
                 data={"content": content},
+                run_id=ctx.run_id,
+            )
+
+        # Emit tool result event
+        yield StreamEvent(
+            type=StreamEventType.TOOL_RESULT,
+            data={"name": function_name, "output": full_response},
+            run_id=ctx.run_id,
+        )
+
+        # Create checkpoint with final state
+        if self.checkpoint_functions:
+            await self.on_checkpoint(
+                {
+                    "state": {"completed": True, "function": function_name},
+                    "function_calls": [
+                        {"name": function_name, "input": arguments, "output": full_response}
+                    ],
+                    "context": {"result": full_response},
+                },
+                ctx,
+            )
+            yield StreamEvent(
+                type=StreamEventType.CHECKPOINT,
+                data={"step": "completed", "function": function_name},
                 run_id=ctx.run_id,
             )
 
@@ -261,6 +376,21 @@ class SemanticKernelAdapter(BaseAdapter):
             yield StreamEvent(
                 type=StreamEventType.TOKEN,
                 data={"content": content},
+                run_id=ctx.run_id,
+            )
+
+        # Create checkpoint with final state
+        if self.checkpoint_functions:
+            await self.on_checkpoint(
+                {
+                    "state": {"completed": True},
+                    "context": {"result": full_response, "prompt": prompt},
+                },
+                ctx,
+            )
+            yield StreamEvent(
+                type=StreamEventType.CHECKPOINT,
+                data={"step": "completed"},
                 run_id=ctx.run_id,
             )
 
@@ -312,6 +442,7 @@ class SemanticKernelAdapter(BaseAdapter):
             plugin_name=plugin_name or self.plugin_name,
             agent=self.agent,
             settings=self.settings,
+            checkpoint_functions=self.checkpoint_functions,
         )
 
     def with_settings(self, settings: Any) -> SemanticKernelAdapter:
@@ -329,4 +460,41 @@ class SemanticKernelAdapter(BaseAdapter):
             plugin_name=self.plugin_name,
             agent=self.agent,
             settings=settings,
+            checkpoint_functions=self.checkpoint_functions,
+        )
+
+    def with_checkpoints(self, enabled: bool = True) -> SemanticKernelAdapter:
+        """Create a new adapter with checkpoint configuration.
+
+        Args:
+            enabled: Whether to checkpoint after function calls
+
+        Returns:
+            A new SemanticKernelAdapter with the specified checkpoint settings
+        """
+        return SemanticKernelAdapter(
+            self.kernel,
+            function_name=self.function_name,
+            plugin_name=self.plugin_name,
+            agent=self.agent,
+            settings=self.settings,
+            checkpoint_functions=enabled,
+        )
+
+    def with_agent(self, agent: Any) -> SemanticKernelAdapter:
+        """Create a new adapter with a different agent.
+
+        Args:
+            agent: New SK Agent instance
+
+        Returns:
+            A new SemanticKernelAdapter with the updated agent
+        """
+        return SemanticKernelAdapter(
+            self.kernel,
+            function_name=self.function_name,
+            plugin_name=self.plugin_name,
+            agent=agent,
+            settings=self.settings,
+            checkpoint_functions=self.checkpoint_functions,
         )

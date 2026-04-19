@@ -163,41 +163,89 @@ MCP schema includes crew structure:
 ```python
 CrewAIAdapter(
     crew: Crew,
-    checkpoint_per_task: bool = True,
-    include_agent_thoughts: bool = True,
-    cost_tracking_per_agent: bool = True,
+    stream_agent_output: bool = True,
+    stream_task_output: bool = True,
+    checkpoint_tasks: bool = True,
 )
 ```
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `crew` | `Crew` | required | CrewAI crew instance |
-| `checkpoint_per_task` | `bool` | `True` | Checkpoint after each task |
-| `include_agent_thoughts` | `bool` | `True` | Include agent reasoning in events |
-| `cost_tracking_per_agent` | `bool` | `True` | Track costs per agent |
+| `stream_agent_output` | `bool` | `True` | Stream per-agent output |
+| `stream_task_output` | `bool` | `True` | Stream per-task output |
+| `checkpoint_tasks` | `bool` | `True` | Checkpoint after each task |
+
+### Builder Methods
+
+```python
+# Configure checkpointing
+adapter = CrewAIAdapter(crew).with_checkpoints(enabled=True)
+
+# Enable verbose mode
+adapter = CrewAIAdapter(crew).with_verbose()
+
+# Configure streaming
+adapter = CrewAIAdapter(crew).with_streaming(agent_output=True, task_output=True)
+```
 
 ## Event Types
 
 | Event | Description | Payload |
 |-------|-------------|---------|
-| `agent_start` | Agent begins task | `{agent, task, role}` |
-| `agent_end` | Agent completes | `{agent, result, duration}` |
-| `task_complete` | Task finished | `{task, agent, output}` |
-| `delegation` | Task delegated | `{from, to, task}` |
-| `token` | LLM output | `{content, agent}` |
-| `tool_call` | Tool invoked | `{tool, args, agent}` |
-| `tool_result` | Tool returns | `{tool, output, agent}` |
-| `checkpoint` | State saved | `{checkpoint_id, task}` |
-| `cost` | Usage metrics | `{tokens, amount, agent}` |
+| `node_start` | Crew/agent begins | `{name, agents, tasks}` |
+| `node_end` | Agent completes | `{name, task_index}` |
+| `token` | LLM output (native streaming) | `{content}` |
+| `tool_call` | Tool invoked | `{name, input}` or `{name, agent, task_index}` |
+| `tool_result` | Tool returns | `{name, output}` |
+| `checkpoint` | State saved | `{task_index, agent}` or `{step: "completed"}` |
+| `done` | Crew complete | `{result, raw}` |
 
 ## Checkpoint State
 
-The adapter persists:
-- Completed task outputs
-- Agent conversation contexts
-- Tool call history per agent
-- Cost counters per agent
-- Delegation chain
+The adapter automatically creates checkpoints containing:
+
+```python
+{
+    "state": {
+        "completed_tasks": int,  # Number of completed tasks
+        "current_agent": str,    # Current agent role
+        "completed": bool,       # Whether crew finished
+    },
+    "task_outputs": [
+        {"task_index": 0, "agent": "Research Analyst"},
+        {"task_index": 1, "agent": "Content Writer"},
+    ],
+    "context": {"result": "..."},  # Final result (on completion)
+}
+```
+
+**Checkpoint Triggers:**
+- After each task completion
+- On crew completion
+
+**Resume Behavior:**
+When resuming, the adapter:
+1. Restores completed task count and outputs
+2. Sets `_is_resumed = True` on the run context
+3. Emits a `NODE_START` event with `name: "__resume__"`
+
+## Native Streaming (CrewAI 0.30+)
+
+For CrewAI versions with event bus support, the adapter uses native token streaming:
+
+```python
+# Automatic detection - uses event bus if available
+adapter = CrewAIAdapter(crew)
+
+# Events from native streaming:
+# node_start → token → token → tool_call → tool_result → checkpoint → node_end → done
+```
+
+**Event Bus Features:**
+- Real-time token streaming via `LLMStreamChunkEvent`
+- Tool events via `ToolUseEvent` and `ToolResultEvent`
+- Falls back to polling-based streaming for older versions
 
 ## Common Patterns
 

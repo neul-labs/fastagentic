@@ -40,6 +40,7 @@ class PydanticAIAdapter(BaseAdapter):
         *,
         deps: Any = None,
         model: str | None = None,
+        checkpoint_on_tool: bool = True,
     ) -> None:
         """Initialize the PydanticAI adapter.
 
@@ -47,10 +48,12 @@ class PydanticAIAdapter(BaseAdapter):
             agent: A PydanticAI Agent instance
             deps: Optional dependencies to pass to the agent
             model: Optional model override
+            checkpoint_on_tool: Whether to create checkpoints after tool calls
         """
         self.agent = agent
         self.deps = deps
         self.model = model
+        self.checkpoint_on_tool = checkpoint_on_tool
 
     async def invoke(self, input: Any, ctx: AdapterContext | Any) -> Any:
         """Run the PydanticAI agent and return the result.
@@ -63,6 +66,12 @@ class PydanticAIAdapter(BaseAdapter):
             The agent's typed output
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
+
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        if checkpoint:
+            adapter_ctx.state["message_history"] = checkpoint.get("messages", [])
+            adapter_ctx.agent_ctx.run._is_resumed = True
 
         # Extract message from input
         message = self._extract_message(input)
@@ -87,6 +96,35 @@ class PydanticAIAdapter(BaseAdapter):
             adapter_ctx.agent_ctx.usage.output_tokens += usage.response_tokens or 0
             adapter_ctx.agent_ctx.usage.total_tokens += usage.total_tokens or 0
 
+        # Create checkpoint with final state
+        messages = []
+        if hasattr(result, "all_messages"):
+            try:
+                messages = [
+                    {
+                        "role": getattr(m, "role", "unknown"),
+                        "content": getattr(m, "content", str(m)),
+                    }
+                    for m in result.all_messages()
+                ]
+            except Exception:
+                pass
+
+        await self.on_checkpoint(
+            {
+                "state": {"completed": True},
+                "messages": messages,
+                "context": {
+                    "result": (
+                        result.data.model_dump()
+                        if hasattr(result.data, "model_dump")
+                        else result.data
+                    )
+                },
+            },
+            adapter_ctx,
+        )
+
         return result.data
 
     async def stream(self, input: Any, ctx: AdapterContext | Any) -> AsyncIterator[StreamEvent]:
@@ -100,6 +138,17 @@ class PydanticAIAdapter(BaseAdapter):
             StreamEvent objects for tokens, tool calls, etc.
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
+
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        if checkpoint:
+            adapter_ctx.state["message_history"] = checkpoint.get("messages", [])
+            adapter_ctx.agent_ctx.run._is_resumed = True
+            yield StreamEvent(
+                type=StreamEventType.NODE_START,
+                data={"name": "__resume__", "checkpoint": checkpoint},
+                run_id=adapter_ctx.run_id,
+            )
 
         # Extract message from input
         message = self._extract_message(input)
@@ -132,6 +181,41 @@ class PydanticAIAdapter(BaseAdapter):
                     adapter_ctx.agent_ctx.usage.input_tokens += usage.request_tokens or 0
                     adapter_ctx.agent_ctx.usage.output_tokens += usage.response_tokens or 0
                     adapter_ctx.agent_ctx.usage.total_tokens += usage.total_tokens or 0
+
+                # Create checkpoint with final state
+                messages = []
+                if hasattr(result, "all_messages"):
+                    try:
+                        messages = [
+                            {
+                                "role": getattr(m, "role", "unknown"),
+                                "content": getattr(m, "content", str(m)),
+                            }
+                            for m in result.all_messages()
+                        ]
+                    except Exception:
+                        pass
+
+                await self.on_checkpoint(
+                    {
+                        "state": {"completed": True},
+                        "messages": messages,
+                        "context": {
+                            "result": (
+                                final_result.model_dump()
+                                if hasattr(final_result, "model_dump")
+                                else final_result
+                            )
+                        },
+                    },
+                    adapter_ctx,
+                )
+
+                yield StreamEvent(
+                    type=StreamEventType.CHECKPOINT,
+                    data={"step": "completed"},
+                    run_id=adapter_ctx.run_id,
+                )
 
                 # Yield final result
                 yield StreamEvent(
@@ -169,6 +253,18 @@ class PydanticAIAdapter(BaseAdapter):
             StreamEvent objects including tool calls
         """
         adapter_ctx = self._ensure_adapter_context(ctx)
+
+        # Check for resume from checkpoint
+        checkpoint = await self.on_resume(adapter_ctx)
+        if checkpoint:
+            adapter_ctx.state["message_history"] = checkpoint.get("messages", [])
+            adapter_ctx.agent_ctx.run._is_resumed = True
+            yield StreamEvent(
+                type=StreamEventType.NODE_START,
+                data={"name": "__resume__", "checkpoint": checkpoint},
+                run_id=adapter_ctx.run_id,
+            )
+
         message = self._extract_message(input)
 
         kwargs: dict[str, Any] = {}
@@ -177,33 +273,83 @@ class PydanticAIAdapter(BaseAdapter):
         if self.model:
             kwargs["model"] = self.model
 
+        kwargs["message_history"] = adapter_ctx.state.get("message_history")
+
+        # Track tool calls and messages for checkpointing
+        accumulated_messages: list[dict[str, Any]] = []
+        tool_calls: list[dict[str, Any]] = []
+
         try:
             async with self.agent.run_stream(message, **kwargs) as result:
                 # Stream structured messages for detailed events
-                async for message in result.stream_structured():
-                    if hasattr(message, "role"):
-                        if message.role == "tool-call":
+                async for msg in result.stream_structured():
+                    if hasattr(msg, "role"):
+                        if msg.role == "tool-call":
+                            tool_name = getattr(msg, "tool_name", "unknown")
+                            tool_input = getattr(msg, "args", {})
+                            tool_calls.append({"name": tool_name, "input": tool_input})
+                            accumulated_messages.append(
+                                {
+                                    "role": "tool-call",
+                                    "tool_name": tool_name,
+                                    "args": tool_input,
+                                }
+                            )
+
                             yield StreamEvent(
                                 type=StreamEventType.TOOL_CALL,
                                 data={
-                                    "name": getattr(message, "tool_name", "unknown"),
-                                    "input": getattr(message, "args", {}),
+                                    "name": tool_name,
+                                    "input": tool_input,
                                 },
                                 run_id=adapter_ctx.run_id,
                             )
-                        elif message.role == "tool-return":
+
+                        elif msg.role == "tool-return":
+                            tool_name = getattr(msg, "tool_name", "unknown")
+                            tool_output = getattr(msg, "content", None)
+                            accumulated_messages.append(
+                                {
+                                    "role": "tool-return",
+                                    "tool_name": tool_name,
+                                    "content": tool_output,
+                                }
+                            )
+
                             yield StreamEvent(
                                 type=StreamEventType.TOOL_RESULT,
                                 data={
-                                    "name": getattr(message, "tool_name", "unknown"),
-                                    "output": getattr(message, "content", None),
+                                    "name": tool_name,
+                                    "output": tool_output,
                                 },
                                 run_id=adapter_ctx.run_id,
                             )
+
+                            # Checkpoint after tool result if configured
+                            if self.checkpoint_on_tool:
+                                await self.on_checkpoint(
+                                    {
+                                        "state": {"step": "tool_complete", "tool_name": tool_name},
+                                        "messages": accumulated_messages.copy(),
+                                        "tool_calls": tool_calls.copy(),
+                                    },
+                                    adapter_ctx,
+                                )
+                                yield StreamEvent(
+                                    type=StreamEventType.CHECKPOINT,
+                                    data={"step": "tool_complete", "tool_name": tool_name},
+                                    run_id=adapter_ctx.run_id,
+                                )
                     else:
                         # Text content
-                        content = getattr(message, "content", str(message))
+                        content = getattr(msg, "content", str(msg))
                         if content:
+                            accumulated_messages.append(
+                                {
+                                    "role": "assistant",
+                                    "content": content,
+                                }
+                            )
                             yield StreamEvent(
                                 type=StreamEventType.TOKEN,
                                 data={"content": content},
@@ -211,6 +357,30 @@ class PydanticAIAdapter(BaseAdapter):
                             )
 
                 final_result = await result.get_data()
+
+                # Final checkpoint
+                await self.on_checkpoint(
+                    {
+                        "state": {"completed": True},
+                        "messages": accumulated_messages,
+                        "tool_calls": tool_calls,
+                        "context": {
+                            "result": (
+                                final_result.model_dump()
+                                if hasattr(final_result, "model_dump")
+                                else final_result
+                            )
+                        },
+                    },
+                    adapter_ctx,
+                )
+
+                yield StreamEvent(
+                    type=StreamEventType.CHECKPOINT,
+                    data={"step": "completed"},
+                    run_id=adapter_ctx.run_id,
+                )
+
                 yield StreamEvent(
                     type=StreamEventType.DONE,
                     data={
@@ -263,6 +433,7 @@ class PydanticAIAdapter(BaseAdapter):
             self.agent,
             deps=deps,
             model=self.model,
+            checkpoint_on_tool=self.checkpoint_on_tool,
         )
 
     def with_model(self, model: str) -> PydanticAIAdapter:
@@ -278,4 +449,21 @@ class PydanticAIAdapter(BaseAdapter):
             self.agent,
             deps=self.deps,
             model=model,
+            checkpoint_on_tool=self.checkpoint_on_tool,
+        )
+
+    def with_checkpoints(self, on_tool: bool = True) -> PydanticAIAdapter:
+        """Create a new adapter with checkpoint configuration.
+
+        Args:
+            on_tool: Whether to checkpoint after each tool call
+
+        Returns:
+            A new PydanticAIAdapter with the specified checkpoint settings
+        """
+        return PydanticAIAdapter(
+            self.agent,
+            deps=self.deps,
+            model=self.model,
+            checkpoint_on_tool=on_tool,
         )
