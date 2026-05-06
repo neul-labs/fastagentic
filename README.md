@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="https://docs.neullabs.com/fastagentic/logo.svg" alt="FastAgentic" width="120" />
-</p>
-
 <h1 align="center">FastAgentic</h1>
 
 <p align="center">
