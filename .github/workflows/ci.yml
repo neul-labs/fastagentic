@@ -148,8 +148,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag "v${{ steps.version.outputs.pyproject_version }}"
-          git push origin "v${{ steps.version.outputs.pyproject_version }}"
+          TAG="v${{ steps.version.outputs.pyproject_version }}"
+          if git ls-remote --tags origin "refs/tags/$TAG" | grep -q "$TAG"; then
+            echo "Tag $TAG already exists on remote, skipping"
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
 
   release:
     name: Release
