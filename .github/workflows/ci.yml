@@ -92,7 +92,8 @@ jobs:
     name: Build Package
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Needed for pushing tags
+      contents: write   # Needed for pushing tags
+      actions: write    # Needed for triggering release workflow
     outputs:
       version_changed: ${{ steps.version.outputs.version_changed }}
       pyproject_version: ${{ steps.version.outputs.pyproject_version }}
@@ -156,11 +157,11 @@ jobs:
             git push origin "$TAG"
           fi
 
-  release:
-    name: Release
-    needs: build
-    if: needs.build.outputs.version_changed == 'true' && github.ref == 'refs/heads/main' && github.event_name == 'push'
-    uses: ./.github/workflows/release.yml
-    permissions:
-      contents: write
-      id-token: write
+      - name: Trigger release workflow
+        if: steps.version.outputs.version_changed == 'true' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ steps.version.outputs.pyproject_version }}"
+          echo "Triggering release workflow for tag $TAG"
+          gh workflow run release.yml --ref "$TAG"
