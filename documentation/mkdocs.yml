@@ -1,6 +1,6 @@
 site_name: FastAgentic
 site_description: The deployment layer for agentic applications. Build agents with anything. Ship them with FastAgentic.
-site_url: https://fastagentic.docs.neullabs.com/
+site_url: https://docs.neullabs.com/fastagentic/
 repo_url: https://github.com/neul-labs/fastagentic
 repo_name: neul-labs/fastagentic
 edit_uri: edit/main/documentation/docs/
