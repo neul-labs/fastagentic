@@ -17,8 +17,8 @@ Track LLM calls, token usage, costs, and trace agent execution.
 | Integration | What It Does | Status |
 |-------------|--------------|--------|
 | **[Langfuse](langfuse.md)** | LLM tracing, prompt analytics, cost tracking | v0.3 |
-| **[Logfire](logfire.md)** | PydanticAI native observability, structured logging | v0.3 |
-| **[Datadog](datadog.md)** | APM integration, dashboards, alerting | v0.3 |
+| **Logfire** _(planned)_ | PydanticAI native observability, structured logging | v0.3 |
+| **Datadog** _(planned)_ | APM integration, dashboards, alerting | v0.3 |
 | OTEL (built-in) | OpenTelemetry span export | v0.1 |
 
 ### Guardrails & Security
@@ -28,8 +28,8 @@ Protect against prompt injection, validate outputs, enforce content policies.
 | Integration | What It Does | Status |
 |-------------|--------------|--------|
 | **[Lakera](lakera.md)** | Prompt injection detection, content moderation | v0.3 |
-| **[Guardrails AI](guardrails-ai.md)** | Output validation with RAIL specs | v0.3 |
-| **[NeMo Guardrails](nemo.md)** | Conversational guardrails, topic control | v0.3 |
+| **Guardrails AI** _(planned)_ | Output validation with RAIL specs | v0.3 |
+| **NeMo Guardrails** _(planned)_ | Conversational guardrails, topic control | v0.3 |
 
 ### Memory
 
@@ -38,7 +38,7 @@ Persistent user memory, session context, and conversation history.
 | Integration | What It Does | Status |
 |-------------|--------------|--------|
 | **[Mem0](mem0.md)** | Persistent user memory across sessions | v0.3 |
-| **[Zep](zep.md)** | Session memory with auto-summarization | v0.3 |
+| **Zep** _(planned)_ | Session memory with auto-summarization | v0.3 |
 | Redis (built-in) | Simple key-value memory | v0.2 |
 
 ### LLM Gateway
@@ -48,7 +48,7 @@ Rate limiting, fallbacks, caching, and multi-provider routing.
 | Integration | What It Does | Status |
 |-------------|--------------|--------|
 | **[Portkey](portkey.md)** | Gateway with fallbacks, caching, load balancing | v0.3 |
-| **[LiteLLM](litellm.md)** | Multi-provider routing, unified API | v0.3 |
+| **LiteLLM** _(planned)_ | Multi-provider routing, unified API | v0.3 |
 | Simple limiter (built-in) | Basic RPM/TPM rate limiting | v0.3 |
 
 ### Evaluation
@@ -58,8 +58,8 @@ Score agent outputs, track experiments, measure quality.
 | Integration | What It Does | Status |
 |-------------|--------------|--------|
 | **[Braintrust](braintrust.md)** | Experiment tracking, scoring, datasets | v0.4 |
-| **[LangSmith](langsmith.md)** | Trace-based evaluation, feedback | v0.4 |
-| **[Maxim](maxim.md)** | Production eval pipelines | v0.4 |
+| **LangSmith** _(planned)_ | Trace-based evaluation, feedback | v0.4 |
+| **Maxim** _(planned)_ | Production eval pipelines | v0.4 |
 
 ### Human-in-the-Loop
 
@@ -67,7 +67,7 @@ Approval workflows, human escalation, interactive sessions.
 
 | Integration | What It Does | Status |
 |-------------|--------------|--------|
-| **[HumanLayer](humanlayer.md)** | Multi-channel approval (Slack, Email) | v0.4 |
+| **HumanLayer** _(planned)_ | Multi-channel approval (Slack, Email) | v0.4 |
 | Webhooks (built-in) | Custom approval endpoints | v0.4 |
 
 ### Prompt Management
@@ -76,9 +76,9 @@ Version control, A/B testing, and prompt deployment.
 
 | Integration | What It Does | Status |
 |-------------|--------------|--------|
-| **[PromptLayer](promptlayer.md)** | Versioning, A/B testing, analytics | v0.4 |
-| **[Latitude](latitude.md)** | Prompt CMS, publishing workflow | v0.4 |
-| **[Agenta](agenta.md)** | Prompt + eval workflow | v0.4 |
+| **PromptLayer** _(planned)_ | Versioning, A/B testing, analytics | v0.4 |
+| **Latitude** _(planned)_ | Prompt CMS, publishing workflow | v0.4 |
+| **Agenta** _(planned)_ | Prompt + eval workflow | v0.4 |
 
 ---
 

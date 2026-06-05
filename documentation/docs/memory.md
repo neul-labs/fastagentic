@@ -547,6 +547,6 @@ class MyCustomProvider(MemoryProvider):
 ## Next Steps
 
 - [Mem0 Integration](integrations/mem0.md)
-- [Zep Integration](integrations/zep.md)
+- Zep Integration _(planned)_
 - [Hooks Architecture](hooks.md)
 - [Durability](architecture.md#durable-run-management)

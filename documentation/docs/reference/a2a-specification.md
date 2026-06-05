@@ -54,11 +54,11 @@ This document provides the detailed technical specification for the A2A protocol
 - **Modality Agnostic:** Support exchange of diverse content types including text, audio/video (via file references), structured data/forms, and potentially embedded UI components (e.g., iframes referenced in parts).
 - **Opaque Execution:** Agents collaborate based on declared capabilities and exchanged information, without needing to share their internal thoughts, plans, or tool implementations.
 
-For a broader understanding of A2A's purpose and benefits, see [What is A2A?](./topics/what-is-a2a.md).
+For a broader understanding of A2A's purpose and benefits, see [What is A2A?](https://a2a-protocol.org/latest/topics/what-is-a2a/).
 
 ## 2. Core Concepts Summary
 
-A2A revolves around several key concepts. For detailed explanations, please refer to the [Key Concepts guide](./topics/key-concepts.md).
+A2A revolves around several key concepts. For detailed explanations, please refer to the [Key Concepts guide](https://a2a-protocol.org/latest/topics/key-concepts/).
 
 - **A2A Client:** An application or agent that initiates requests to an A2A Server on behalf of a user or another system.
 - **A2A Server (Remote Agent):** An agent or agentic system that exposes an A2A-compliant HTTP endpoint, processing tasks and providing responses.
@@ -245,7 +245,7 @@ For quick reference, the following table summarizes the method mappings across a
 
 A2A treats agents as standard enterprise applications, relying on established web security practices. Identity information is **not** transmitted within A2A JSON-RPC payloads; it is handled at the HTTP transport layer.
 
-For a comprehensive guide on enterprise security aspects, see [Enterprise-Ready Features](./topics/enterprise-ready.md).
+For a comprehensive guide on enterprise security aspects, see [Enterprise-Ready Features](https://a2a-protocol.org/latest/topics/enterprise-ready/).
 
 ### 4.1. Transport Security
 
@@ -295,7 +295,7 @@ Servers should implement the principle of least privilege.
 
 A2A Servers **MUST** make an Agent Card available. The Agent Card is a JSON document that describes the server's identity, capabilities, skills, service endpoint URL, and how clients should authenticate and interact with it. Clients use this information for discovering suitable agents and for configuring their interactions.
 
-For more on discovery strategies, see the [Agent Discovery guide](./topics/agent-discovery.md).
+For more on discovery strategies, see the [Agent Discovery guide](https://a2a-protocol.org/latest/topics/agent-discovery/).
 
 ### 5.2. Discovery Mechanisms
 
@@ -498,7 +498,7 @@ These objects define the structure of data exchanged within the JSON-RPC methods
 
 ### 6.1. `Task` Object
 
-Represents the stateful unit of work being processed by the A2A Server for an A2A Client. A task encapsulates the entire interaction related to a specific goal or request. A task which has reached a terminal state (completed, canceled, rejected, or failed) can't be restarted. Tasks in completed state SHOULD use artifacts for returning the generated output to the clients. For more information, refer to the [Life of a Task guide](./topics/life-of-a-task.md).
+Represents the stateful unit of work being processed by the A2A Server for an A2A Client. A task encapsulates the entire interaction related to a specific goal or request. A task which has reached a terminal state (completed, canceled, rejected, or failed) can't be restarted. Tasks in completed state SHOULD use artifacts for returning the generated output to the clients. For more information, refer to the [Life of a Task guide](https://a2a-protocol.org/latest/topics/life-of-a-task/).
 
 {{ render_spec_tabs('Task') }}
 
@@ -639,7 +639,7 @@ The A2A Server's HTTP response body **MUST** be a `JSONRPCResponse` object (or, 
 
 ### 7.1. `message/send`
 
-Sends a message to an agent to initiate a new interaction or to continue an existing one. This method is suitable for synchronous request/response interactions or when client-side polling (using `tasks/get`) is acceptable for monitoring longer-running tasks. A task which has reached a terminal state (completed, canceled, rejected, or failed) can't be restarted. Sending a message to such a task will result in an error. For more information, refer to the [Life of a Task guide](./topics/life-of-a-task.md).
+Sends a message to an agent to initiate a new interaction or to continue an existing one. This method is suitable for synchronous request/response interactions or when client-side polling (using `tasks/get`) is acceptable for monitoring longer-running tasks. A task which has reached a terminal state (completed, canceled, rejected, or failed) can't be restarted. Sending a message to such a task will result in an error. For more information, refer to the [Life of a Task guide](https://a2a-protocol.org/latest/topics/life-of-a-task/).
 
 <div class="grid cards" markdown>
 
@@ -703,7 +703,7 @@ The `error` response for all transports in case of failure is a [`JSONRPCError`]
 
 ### 7.2. `message/stream`
 
-Sends a message to an agent to initiate/continue a task AND subscribes the client to real-time updates for that task via Server-Sent Events (SSE). This method requires the server to have `AgentCard.capabilities.streaming: true`. Just like `message/send`, a task which has reached a terminal state (completed, canceled, rejected, or failed) can't be restarted. Sending a message to such a task will result in an error. For more information, refer to the [Life of a Task guide](./topics/life-of-a-task.md).
+Sends a message to an agent to initiate/continue a task AND subscribes the client to real-time updates for that task via Server-Sent Events (SSE). This method requires the server to have `AgentCard.capabilities.streaming: true`. Just like `message/send`, a task which has reached a terminal state (completed, canceled, rejected, or failed) can't be restarted. Sending a message to such a task will result in an error. For more information, refer to the [Life of a Task guide](https://a2a-protocol.org/latest/topics/life-of-a-task/).
 
 <div class="grid cards" markdown>
 
@@ -2046,7 +2046,7 @@ A2A and MCP are complementary protocols designed for different aspects of agenti
 **How they work together:**
 An A2A Client agent might request an A2A Server agent to perform a complex task. The Server agent, in turn, might use MCP to interact with several underlying tools, APIs, or data sources to gather information or perform actions necessary to fulfill the A2A task.
 
-For a more detailed comparison, see the [A2A and MCP guide](./topics/a2a-and-mcp.md).
+For a more detailed comparison, see the [A2A and MCP guide](https://a2a-protocol.org/latest/topics/a2a-and-mcp/).
 
 ### 10.2. Security Considerations Summary
 
@@ -2066,12 +2066,12 @@ Security is a paramount concern in A2A. Key considerations include:
     - Webhook URL validation (by the A2A Server sending notifications) is crucial to prevent SSRF.
     - Authentication of the A2A Server to the client's webhook is essential.
     - Authentication of the notification by the client's webhook receiver (verifying it came from the legitimate A2A Server and is relevant) is critical.
-    - See the [Streaming & Asynchronous Operations guide](./topics/streaming-and-async.md#security-considerations-for-push-notifications) for detailed push notification security.
+    - See the [Streaming & Asynchronous Operations guide](https://a2a-protocol.org/latest/topics/streaming-and-async/#security-considerations-for-push-notifications) for detailed push notification security.
 - **Input Validation:** Servers MUST rigorously validate all RPC parameters and the content/structure of data in `Message` and `Artifact` parts to prevent injection attacks or processing errors.
 - **Resource Management:** Implement rate limiting, concurrency controls, and resource limits to protect agents from abuse or overload.
 - **Data Privacy:** Adhere to all applicable privacy regulations for data exchanged in `Message` and `Artifact` parts. Minimize sensitive data transfer.
 
-For a comprehensive discussion, refer to the [Enterprise-Ready Features guide](./topics/enterprise-ready.md).
+For a comprehensive discussion, refer to the [Enterprise-Ready Features guide](https://a2a-protocol.org/latest/topics/enterprise-ready/).
 
 ## 11. A2A Compliance Requirements
 

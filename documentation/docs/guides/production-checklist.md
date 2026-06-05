@@ -75,7 +75,7 @@ Rate your readiness (0-3 per category):
     expr: rate(fastagentic_errors_total[5m]) > 0.1
   ```
 
-**Tools**: [Langfuse](../integrations/langfuse.md), [Logfire](../integrations/logfire.md), [Datadog](../integrations/datadog.md)
+**Tools**: [Langfuse](../integrations/langfuse.md), Logfire _(planned)_, Datadog _(planned)_
 
 ---
 
@@ -141,7 +141,7 @@ Rate your readiness (0-3 per category):
   app = App()  # Reads from OPENAI_API_KEY, etc.
   ```
 
-**Tools**: [Lakera](../integrations/lakera.md), [Guardrails AI](../integrations/guardrails-ai.md)
+**Tools**: [Lakera](../integrations/lakera.md), Guardrails AI _(planned)_
 
 ---
 

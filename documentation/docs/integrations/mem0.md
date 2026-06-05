@@ -314,5 +314,5 @@ app = App(
 ## Next Steps
 
 - [Mem0 Docs](https://docs.mem0.ai)
-- [Zep Integration](zep.md)
+- Zep Integration _(planned)_
 - [Hooks Architecture](../hooks.md)

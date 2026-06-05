@@ -62,7 +62,7 @@ We welcome community contributions to enhance and evolve the A2A protocol!
 
 - **Questions & Discussions:** Join our [GitHub Discussions](https://github.com/a2aproject/A2A/discussions).
 - **Issues & Feedback:** Report issues or suggest improvements via [GitHub Issues](https://github.com/a2aproject/A2A/issues).
-- **Contribution Guide:** See our [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute.
+- **Contribution Guide:** See the upstream [A2A CONTRIBUTING.md](https://github.com/a2aproject/A2A/blob/main/CONTRIBUTING.md) for details on how to contribute.
 - **Private Feedback:** Use this [Google Form](https://goo.gle/a2a-feedback).
 - **Partner Program:** Google Cloud customers can join our partner program via this [form](https://goo.gle/a2a-partner).
 

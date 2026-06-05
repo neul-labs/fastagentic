@@ -281,4 +281,4 @@ app = App(
 
 - [Portkey Docs](https://docs.portkey.ai)
 - [Reliability Patterns](../reliability.md)
-- [LiteLLM Integration](litellm.md)
+- LiteLLM Integration _(planned)_

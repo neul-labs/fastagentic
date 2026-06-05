@@ -646,4 +646,4 @@ def resolve_template(name: str) -> Path | str:
 
 - [Contributing Templates](contributing.md) - How to contribute
 - [Template Reference](index.md) - Available templates
-- [CLI Usage](../cli.md) - `fastagentic new` command
+- [CLI Reference](../cli-reference.md) - `fastagentic new` command

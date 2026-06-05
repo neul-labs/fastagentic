@@ -228,7 +228,7 @@ Documentation is a first-class deliverable in every release. Each feature ships 
   - [Lakera](integrations/lakera.md) — Prompt injection defense strategies
   - [Mem0](integrations/mem0.md) — Long-term memory patterns
   - [Portkey](integrations/portkey.md) — When to use gateway vs built-in reliability
-  - [Guardrails AI](integrations/guardrails-ai.md) — Output validation patterns
+  - Guardrails AI _(planned)_ — Output validation patterns
 - **Reference Documentation:**
   - [Hooks Architecture](hooks.md) — Complete hook lifecycle reference
   - [Reliability Patterns](reliability.md) — When to use built-in vs external tools
@@ -527,7 +527,7 @@ LangGraph-Specific:
 
 Timelines are subject to change as community feedback and adoption inform priorities. Contributions, RFCs, and plugin proposals are welcome to accelerate the roadmap.
 
-- [GitHub Discussions](https://github.com/fastagentic/fastagentic/discussions) - Feature requests
-- [GitHub Issues](https://github.com/fastagentic/fastagentic/issues) - Bug reports
-- [Contributing Guide](../CONTRIBUTING.md) - How to contribute
+- [GitHub Discussions](https://github.com/neul-labs/fastagentic/discussions) - Feature requests
+- [GitHub Issues](https://github.com/neul-labs/fastagentic/issues) - Bug reports
+- [Contributing Guide](https://github.com/neul-labs/fastagentic/blob/main/CONTRIBUTING.md) - How to contribute
 - [Integration Guide](integrations/index.md) - Build a hook or provider

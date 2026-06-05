@@ -564,4 +564,4 @@ app = App(
 
 - [Hooks Architecture](hooks.md) — Intercept retry/circuit events
 - [Integrations](integrations/index.md) — Portkey, LiteLLM setup
-- [Observability](operations/observability/index.md) — Monitor reliability metrics
+- [Operations](operations/index.md) — Monitor reliability metrics

@@ -249,5 +249,5 @@ LakeraHook(
 ## Next Steps
 
 - [Lakera Docs](https://docs.lakera.ai)
-- [Guardrails AI Integration](guardrails-ai.md)
-- [Security Guide](../operations/security/index.md)
+- Guardrails AI Integration _(planned)_
+- [Operations](../operations/index.md)

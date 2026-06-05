@@ -1,9 +1,12 @@
 site_name: FastAgentic
 site_description: The deployment layer for agentic applications. Build agents with anything. Ship them with FastAgentic.
-site_url: https://github.com/neul-labs/fastagentic
-repo_url: https://github.com/fastagentic/fastagentic
-repo_name: fastagentic/fastagentic
+site_url: https://fastagentic.docs.neullabs.com/
+repo_url: https://github.com/neul-labs/fastagentic
+repo_name: neul-labs/fastagentic
 edit_uri: edit/main/documentation/docs/
+
+exclude_docs: |
+  !/templates/
 
 theme:
   name: material
@@ -86,7 +89,7 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.magiclink:
       repo_url_shorthand: true
-      user: fastagentic
+      user: neul-labs
       repo: fastagentic
   - pymdownx.mark
   - pymdownx.smartsymbols
@@ -110,7 +113,7 @@ extra:
     provider: mike
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/fastagentic/fastagentic
+      link: https://github.com/neul-labs/fastagentic
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/fastagentic/
     - icon: fontawesome/brands/discord

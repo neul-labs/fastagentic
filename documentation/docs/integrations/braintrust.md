@@ -317,5 +317,5 @@ from fastagentic.integrations.langsmith import LangSmithHook
 ## Next Steps
 
 - [Braintrust Docs](https://www.braintrust.dev/docs)
-- [LangSmith Integration](langsmith.md)
+- LangSmith Integration _(planned)_
 - [Hooks Architecture](../hooks.md)

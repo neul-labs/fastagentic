@@ -217,4 +217,4 @@ LangfuseHook(
 
 - [Langfuse Docs](https://langfuse.com/docs)
 - [Hooks Architecture](../hooks.md)
-- [Observability Guide](../operations/observability/index.md)
+- [Operations](../operations/index.md)

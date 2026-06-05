@@ -448,9 +448,9 @@ See [Integrations Guide](integrations/index.md) for detailed setup:
 | Integration | Hooks Provided | Purpose |
 |-------------|----------------|---------|
 | [Langfuse](integrations/langfuse.md) | `on_llm_*`, `on_tool_*` | LLM observability |
-| [Logfire](integrations/logfire.md) | All hooks | PydanticAI tracing |
+| Logfire _(planned)_ | All hooks | PydanticAI tracing |
 | [Lakera](integrations/lakera.md) | `on_llm_start` | Prompt injection detection |
-| [Guardrails AI](integrations/guardrails.md) | `on_response` | Output validation |
+| Guardrails AI _(planned)_ | `on_response` | Output validation |
 | [Mem0](integrations/mem0.md) | Memory provider | Persistent memory |
 | [Braintrust](integrations/braintrust.md) | Eval hooks | Experiment tracking |
 
@@ -477,5 +477,4 @@ async def fast_hook(ctx: HookContext):
 ## Next Steps
 
 - [Integrations Index](integrations/index.md) — Setup guides for each integration
-- [Observability Guide](operations/observability/index.md) — Monitoring and tracing
-- [Security Guide](operations/security/index.md) — Guardrails and compliance
+- [Operations](operations/index.md) — Deployment, observability, security
